@@ -1,0 +1,20 @@
+<RCC>
+    <qresource prefix="/new/mainWindowIcons">
+        <file>noback/agvIcon.png</file>
+        <file>noback/agvSetting.png</file>
+        <file>noback/alert.png</file>
+        <file>noback/bell.png</file>
+        <file>noback/edit.png</file>
+        <file>noback/galka.png</file>
+        <file>noback/logs.png</file>
+        <file>noback/lupa.png</file>
+        <file>noback/print.png</file>
+        <file>noback/user.png</file>
+        <file>noback/VAPManagerLogo.png</file>
+        <file>noback/warning.png</file>
+        <file>noback/YearListPrint.png</file>
+        <file>noback/arrow_left.png</file>
+        <file>noback/filter.png</file>
+        <file>noback/arrows_down.png</file>
+    </qresource>
+</RCC>

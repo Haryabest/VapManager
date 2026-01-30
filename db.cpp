@@ -1,30 +1,35 @@
-#include "db.h"
 #include <QSqlDatabase>
+#include <QSqlQuery>
 #include <QSqlError>
 #include <QDebug>
 
 bool connectToDB()
 {
-    // Если соединение уже существует — используем его
-    if (QSqlDatabase::contains("main_connection")) {
-        QSqlDatabase db = QSqlDatabase::database("main_connection");
-        if (db.isOpen())
-            return true;
-    }
-
-    // Создаём новое соединение
+    // ВАЖНО: добавляем ИМЯ соединения
     QSqlDatabase db = QSqlDatabase::addDatabase("QMYSQL", "main_connection");
-
     db.setHostName("localhost");
-    db.setDatabaseName("agv_db");
+    db.setDatabaseName("agv_manager_db");
     db.setUserName("root");
-    db.setPassword("");
+    db.setPassword(""); // если пароль есть — впиши
 
     if (!db.open()) {
-        qDebug() << "[DB] Ошибка подключения:" << db.lastError().text();
+        qDebug() << "Ошибка подключения к базе данных:" << db.lastError().text();
         return false;
     }
 
-    qDebug() << "[DB] Подключение к MySQL успешно!";
+    qDebug() << "Успешно подключились к базе данных!";
     return true;
+}
+
+void testConnection()
+{
+    QSqlQuery query(QSqlDatabase::database("main_connection"));
+    query.prepare("SELECT COUNT(*) FROM agv_models");
+    if (!query.exec()) {
+        qDebug() << "Ошибка выполнения запроса:" << query.lastError().text();
+    } else {
+        if (query.next()) {
+            qDebug() << "Количество записей в таблице models_agv:" << query.value(0).toInt();
+        }
+    }
 }

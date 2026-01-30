@@ -34,7 +34,6 @@
 #include <QStyledItemDelegate>
 
 #include "listagvinfo.h"
-#include "agvdetailinfo.h"
 #include "agvsettingspage.h"
 #include "multisectionwidget.h"
 #include "maintenanceitemwidget.h"
@@ -115,7 +114,6 @@ private:
     QWidget *rightUpcomingMaintenanceFrame = nullptr;
 
     ListAgvInfo *listAgvInfo = nullptr;
-    AgvDetailInfo *agvDetailInfo = nullptr;
     AgvSettingsPage *agvSettingsPage = nullptr;
 
     ModelListPage *modelListPage = nullptr;

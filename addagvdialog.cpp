@@ -8,6 +8,26 @@
 #include <QKeyEvent>
 #include <QRegularExpression>
 #include <QTimer>
+#include <QSqlQuery>
+#include <QSqlError>
+#include <QDebug>
+
+static QStringList loadAgvModels()
+{
+    QStringList list;
+
+    QSqlQuery q("SELECT name FROM agv_models ORDER BY name ASC");
+
+    if (!q.isActive()) {
+        qDebug() << "Ошибка загрузки моделей:" << q.lastError().text();
+        return list;
+    }
+
+    while (q.next())
+        list << q.value(0).toString();
+
+    return list;
+}
 
 AddAgvDialog::AddAgvDialog(std::function<int(int)> scale, QWidget *parent)
     : QDialog(parent), s(scale)
@@ -19,10 +39,7 @@ AddAgvDialog::AddAgvDialog(std::function<int(int)> scale, QWidget *parent)
     root->setContentsMargins(s(20), s(20), s(20), s(20));
     root->setSpacing(s(10));
 
-    //
-    // ======= UI HELPERS =======
-    //
-    auto makeTitle = [&](QString t){
+    auto makeTitle = [&](const QString &t){
         QLabel *lbl = new QLabel(t, this);
         lbl->setStyleSheet(QString(
             "font-family:Inter;"
@@ -56,31 +73,21 @@ AddAgvDialog::AddAgvDialog(std::function<int(int)> scale, QWidget *parent)
         "selection-background-color:#0F00DB22;"
         "selection-color:black;";
 
-    //
-    // ======= COMBOBOX FRAME (стрелка стандартная) =======
-    //
-    QString comboBoxFrameStyle =
+    QString comboStyle =
         "QComboBox {"
         "   border:1px solid #D0D0D0;"
-        "   border-radius:0px;"     /* квадратные углы */
-        "   padding:6px 8px;"       /* стандартный padding */
+        "   border-radius:0px;"
+        "   padding:6px 8px;"
         "   background:white;"
         "   font-size:15px;"
-        "}";
-
-    //
-    // ======= HIGHLIGHT СПИСКА =======
-    //
-    QString comboListStyle =
+        "}"
         "QComboBox QAbstractItemView {"
         "   selection-background-color:#0F00DB22;"
         "   selection-color:black;"
         "   outline:0;"
         "}";
 
-    //
-    // ======= NAME =======
-    //
+    // ===== NAME (AGV_) =====
     root->addWidget(makeTitle("Название (AGV_###)"));
     nameEdit = new QLineEdit(this);
     nameEdit->setPlaceholderText("AGV______");
@@ -92,9 +99,7 @@ AddAgvDialog::AddAgvDialog(std::function<int(int)> scale, QWidget *parent)
     nameError = makeError();
     root->addWidget(nameError);
 
-    //
-    // ======= SERIAL =======
-    //
+    // ===== SERIAL (SN-) =====
     root->addWidget(makeTitle("Серийный номер"));
     serialEdit = new QLineEdit(this);
     serialEdit->setText("SN-");
@@ -105,30 +110,28 @@ AddAgvDialog::AddAgvDialog(std::function<int(int)> scale, QWidget *parent)
     serialError = makeError();
     root->addWidget(serialError);
 
-    //
-    // ======= STATUS =======
-    //
+    // ===== STATUS =====
     root->addWidget(makeTitle("Статус"));
     statusBox = new QComboBox(this);
     statusBox->addItem("online");
     statusBox->addItem("offline");
-    statusBox->setStyleSheet(comboBoxFrameStyle + comboListStyle);
+    statusBox->setStyleSheet(comboStyle);
     root->addWidget(statusBox);
 
-    //
-    // ======= MODEL =======
-    //
+    // ===== MODEL (из БД agv_models.name) =====
     root->addWidget(makeTitle("Модель AGV"));
     modelBox = new QComboBox(this);
-    modelBox->addItem("MX1");
-    modelBox->addItem("MX2");
-    modelBox->addItem("MX3");
-    modelBox->setStyleSheet(comboBoxFrameStyle + comboListStyle);
+    modelBox->setStyleSheet(comboStyle);
+
+    QStringList models = loadAgvModels();
+    if (models.isEmpty())
+        modelBox->addItem("Нет моделей");
+    else
+        modelBox->addItems(models);
+
     root->addWidget(modelBox);
 
-    //
-    // ======= ALIAS =======
-    //
+    // ===== ALIAS =====
     root->addWidget(makeTitle("Добавить заметку (необязательно)"));
     aliasEdit = new QLineEdit(this);
     aliasEdit->setPlaceholderText("Добавить заметку");
@@ -138,9 +141,7 @@ AddAgvDialog::AddAgvDialog(std::function<int(int)> scale, QWidget *parent)
     aliasError = makeError();
     root->addWidget(aliasError);
 
-    //
-    // ======= BUTTONS =======
-    //
+    // ===== BUTTONS =====
     QHBoxLayout *btns = new QHBoxLayout();
     QPushButton *cancel = new QPushButton("Отмена", this);
     addBtn = new QPushButton("Добавить", this);
@@ -180,9 +181,7 @@ AddAgvDialog::AddAgvDialog(std::function<int(int)> scale, QWidget *parent)
     root->addStretch();
     root->addLayout(btns);
 
-    //
     // SIGNALS
-    //
     connect(cancel, &QPushButton::clicked, this, &QDialog::reject);
 
     connect(nameEdit,   &QLineEdit::textChanged, this, &AddAgvDialog::validateAll);
@@ -198,17 +197,11 @@ AddAgvDialog::AddAgvDialog(std::function<int(int)> scale, QWidget *parent)
         accept();
     });
 
-    //
     // EVENT FILTERS
-    //
     nameEdit->installEventFilter(this);
     serialEdit->installEventFilter(this);
     aliasEdit->installEventFilter(this);
 }
-
-//
-// ======= VALIDATION =======
-//
 
 void AddAgvDialog::validateAll()
 {
@@ -266,114 +259,77 @@ bool AddAgvDialog::validateAlias()
     return true;
 }
 
-//
-// ======= EVENT FILTER =======
 bool AddAgvDialog::eventFilter(QObject *obj, QEvent *event)
 {
-    if (obj == nameEdit && event->type() == QEvent::FocusIn)
+    //
+    // ===== AGV_ (nameEdit) =====
+    //
+    if (obj == nameEdit)
     {
-        QTimer::singleShot(0, [this](){
-            nameEdit->setCursorPosition(4);
-        });
-    }
-
-    if (obj == nameEdit && event->type() == QEvent::MouseButtonPress)
-    {
-        QTimer::singleShot(0, [this](){
-            nameEdit->setCursorPosition(4);
-        });
-    }
-
-    if (event->type() == QEvent::KeyPress)
-    {
-        QKeyEvent *key = static_cast<QKeyEvent*>(event);
-
-        if (key->key() == Qt::Key_Tab)
+        if (event->type() == QEvent::FocusIn ||
+            event->type() == QEvent::MouseButtonPress)
         {
-            QWidget *next = nullptr;
-
-            if (obj == nameEdit)        next = serialEdit;
-            else if (obj == serialEdit) next = aliasEdit;
-            else if (obj == aliasEdit)  next = nullptr;
-            else if (obj == addBtn || obj == nullptr) next = nameEdit;
-
-            if (next)
-            {
-                next->setFocus();
-
-                if (auto *le = qobject_cast<QLineEdit*>(next))
-                {
-                    if (next == nameEdit)
-                        le->setCursorPosition(4);
-                    else
-                        le->setCursorPosition(le->text().length());
-                }
-
-                return true;
-            }
+            QTimer::singleShot(0, [this](){
+                if (nameEdit->cursorPosition() < 4)
+                    nameEdit->setCursorPosition(4);
+            });
         }
 
-        if (obj == nameEdit &&
-            (key->key() == Qt::Key_Backspace || key->key() == Qt::Key_Delete))
+        if (event->type() == QEvent::KeyPress)
         {
-            if (nameEdit->cursorPosition() <= 4)
-                return true;
-        }
+            QKeyEvent *key = static_cast<QKeyEvent*>(event);
 
-        if (key->key() == Qt::Key_Backspace || key->key() == Qt::Key_Delete)
-            return QDialog::eventFilter(obj, event);
-
-        if (obj == nameEdit)
-        {
-            QString t = key->text();
-
-            if (t.isEmpty())
-                return QDialog::eventFilter(obj, event);
-
-            if (key->key() == Qt::Key_Space)
+            // Запрет удаления префикса
+            if ((key->key() == Qt::Key_Backspace && nameEdit->cursorPosition() <= 4) ||
+                (key->key() == Qt::Key_Delete   && nameEdit->cursorPosition() <  4))
             {
-                nameError->setText("Пробелы запрещены");
-                nameError->show();
                 return true;
             }
 
-            if (t.contains(QRegularExpression("[А-Яа-яЁё]")))
-            {
-                nameError->setText("Русские буквы запрещены");
-                nameError->show();
-                return true;
-            }
-
-            if (!t.contains(QRegularExpression("^[A-Za-z0-9_]$")))
-            {
-                nameError->setText("Спецсимволы запрещены");
-                nameError->show();
-                return true;
-            }
-
-            QString cur = nameEdit->text();
-            if (cur.length() < 4)
-            {
-                nameEdit->setText("AGV_");
-                nameEdit->setCursorPosition(4);
-                return true;
-            }
-
+            // После AGV_ — только цифры
             if (nameEdit->cursorPosition() >= 4)
             {
-                if (!t.contains(QRegularExpression("^[0-9]$")))
-                {
-                    nameError->setText("После AGV_ можно вводить только цифры");
-                    nameError->show();
+                if (!key->text().contains(QRegularExpression("[0-9]")))
                     return true;
-                }
             }
         }
 
-        if (obj == serialEdit)
+        // Автовосстановление префикса
+        if (event->type() == QEvent::KeyRelease)
         {
-            if (key->key() == Qt::Key_Backspace && serialEdit->cursorPosition() <= 3)
+            if (!nameEdit->text().startsWith("AGV_"))
+            {
+                QString t = nameEdit->text();
+                t.remove(QRegularExpression("^[^0-9]*"));
+                nameEdit->setText("AGV_" + t);
+                nameEdit->setCursorPosition(nameEdit->text().length());
+            }
+        }
+    }
+
+    //
+    // ===== SN- (serialEdit) =====
+    //
+    if (obj == serialEdit)
+    {
+        if (event->type() == QEvent::FocusIn ||
+            event->type() == QEvent::MouseButtonPress)
+        {
+            QTimer::singleShot(0, [this](){
+                if (serialEdit->cursorPosition() < 3)
+                    serialEdit->setCursorPosition(3);
+            });
+        }
+
+        if (event->type() == QEvent::KeyPress)
+        {
+            QKeyEvent *key = static_cast<QKeyEvent*>(event);
+
+            if ((key->key() == Qt::Key_Backspace && serialEdit->cursorPosition() <= 3) ||
+                (key->key() == Qt::Key_Delete   && serialEdit->cursorPosition() <  3))
+            {
                 return true;
+            }
 
             if (serialEdit->cursorPosition() >= 3)
             {
@@ -382,14 +338,30 @@ bool AddAgvDialog::eventFilter(QObject *obj, QEvent *event)
             }
         }
 
-        if (obj == aliasEdit)
+        if (event->type() == QEvent::KeyRelease)
         {
-            if (key->key() == Qt::Key_Space)
+            if (!serialEdit->text().startsWith("SN-"))
             {
-                aliasError->setText("Пробелы запрещены");
-                aliasError->show();
-                return true;
+                QString t = serialEdit->text();
+                t.remove(QRegularExpression("^[^0-9]*"));
+                serialEdit->setText("SN-" + t);
+                serialEdit->setCursorPosition(serialEdit->text().length());
             }
+        }
+    }
+
+    //
+    // ===== ALIAS =====
+    //
+    if (obj == aliasEdit && event->type() == QEvent::KeyPress)
+    {
+        QKeyEvent *key = static_cast<QKeyEvent*>(event);
+
+        if (key->key() == Qt::Key_Space)
+        {
+            aliasError->setText("Пробелы запрещены");
+            aliasError->show();
+            return true;
         }
     }
 

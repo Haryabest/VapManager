@@ -1,50 +1,61 @@
-    #pragma once
+#pragma once
 
-    #include <QDialog>
-    #include <QString>
-    #include <functional>
+#include <QDialog>
+#include <QString>
+#include <functional>
 
-    class QLineEdit;
-    class QComboBox;
-    class QLabel;
-    class QPushButton;
+class QLineEdit;
+class QComboBox;
+class QLabel;
+class QPushButton;
+class QEvent;
 
-    struct NewAgvData {
-        QString name;
-        QString serial;
-        QString status;
-        QString model;
-        QString alias;
-    };
+//
+// ===== Структура данных, возвращаемая диалогом =====
+//
 
-    class AddAgvDialog : public QDialog
-    {
-        Q_OBJECT
-    public:
-        explicit AddAgvDialog(std::function<int(int)> scale, QWidget *parent = nullptr);
+struct NewAgvData
+{
+    QString name;
+    QString serial;
+    QString status;
+    QString model;
+    QString alias;
+};
 
-        NewAgvData result;
+//
+// ===== AddAgvDialog =====
+//
 
-    protected:
-        bool eventFilter(QObject *obj, QEvent *event) override;
+class AddAgvDialog : public QDialog
+{
+    Q_OBJECT
+public:
+    explicit AddAgvDialog(std::function<int(int)> scale,
+                          QWidget *parent = nullptr);
 
-    private:
-        std::function<int(int)> s;
+    NewAgvData result;
 
-        QLineEdit *nameEdit;
-        QLineEdit *serialEdit;
-        QComboBox *statusBox;
-        QComboBox *modelBox;
-        QLineEdit *aliasEdit;
+protected:
+    bool eventFilter(QObject *obj, QEvent *event) override;
 
-        QLabel *nameError;
-        QLabel *serialError;
-        QLabel *aliasError;
+private:
+    std::function<int(int)> s;
 
-        QPushButton *addBtn;
+    QLineEdit  *nameEdit   = nullptr;
+    QLineEdit  *serialEdit = nullptr;
+    QComboBox  *statusBox  = nullptr;
+    QComboBox  *modelBox   = nullptr;
+    QLineEdit  *aliasEdit  = nullptr;
 
-        void validateAll();
-        bool validateName();
-        bool validateSerial();
-        bool validateAlias();
-    };
+    QLabel *nameError   = nullptr;
+    QLabel *serialError = nullptr;
+    QLabel *aliasError  = nullptr;
+
+    QPushButton *addBtn = nullptr;
+
+    void validateAll();
+    bool validateName();
+    bool validateSerial();
+    bool validateAlias();
+};

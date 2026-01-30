@@ -1,21 +1,43 @@
-#ifndef MODELLISTPAGE_H
-#define MODELLISTPAGE_H
+#pragma once
 
 #include <QFrame>
 #include <QVector>
-#include <QPushButton>
-#include <QLabel>
-#include <QScrollArea>
-#include <QVBoxLayout>
 #include <functional>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QGridLayout>
+#include <QScrollArea>
+#include <QLabel>
+#include <QPushButton>
+#include <QDialog>
+#include <QLineEdit>
+#include <QCheckBox>
+#include <QResizeEvent>
+#include <QSqlQuery>
+#include <QSqlError>
+#include <QMap>
+#include <QDebug>
+#include <QPixmap>
+#include <QIcon>
+#include <QTimer>
+#include <QScrollBar>
 
-struct ModelInfo {
-    QString name;
-    QString category;
-    int capacityKg;
-    double maxSpeed;
-    QString blueprintPath;
+struct ModelInfo;
+struct MaintenanceTask;
+
+class QVBoxLayout;
+class QLabel;
+class QPushButton;
+class QResizeEvent;
+class QScrollArea;
+class QWidget;
+
+enum PageMode {
+    MODE_LIST,
+    MODE_TEMPLATE
 };
+
+class TemplatePageWidget;
 
 class ModelListPage : public QFrame
 {
@@ -23,24 +45,33 @@ class ModelListPage : public QFrame
 public:
     explicit ModelListPage(std::function<int(int)> scale, QWidget *parent = nullptr);
 
-    void addModel(const ModelInfo &info);
-    void reloadFromDatabase();
-
 signals:
     void backRequested();
 
 protected:
     void resizeEvent(QResizeEvent *event) override;
 
+private slots:
+    void openAddModelDialog();
+    void openDeleteDialog();
+    void showTemplatePage();
+
+private:
+    void reloadFromDatabase();
+    void addModel(const ModelInfo &info);
+
 private:
     std::function<int(int)> s;
 
+    QScrollArea *scrollArea = nullptr;
+    QWidget *contentWidget = nullptr;
     QVBoxLayout *layout = nullptr;
-    QLabel *emptyLabel = nullptr;
 
     QPushButton *addBtn = nullptr;
 
-    void openAddModelDialog();
-};
+    QLabel *emptyLabel = nullptr;
 
-#endif // MODELLISTPAGE_H
+    TemplatePageWidget *templatePage = nullptr;
+
+    PageMode mode = MODE_LIST;
+};

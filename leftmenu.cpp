@@ -1,7 +1,6 @@
 #include "leftmenu.h"
 #include "multisectionwidget.h"
 #include "listagvinfo.h"
-#include "agvdetailinfo.h"
 #include "agvsettingspage.h"
 //
 // ======================= ДИАЛОГ НАСТРОЕК КАЛЕНДАРЯ =======================
@@ -144,7 +143,6 @@ void leftMenu::setScaleFactor(qreal factor)
     rightCalendarFrame = nullptr;
     rightUpcomingMaintenanceFrame = nullptr;
     listAgvInfo = nullptr;
-    agvDetailInfo = nullptr;
     agvSettingsPage = nullptr;
     backButton = nullptr;
     monthLabel = nullptr;
@@ -991,21 +989,6 @@ void leftMenu::initUI()
         showCalendar();
     });
 
-
-
-    //
-    // ======================= ДЕТАЛЬНАЯ СТРАНИЦА AGV =======================
-    //
-    agvDetailInfo = new AgvDetailInfo([this](int v){ return s(v); }, rightBodyFrame);
-    agvDetailInfo->setVisible(false);
-
-    // Назад → возвращаемся в список AGV
-    connect(agvDetailInfo, &AgvDetailInfo::backRequested, this, [this](){
-        agvDetailInfo->setVisible(false);
-        listAgvInfo->setVisible(true);
-    });
-
-
     //
     // ======================= СУПЕР‑НАСТРОЙКИ AGV =======================
     //
@@ -1027,7 +1010,6 @@ void leftMenu::initUI()
     rightBodyLayout->addWidget(rightCalendarFrame, 3);
     rightBodyLayout->addWidget(rightUpcomingMaintenanceFrame, 2);
     rightBodyLayout->addWidget(listAgvInfo, 3);
-    rightBodyLayout->addWidget(agvDetailInfo, 3);
     rightBodyLayout->addWidget(agvSettingsPage, 3);
     rightBodyLayout->addWidget(modelListPage, 3);
 
@@ -1050,7 +1032,6 @@ void leftMenu::showAgvList()
 {
     if (rightCalendarFrame)              rightCalendarFrame->setVisible(false);
     if (rightUpcomingMaintenanceFrame)   rightUpcomingMaintenanceFrame->setVisible(false);
-    if (agvDetailInfo)                   agvDetailInfo->setVisible(false);
     if (agvSettingsPage)                 agvSettingsPage->setVisible(false);
     if (modelListPage)                   modelListPage->setVisible(false);   // ← ВОТ ЭТО ДОБАВИТЬ
 
@@ -1061,7 +1042,6 @@ void leftMenu::showAgvList()
 void leftMenu::showCalendar()
 {
     if (listAgvInfo)                     listAgvInfo->setVisible(false);
-    if (agvDetailInfo)                   agvDetailInfo->setVisible(false);
     if (agvSettingsPage)                 agvSettingsPage->setVisible(false);
     if (modelListPage)                   modelListPage->setVisible(false);   // ← ДОБАВЬ ЭТУ СТРОКУ
 
@@ -1081,10 +1061,6 @@ void leftMenu::showAgvDetailInfo(const QString &agvId)
     if (listAgvInfo)                     listAgvInfo->setVisible(false);
     if (agvSettingsPage)                 agvSettingsPage->setVisible(false);
 
-    if (agvDetailInfo) {
-        agvDetailInfo->setAgv(agvId);
-        agvDetailInfo->setVisible(true);
-    }
 }
 
 //
@@ -1198,7 +1174,6 @@ void leftMenu::showModelList()
     if (rightCalendarFrame)              rightCalendarFrame->setVisible(false);
     if (rightUpcomingMaintenanceFrame)   rightUpcomingMaintenanceFrame->setVisible(false);
     if (listAgvInfo)                     listAgvInfo->setVisible(false);
-    if (agvDetailInfo)                   agvDetailInfo->setVisible(false);
     if (agvSettingsPage)                 agvSettingsPage->setVisible(false);
 
     if (modelListPage)                   modelListPage->setVisible(true);

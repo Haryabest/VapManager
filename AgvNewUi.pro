@@ -17,8 +17,9 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
     addagvdialog.cpp \
-    agvdetailinfo.cpp \
     agvsettingspage.cpp \
+    db.cpp \
+    db_models.cpp \
     leftmenu.cpp \
     listagvinfo.cpp \
     main.cpp \
@@ -30,8 +31,9 @@ SOURCES += \
 
 HEADERS += \
     addagvdialog.h \
-    agvdetailinfo.h \
     agvsettingspage.h \
+    db.h \
+    db_models.h \
     leftmenu.h \
     listagvinfo.h \
     maintenanceitemwidget.h \

@@ -1,10 +1,58 @@
 #pragma once
 
 #include <QDialog>
+#include <QWidget>
 #include <QString>
 #include <QVector>
 #include <functional>
 #include <QSet>
+#include <QPixmap>
+#include <QLabel>
+#include <QPushButton>
+#include <QMouseEvent>
+#include <QPaintEvent>
+#include <QKeyEvent>
+#include <QResizeEvent>
+
+class ImagePreviewDialog : public QWidget
+{
+    Q_OBJECT
+public:
+    explicit ImagePreviewDialog(const QPixmap &image,
+                                const QString &fileName,
+                                const QByteArray &imageData,
+                                QWidget *parent = nullptr,
+                                const QString &currentUser = QString(),
+                                int messageId = 0);
+    
+    int getDialogResult() const { return result_; }
+
+protected:
+    void paintEvent(QPaintEvent *event) override;
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
+    void keyPressEvent(QKeyEvent *event) override;
+
+private:
+    void centerImage();
+    void updateGeometry();
+    
+    QPixmap image_;
+    QByteArray imageData_;
+    QString fileName_;
+    QString currentUser_;
+    int messageId_;
+    int result_;
+    
+    QLabel *imageLabel_;
+    QPushButton *saveBtn_;
+    QPushButton *deleteBtn_;
+    QWidget *buttonsWidget_;
+    
+    QRect imageRect_;
+    bool mousePressed_;
+};
 
 struct TaskChatRecipient {
     QString displayName;  // "ФИО (логин)" or "Все админы"

@@ -23,6 +23,7 @@
 #include <QSet>
 #include <QScrollBar>
 #include <QTimer>
+#include <QThread>
 #include <QListWidget>
 #include <QListWidgetItem>
 #include <QMouseEvent>
@@ -50,6 +51,8 @@
 #include <QImage>
 #include <QBuffer>
 #include <QPainter>
+#include <QGuiApplication>
+#include <QScreen>
 #include <QStyle>
 #include <QDragEnterEvent>
 #include <QDropEvent>
@@ -232,41 +235,26 @@ static bool openAttachmentInsideApp(QWidget *owner, const QString &fileName, con
                                     const QString &currentUser = QString(), int messageId = 0)
 {
     if (isImageAttachment(mimeType, fileName)) {
-        QDialog dlg(owner);
-        dlg.setWindowTitle(fileName);
-        dlg.setMinimumSize(820, 560);
-        QVBoxLayout *root = new QVBoxLayout(&dlg);
-        QLabel *img = new QLabel(&dlg);
-        img->setAlignment(Qt::AlignCenter);
-        img->setStyleSheet("background:#0F172A;border-radius:10px;");
         QPixmap pm;
         pm.loadFromData(bytes);
-        if (!pm.isNull())
-            img->setPixmap(pm.scaled(780, 500, Qt::KeepAspectRatio, Qt::SmoothTransformation));
-        root->addWidget(img, 1);
-        QHBoxLayout *btns = new QHBoxLayout();
-        QPushButton *saveAs = new QPushButton(QStringLiteral("Сохранить как"), &dlg);
-        QObject::connect(saveAs, &QPushButton::clicked, &dlg, [owner, fileName, bytes]() {
-            saveAttachmentAs(owner, fileName, bytes);
-        });
-        btns->addWidget(saveAs);
-        QPushButton *delBtn = new QPushButton(QStringLiteral("Удалить"), &dlg);
-        delBtn->setStyleSheet("QPushButton{background:#FEE2E2;color:#B91C1C;border:none;border-radius:8px;padding:6px 10px;font-weight:800;}"
-                              "QPushButton:hover{background:#FCA5A5;}");
-        QObject::connect(delBtn, &QPushButton::clicked, &dlg, [owner, &dlg, currentUser, messageId]() {
-            if (messageId <= 0 || currentUser.trimmed().isEmpty()) return;
-            QString err;
-            if (!hideMessageForUser(messageId, currentUser, err)) {
-                QMessageBox::warning(owner, "Удаление", err);
-                return;
-            }
-            dlg.accept();
-        });
-        btns->addWidget(delBtn);
-        btns->addStretch();
-        root->addLayout(btns);
-        dlg.exec();
-        return (dlg.result() == QDialog::Accepted);
+
+        ImagePreviewDialog *dlg = new ImagePreviewDialog(pm, fileName, bytes, owner, currentUser, messageId);
+        
+        // Показываем окно
+        dlg->show();
+        dlg->raise();
+        dlg->activateWindow();
+        
+        // Ждём закрытия через модальный цикл
+        QEventLoop loop;
+        QObject::connect(dlg, &QWidget::destroyed, &loop, &QEventLoop::quit);
+        loop.exec(QEventLoop::AllEvents);
+        
+        // Получаем результат и удаляем
+        int result = dlg->getDialogResult();
+        dlg->deleteLater();
+        
+        return (result == 1);
     }
 
     openAttachmentData(owner, fileName, bytes);
@@ -497,6 +485,238 @@ static QString formatLastSeenLabel(const QString &username)
         return QStringLiteral("Был(а) в сети вчера");
     return QStringLiteral("Был(а) в сети %1").arg(lastLogin.toString(QStringLiteral("dd.MM.yyyy hh:mm")));
 }
+
+// ------------------------- ImagePreviewDialog -------------------------
+ImagePreviewDialog::ImagePreviewDialog(const QPixmap &image,
+                                       const QString &fileName,
+                                       const QByteArray &imageData,
+                                       QWidget *parent,
+                                       const QString &currentUser,
+                                       int messageId)
+    : QWidget(parent, Qt::FramelessWindowHint | Qt::WindowSystemMenuHint)
+    , image_(image)
+    , imageData_(imageData)
+    , fileName_(fileName)
+    , currentUser_(currentUser)
+    , messageId_(messageId)
+    , result_(0)
+    , mousePressed_(false)
+{
+    // Настраиваем окно
+    setWindowTitle(fileName_);
+    setAttribute(Qt::WA_TranslucentBackground);
+    setAttribute(Qt::WA_DeleteOnClose, false);
+    setMouseTracking(true);
+    
+    // Получаем геометрию экрана
+    QRect screenGeometry = QGuiApplication::primaryScreen()->geometry();
+    setGeometry(screenGeometry);
+    
+    // Создаём контейнер для изображения
+    imageLabel_ = new QLabel(this);
+    imageLabel_->setAlignment(Qt::AlignCenter);
+    imageLabel_->setStyleSheet("background:transparent;");
+    imageLabel_->setAttribute(Qt::WA_TranslucentBackground);
+    imageLabel_->setCursor(Qt::PointingHandCursor);
+    imageLabel_->setMouseTracking(true);
+    
+    // Масштабируем изображение
+    if (!image_.isNull()) {
+        QSize screenSize = screenGeometry.size() * 0.85;
+        QPixmap scaled = image_.scaled(screenSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        imageLabel_->setPixmap(scaled);
+        imageLabel_->setFixedSize(scaled.size());
+    }
+    
+    // Центрируем изображение
+    centerImage();
+    
+    // Создаём панель с кнопками
+    buttonsWidget_ = new QWidget(this);
+    buttonsWidget_->setObjectName("buttonsPanel");
+    buttonsWidget_->setStyleSheet(
+        "QWidget#buttonsPanel{"
+        "  background:rgba(30,41,59,0.95);"
+        "  border-radius:12px;"
+        "  border:1px solid rgba(148,163,184,0.2);"
+        "}"
+    );
+    buttonsWidget_->setFixedHeight(60);
+    buttonsWidget_->setMouseTracking(true);
+    
+    QHBoxLayout *btnsLayout = new QHBoxLayout(buttonsWidget_);
+    btnsLayout->setContentsMargins(20, 5, 20, 5);
+    btnsLayout->setSpacing(15);
+    
+    // Кнопка "Сохранить как"
+    saveBtn_ = new QPushButton(QStringLiteral("💾 Сохранить как"), buttonsWidget_);
+    saveBtn_->setObjectName("saveBtn");
+    saveBtn_->setFixedHeight(40);
+    saveBtn_->setCursor(Qt::PointingHandCursor);
+    saveBtn_->setStyleSheet(
+        "QPushButton#saveBtn{"
+        "  background:qlineargradient(x1:0,y1:0,x2:0,y2:1,stop:0 #3B82F6,stop:1 #2563EB);"
+        "  color:white;"
+        "  border:none;"
+        "  border-radius:8px;"
+        "  padding:0 20px;"
+        "  font-weight:700;"
+        "  font-size:13px;"
+        "}"
+        "QPushButton#saveBtn:hover{"
+        "  background:qlineargradient(x1:0,y1:0,x2:0,y2:1,stop:0 #60A5FA,stop:1 #3B82F6);"
+        "}"
+    );
+    connect(saveBtn_, &QPushButton::clicked, this, [this]() {
+        saveAttachmentAs(this, fileName_, imageData_);
+    });
+    btnsLayout->addWidget(saveBtn_);
+    
+    // Кнопка "Удалить" (если есть messageId)
+    if (messageId_ > 0 && !currentUser_.trimmed().isEmpty()) {
+        deleteBtn_ = new QPushButton(QStringLiteral("🗑 Удалить"), buttonsWidget_);
+        deleteBtn_->setObjectName("deleteBtn");
+        deleteBtn_->setFixedHeight(40);
+        deleteBtn_->setCursor(Qt::PointingHandCursor);
+        deleteBtn_->setStyleSheet(
+            "QPushButton#deleteBtn{"
+            "  background:qlineargradient(x1:0,y1:0,x2:0,y2:1,stop:0 #EF4444,stop:1 #DC2626);"
+            "  color:white;"
+            "  border:none;"
+            "  border-radius:8px;"
+            "  padding:0 20px;"
+            "  font-weight:700;"
+            "  font-size:13px;"
+            "}"
+            "QPushButton#deleteBtn:hover{"
+            "  background:qlineargradient(x1:0,y1:0,x2:0,y2:1,stop:0 #F87171,stop:1 #EF4444);"
+            "}"
+        );
+        connect(deleteBtn_, &QPushButton::clicked, this, [this]() {
+            QString err;
+            if (hideMessageForUser(messageId_, currentUser_, err)) {
+                result_ = 1; // Accepted
+                close();
+            } else {
+                QMessageBox::warning(this, "Удаление", err);
+            }
+        });
+        btnsLayout->addWidget(deleteBtn_);
+    }
+    
+    btnsLayout->addStretch();
+    
+    // Кнопка "Закрыть"
+    QPushButton *closeBtn = new QPushButton(QStringLiteral("✕"), buttonsWidget_);
+    closeBtn->setObjectName("closeBtn");
+    closeBtn->setFixedSize(40, 40);
+    closeBtn->setCursor(Qt::PointingHandCursor);
+    closeBtn->setStyleSheet(
+        "QPushButton#closeBtn{"
+        "  background:rgba(100,116,139,0.3);"
+        "  color:#E2E8F0;"
+        "  border:none;"
+        "  border-radius:20px;"
+        "  font-size:18px;"
+        "  font-weight:900;"
+        "}"
+        "QPushButton#closeBtn:hover{"
+        "  background:rgba(100,116,139,0.5);"
+        "}"
+    );
+    connect(closeBtn, &QPushButton::clicked, this, [this]() {
+        close();
+    });
+    btnsLayout->addWidget(closeBtn);
+    
+    // Позиционируем панель кнопок внизу
+    buttonsWidget_->move(
+        (width() - buttonsWidget_->width()) / 2,
+        height() - buttonsWidget_->height() - 30
+    );
+}
+
+void ImagePreviewDialog::paintEvent(QPaintEvent *event)
+{
+    Q_UNUSED(event);
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
+    
+    // Полупрозрачный фон
+    painter.fillRect(rect(), QColor(15, 23, 42, 230));
+}
+
+void ImagePreviewDialog::mousePressEvent(QMouseEvent *event)
+{
+    mousePressed_ = true;
+    
+    // Проверяем, клик по кнопкам или нет
+    QWidget *clickedWidget = childAt(event->pos());
+    bool clickedOnButtons = false;
+    
+    if (clickedWidget) {
+        QWidget *parent = clickedWidget;
+        while (parent) {
+            if (parent == buttonsWidget_ || parent == saveBtn_ || parent == deleteBtn_) {
+                clickedOnButtons = true;
+                break;
+            }
+            parent = parent->parentWidget();
+        }
+    }
+    
+    // Если клик НЕ по кнопкам - закрываем
+    if (!clickedOnButtons) {
+        close();
+        return;
+    }
+    
+    QWidget::mousePressEvent(event);
+}
+
+void ImagePreviewDialog::mouseReleaseEvent(QMouseEvent *event)
+{
+    mousePressed_ = false;
+    QWidget::mouseReleaseEvent(event);
+}
+
+void ImagePreviewDialog::resizeEvent(QResizeEvent *event)
+{
+    QWidget::resizeEvent(event);
+    centerImage();
+    
+    // Перемещаем панель кнопок
+    if (buttonsWidget_) {
+        buttonsWidget_->move(
+            (width() - buttonsWidget_->width()) / 2,
+            height() - buttonsWidget_->height() - 30
+        );
+    }
+}
+
+void ImagePreviewDialog::keyPressEvent(QKeyEvent *event)
+{
+    if (event->key() == Qt::Key_Escape) {
+        close();
+        return;
+    }
+    QWidget::keyPressEvent(event);
+}
+
+void ImagePreviewDialog::centerImage()
+{
+    if (imageLabel_) {
+        int x = (width() - imageLabel_->width()) / 2;
+        int y = (height() - imageLabel_->height() - buttonsWidget_->height()) / 2;
+        imageLabel_->move(qMax(0, x), qMax(0, y));
+    }
+}
+
+void ImagePreviewDialog::updateGeometry()
+{
+    update();
+}
+
 
 // ------------------------- TaskChatWidget (embedded chat) -------------------------
 TaskChatWidget::TaskChatWidget(int threadId, const QString &currentUser, bool isAdmin,
@@ -1577,7 +1797,7 @@ void TaskChatWidget::showMediaHistoryDialog()
                 const QString fn = card->property("fileName").toString();
                 const QString mt = card->property("mimeType").toString();
                 const QByteArray data = card->property("bytes").toByteArray();
-                openAttachmentInsideApp(this, fn, mt, data);
+                openAttachmentInsideApp(this, fn, mt, data, QString(), 0);
             });
             connect(card, &QToolButton::customContextMenuRequested, &dlg, [this, card, &dlg](const QPoint &pos) {
                 QMenu menu(card);
@@ -3017,7 +3237,7 @@ bool TaskChatDialog::eventFilter(QObject *obj, QEvent *event)
                 QString decodedMime;
                 QByteArray data;
                 if (decodeAttachmentFromStoredMessage(raw, decodedName, decodedMime, data) && !data.isEmpty()) {
-                    openAttachmentInsideApp(this, fn, mt, data);
+                    openAttachmentInsideApp(this, fn, mt, data, QString(), 0);
                     return true;
                 }
             }

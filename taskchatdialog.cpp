@@ -1136,9 +1136,9 @@ void TaskChatWidget::refreshMessages(bool fullReload)
         return;
 
     bool keepAtBottom = forceScrollToBottom_;
-    if (scrollArea_ && scrollArea_->verticalScrollBar()) {
+    if (!keepAtBottom && scrollArea_ && scrollArea_->verticalScrollBar()) {
         QScrollBar *sb = scrollArea_->verticalScrollBar();
-        keepAtBottom = keepAtBottom || (sb->maximum() - sb->value()) < 30;
+        keepAtBottom = (sb->maximum() - sb->value()) < 30;
     }
 
     // Если forceScrollToBottom_, делаем полную перезагрузку
@@ -1156,6 +1156,8 @@ void TaskChatWidget::refreshMessages(bool fullReload)
             forceScrollToBottom_ = false;
             return;
         }
+        // Если есть новые сообщения, всегда скроллим вниз
+        keepAtBottom = true;
     } else {
         while (QLayoutItem *item = messagesLayout_->takeAt(0)) {
             if (item->widget()) item->widget()->deleteLater();
@@ -1699,7 +1701,13 @@ bool TaskChatWidget::eventFilter(QObject *obj, QEvent *event)
                     QString decodedName;
                     QString decodedMime;
                     QByteArray data;
-                    if (decodeAttachmentFromStoredMessage(raw, decodedName, decodedMime, data) && !data.isEmpty()) {
+                    
+                    // Проверяем, есть ли комбинированное сообщение
+                    QString messageText, attachmentPayload;
+                    bool isCombined = splitCombinedMessage(raw, messageText, attachmentPayload);
+                    const QString &msgToDecode = isCombined ? attachmentPayload : raw;
+                    
+                    if (decodeAttachmentMessage(msgToDecode, decodedName, decodedMime, data) && !data.isEmpty()) {
                         const int mid = row->property("messageId").toInt();
                         openAttachmentInsideApp(this, fn, mt, data, currentUser_, mid);
                         return true;
@@ -2327,9 +2335,9 @@ void TaskChatDialog::refreshMessages(bool fullReload)
         return;
 
     bool keepAtBottom = forceScrollToBottom_;
-    if (scrollArea_ && scrollArea_->verticalScrollBar()) {
+    if (!keepAtBottom && scrollArea_ && scrollArea_->verticalScrollBar()) {
         QScrollBar *sb = scrollArea_->verticalScrollBar();
-        keepAtBottom = keepAtBottom || (sb->maximum() - sb->value()) < 30;
+        keepAtBottom = (sb->maximum() - sb->value()) < 30;
     }
 
     // Если forceScrollToBottom_, делаем полную перезагрузку
@@ -2341,6 +2349,8 @@ void TaskChatDialog::refreshMessages(bool fullReload)
             forceScrollToBottom_ = false;
             return;
         }
+        // Если есть новые сообщения, всегда скроллим вниз
+        keepAtBottom = true;
         fullReload = true;
     }
 

@@ -1,0 +1,109 @@
+Пожалуйста, примените следующие изменения в файле C:\AgvNewUi\taskchatdialog.cpp:
+
+## Изменение 1: Функция TaskChatDialog::refreshMessages (строка ~2385)
+
+Найдите в функции refreshMessages (~строка 2385):
+```cpp
+        QLabel *text = new QLabel(visibleText, bubble);
+        text->setWordWrap(true);
+        text->setTextInteractionFlags(Qt::NoTextInteraction);
+```
+
+Замените на:
+```cpp
+        QLabel *text = new QLabel(bubble);
+        text->setWordWrap(true);
+        
+        bool hasUrls = visibleText.contains(QRegularExpression(R"((https?://[^\s<]+[^<.,:;"')\]\s]))", QRegularExpression::CaseInsensitiveOption));
+        
+        if (hasUrls) {
+            QString clickableText = detectUrlsAndMakeClickable(visibleText);
+            text->setText(clickableText);
+            text->setTextFormat(Qt::RichText);
+            text->setTextInteractionFlags(Qt::TextBrowserInteraction);
+            text->setOpenExternalLinks(true);
+            text->setCursor(Qt::IBeamCursor);
+        } else {
+            text->setText(visibleText);
+            text->setTextFormat(Qt::AutoText);
+            text->setTextInteractionFlags(Qt::NoTextInteraction);
+        }
+```
+
+## Изменение 2: Превью изображений в TaskChatDialog::refreshMessages (~строка 2423)
+
+Найдите:
+```cpp
+            if (isImageAttachment(fileMime, fileName)) {
+                QPushButton *thumb = new QPushButton(QStringLiteral("Изображение\n%1").arg(fileName), bubble);
+                thumb->setFlat(false);
+                thumb->setFixedSize(180, 72);
+                const QString rawMessage = m.message;
+                thumb->setStyleSheet(
+                    "QPushButton{border:1px solid #BFDBFE;border-radius:10px;background:#EFF6FF;color:#1D4ED8;font-weight:800;padding:8px;text-align:left;}"
+                    "QPushButton:hover{background:#DBEAFE;border:1px solid #60A5FA;}"
+                );
+                connect(thumb, &QPushButton::clicked, this, [this, rawMessage]() {
+                    QString fileName;
+                    QString fileMime;
+                    QByteArray fileData;
+                    if (!decodeAttachmentFromStoredMessage(rawMessage, fileName, fileMime, fileData) || fileData.isEmpty())
+                        return;
+                    openAttachmentInsideApp(this, fileName, fileMime, fileData);
+                });
+                bubbleL->addWidget(thumb, 0, mine ? Qt::AlignRight : Qt::AlignLeft);
+```
+
+Замените на:
+```cpp
+            if (isImageAttachment(fileMime, fileName)) {
+                QString decodedName;
+                QString decodedMime;
+                QByteArray imageData;
+                bool hasImage = decodeAttachmentFromStoredMessage(m.message, decodedName, decodedMime, imageData);
+                
+                if (hasImage && !imageData.isEmpty()) {
+                    QLabel *imagePreview = new QLabel(bubble);
+                    imagePreview->setAlignment(Qt::AlignCenter);
+                    imagePreview->setCursor(Qt::PointingHandCursor);
+                    imagePreview->setStyleSheet(
+                        "QLabel{border:1px solid #BFDBFE;border-radius:10px;background:#EFF6FF;}"
+                    );
+                    
+                    QPixmap pixmap;
+                    if (pixmap.loadFromData(imageData)) {
+                        QPixmap scaled = pixmap.scaled(200, 150, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+                        imagePreview->setPixmap(scaled);
+                        imagePreview->setFixedSize(200, 150);
+                    } else {
+                        imagePreview->setText(QStringLiteral("Изображение\n%1").arg(fileName));
+                        imagePreview->setStyleSheet(
+                            "QLabel{border:1px solid #BFDBFE;border-radius:10px;background:#EFF6FF;color:#1D4ED8;font-weight:800;padding:8px;text-align:center;}"
+                        );
+                    }
+                    
+                    bubbleL->addWidget(imagePreview, 0, mine ? Qt::AlignRight : Qt::AlignLeft);
+                } else {
+                    QPushButton *thumb = new QPushButton(QStringLiteral("Изображение\n%1").arg(fileName), bubble);
+                    thumb->setFlat(false);
+                    thumb->setFixedSize(180, 72);
+                    const QString rawMessage = m.message;
+                    thumb->setStyleSheet(
+                        "QPushButton{border:1px solid #BFDBFE;border-radius:10px;background:#EFF6FF;color:#1D4ED8;font-weight:800;padding:8px;text-align:left;}"
+                        "QPushButton:hover{background:#DBEAFE;border:1px solid #60A5FA;}"
+                    );
+                    connect(thumb, &QPushButton::clicked, this, [this, rawMessage]() {
+                        QString fileName;
+                        QString fileMime;
+                        QByteArray fileData;
+                        if (!decodeAttachmentFromStoredMessage(rawMessage, fileName, fileMime, fileData) || fileData.isEmpty())
+                            return;
+                        openAttachmentInsideApp(this, fileName, fileMime, fileData);
+                    });
+                    bubbleL->addWidget(thumb, 0, mine ? Qt::AlignRight : Qt::AlignLeft);
+                }
+```
+
+## Изменение 3: Функция TaskChatDialog::loadOlderMessages (~строка 2581)
+
+Те же самые изменения, что и выше, для функции loadOlderMessages.

@@ -5,34 +5,17 @@
 #include <QString>
 #include <QDate>
 #include <functional>
-#include <QRegularExpression>
-#include <QRegularExpressionMatch>
-#include <QRegularExpressionMatchIterator>
-#include <QHBoxLayout>
 #include <QVBoxLayout>
-#include <QScrollArea>
+#include <QHBoxLayout>
 #include <QPushButton>
 #include <QLabel>
-#include <QEvent>
-#include <QPixmap>
-#include <QIcon>
-#include <QLayoutItem>
-#include <QDialog>
-#include <QFrame>
-#include <QLineEdit>
-#include <QPainter>
+#include <QScrollArea>
 #include <QCheckBox>
 #include <QMouseEvent>
-#include <QComboBox>
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QDebug>
-
-class QVBoxLayout;
-class QLabel;
-class QPushButton;
-class QWidget;
-class QMouseEvent;
+#include "db_agv_tasks.h"
 
 //
 // ===== Структура AGV =====
@@ -46,8 +29,12 @@ struct AgvInfo
     int     kilometers = 0;
     QString blueprintPath;
     QString status;
+    QString maintenanceState; // green / orange / red
+    bool hasOverdueMaintenance = false;
+    bool hasSoonMaintenance = false;
     QString task;
     QDate   lastActive;
+    QString assignedUser;  // за кем закреплена (для раздела Ваши/Общие)
 };
 
 //
@@ -56,30 +43,21 @@ struct AgvInfo
 
 struct FilterSettings
 {
-    bool servAsc  = false;
-    bool servDesc = false;
-
-    bool upAsc  = false;
-    bool upDesc = false;
-
-    bool overOld = false;
-    bool overNew = false;
-
-    bool modelAZ = false;
-    bool modelZA = false;
-
-    bool kmAsc  = false;
-    bool kmDesc = false;
+    enum Serv  { None, Asc, Desc } serv = None;
+    enum Up    { UpNone, UpAsc, UpDesc } up = UpNone;
+    enum Over  { OverNone, OverOld, OverNew } over = OverNone;
+    enum Model { ModelNone, ModelAZ, ModelZA } modelSort = ModelNone;
+    enum Km    { KmNone, KmAsc, KmDesc } km = KmNone;
 
     QString nameFilter;
 
     bool isActive() const
     {
-        return servAsc || servDesc ||
-               upAsc || upDesc ||
-               overOld || overNew ||
-               modelAZ || modelZA ||
-               kmAsc || kmDesc ||
+        return serv != None ||
+               up != UpNone ||
+               over != OverNone ||
+               modelSort != ModelNone ||
+               km != KmNone ||
                !nameFilter.isEmpty();
     }
 };
@@ -106,13 +84,13 @@ public:
 
 signals:
     void openDetailsRequested(const QString &id);
-    void deleteRequested(const QString &id);
 
 protected:
     void mouseReleaseEvent(QMouseEvent *event) override;
 
 private:
     QString statusColor(const QString &st);
+    QString maintenanceColor(const QString &state);
 
     AgvInfo agv;
     std::function<int(int)> s;
@@ -137,9 +115,19 @@ public:
     void addAgv(const AgvInfo &info);
     void removeAgvById(const QString &id);
 
+    QVector<AgvInfo> loadAgvList();
+    void rebuildList(const QVector<AgvInfo> &list);
+    bool hasRenderedState() const;
+
 signals:
     void backRequested();
     void openAgvDetails(const QString &id);
+
+    // ★ ДОБАВЛЕНО — сигнал для leftMenu, чтобы обновлять счётчик AGV
+    void agvListChanged();
+
+protected:
+    void resizeEvent(QResizeEvent *event) override;
 
 private:
     std::function<int(int)> s;
@@ -147,12 +135,38 @@ private:
     QWidget     *content = nullptr;
     QVBoxLayout *layout  = nullptr;
 
-    QPushButton *filterBtn   = nullptr;
-    QLabel      *filterCount = nullptr;
+    QPushButton *addBtn_ = nullptr;
+    QPushButton *loadMoreBtn_ = nullptr;
+    QFrame *undoToast_ = nullptr;
+    QPushButton *undoBtn_ = nullptr;
+    QTimer *undoTimer_ = nullptr;
 
     FilterSettings currentFilter;
+    QVector<AgvInfo> currentDisplayList_;
+    int shownCount_ = 0;
+    /// Размер плоской очереди карточек (ваши+общие+делегированные); для кнопки «Показать ещё».
+    int displayQueueTotal_ = 0;
+    int batchSize_ = 50;
+    int appearRetryLeft_ = 0;
+    bool hasRenderedState_ = false;
+
+    struct DeletedHistoryRow {
+        QString agvId;
+        int taskId = 0;
+        QString taskName;
+        int intervalDays = 0;
+        QDate completedAt;
+        QDate nextDateAfter;
+        QString performedBy;
+    };
+    QVector<AgvInfo> lastDeletedAgvs_;
+    QVector<AgvTask> lastDeletedTasks_;
+    QVector<DeletedHistoryRow> lastDeletedHistory_;
 
     void applyFilter(const FilterSettings &fs);
-    void rebuildList(const QVector<AgvInfo> &list);
-    QVector<AgvInfo> loadAgvList();   // тянет AGV из БД (реализация в .cpp)
+    void rebuildShownChunk();
+    void runListAppearSmokeTest(int expectedVisible);
+    void showUndoToast();
+    void clearUndoSnapshot();
+    void restoreDeletedAgvs();
 };

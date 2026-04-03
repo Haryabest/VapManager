@@ -7,9 +7,14 @@
 
 struct ModelInfo {
     QString name;
-    QString category;
+    QString versionPo;      // версия по: англ буквы + цифры, 10 символов
+    QString versionEplan;   // версия eplan: те же фильтры
+    QString category;       // в Подробнее
     int capacityKg;
-    int maxSpeed; // км/ч
+    int maxSpeed;           // км/ч, в Подробнее
+    QString dimensions;     // габариты: 4x4x4 м
+    int couplingCount;      // сцепные устройства 1-4
+    QString direction;      // направление: 1/2/4
 };
 
 QStringList loadModelNames();

@@ -1,4 +1,4 @@
-#include "agvsettingspage.h"
+ё#include "agvsettingspage.h"
 #include "db_agv_tasks.h"
 #include "db_users.h"
 #include "databus.h"

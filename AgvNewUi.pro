@@ -16,33 +16,57 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    diag_logger.cpp \
+    accountinfodialog.cpp \
+    app_session.cpp \
     addagvdialog.cpp \
     agvsettingspage.cpp \
+    databus.cpp \
     db.cpp \
+    db_agv_tasks.cpp \
     db_models.cpp \
+    db_task_chat.cpp \
+    db_users.cpp \
     leftmenu.cpp \
     listagvinfo.cpp \
+    logindialog.cpp \
     main.cpp \
     maintenanceitemwidget.cpp \
     mainwindow.cpp \
     modellistpage.cpp \
     multisectionwidget.cpp \
-    notifications_logs.cpp
+    notifications_logs.cpp \
+    taskchatdialog.cpp \
+    ui_action_logger.cpp \
+    userspage.cpp
 
 HEADERS += \
+    diag_logger.h \
+    accountinfodialog.h \
+    app_session.h \
     addagvdialog.h \
     agvsettingspage.h \
+    databus.h \
     db.h \
+    db_agv_tasks.h \
     db_models.h \
+    db_task_chat.h \
+    db_users.h \
     leftmenu.h \
     listagvinfo.h \
+    logindialog.h \
     maintenanceitemwidget.h \
     mainwindow.h \
     modellistpage.h \
     multisectionwidget.h \
-    notifications_logs.h
+    notifications_logs.h \
+    taskchatdialog.h \
+    ui_action_logger.h \
+    userspage.h
 
 FORMS +=
+
+TRANSLATIONS += AgvNewUi_en.ts AgvNewUi_zh.ts
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -51,6 +75,9 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 RESOURCES += \
     resources.qrc
+
+# Иконка приложения для Windows (exe, панель задач, рабочий стол)
+win32: RC_ICONS = noback/agvIcon.ico
 
 DISTFILES += \
     agv_pic/AGV_Background.png \

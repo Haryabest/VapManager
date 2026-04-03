@@ -16,5 +16,7 @@
         <file>noback/arrow_left.png</file>
         <file>noback/filter.png</file>
         <file>noback/arrows_down.png</file>
+        <file>noback/show.png</file>
+        <file>noback/hide.png</file>
     </qresource>
 </RCC>

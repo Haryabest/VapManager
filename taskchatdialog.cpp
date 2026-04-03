@@ -1010,6 +1010,7 @@ QWidget* TaskChatWidget::createMessageRow(const TaskChatMessage &m)
                 }
 
                 bubbleL->addWidget(imagePreview, 0, mine ? Qt::AlignRight : Qt::AlignLeft);
+                imagePreview->installEventFilter(this);
             } else {
                 // Если не удалось загрузить, показываем кнопку
                 QPushButton *thumb = new QPushButton(QStringLiteral("Изображение\n%1").arg(fileName), bubble);
@@ -1020,6 +1021,7 @@ QWidget* TaskChatWidget::createMessageRow(const TaskChatMessage &m)
                     "QPushButton:hover{background:#DBEAFE;border:1px solid #60A5FA;}"
                 );
                 bubbleL->addWidget(thumb, 0, mine ? Qt::AlignRight : Qt::AlignLeft);
+                thumb->installEventFilter(this);
             }
         } else {
             QPushButton *doc = new QPushButton(QString("Файл\n%1").arg(fileName), bubble);
@@ -1029,6 +1031,7 @@ QWidget* TaskChatWidget::createMessageRow(const TaskChatMessage &m)
                                .arg(mine ? "#FFFFFF" : "#334155")
                                .arg(mine ? "#1E40AF" : "#CBD5E1"));
             bubbleL->addWidget(doc, 0, mine ? Qt::AlignRight : Qt::AlignLeft);
+            doc->installEventFilter(this);
         }
     }
     // Текст после вложения
@@ -1684,25 +1687,35 @@ bool TaskChatWidget::eventFilter(QObject *obj, QEvent *event)
                 }
             }
 
-            QWidget *row = messageRowAtGlobalPos(me->globalPos());
-            if (row && row->property("isAttachment").toBool()) {
-                const QString fn = row->property("attachmentFileName").toString();
-                const QString mt = row->property("attachmentMime").toString();
-                const QString raw = row->property("rawMessage").toString();
-                QString decodedName;
-                QString decodedMime;
-                QByteArray data;
-                if (!decodeAttachmentFromStoredMessage(raw, decodedName, decodedMime, data) || data.isEmpty())
-                    return true;
-                const int mid = row->property("messageId").toInt();
-                if (isImageAttachment(mt, fn)) {
-                    const bool deleted = openAttachmentInsideApp(this, fn, mt, data, currentUser_, mid);
-                    if (deleted) refreshMessages();
-                } else {
-                    openAttachmentData(this, fn, data);
+            // Проверяем, кликнули ли по кнопке файла/изображения
+            QPushButton *fileButton = qobject_cast<QPushButton*>(obj);
+            if (fileButton) {
+                // Ищем родительский row
+                QWidget *row = fileButton;
+                while (row && row->objectName() != "chatMessageRow") {
+                    row = row->parentWidget();
                 }
-                return true;
+                if (row && row->property("isAttachment").toBool()) {
+                    const QString fn = row->property("attachmentFileName").toString();
+                    const QString mt = row->property("attachmentMime").toString();
+                    const QString raw = row->property("rawMessage").toString();
+                    QString decodedName;
+                    QString decodedMime;
+                    QByteArray data;
+                    if (decodeAttachmentFromStoredMessage(raw, decodedName, decodedMime, data) && !data.isEmpty()) {
+                        const int mid = row->property("messageId").toInt();
+                        if (isImageAttachment(mt, fn)) {
+                            openAttachmentInsideApp(this, fn, mt, data, currentUser_, mid);
+                        } else {
+                            openAttachmentData(this, fn, data);
+                        }
+                        return true;
+                    }
+                }
             }
+
+            // УБРАНО: открытие вложения при клике на любую область строки
+            // Теперь только клик по самому файлу/превью открывает его
         }
     }
 
@@ -2477,6 +2490,7 @@ void TaskChatDialog::refreshMessages(bool fullReload)
                     }
 
                     bubbleL->addWidget(imagePreview, 0, mine ? Qt::AlignRight : Qt::AlignLeft);
+                    imagePreview->installEventFilter(this);
                 } else {
                     QPushButton *thumb = new QPushButton(QStringLiteral("Изображение\n%1").arg(fileName), bubble);
                     thumb->setFlat(false);
@@ -2486,15 +2500,17 @@ void TaskChatDialog::refreshMessages(bool fullReload)
                         "QPushButton{border:1px solid #BFDBFE;border-radius:10px;background:#EFF6FF;color:#1D4ED8;font-weight:800;padding:8px;text-align:left;}"
                         "QPushButton:hover{background:#DBEAFE;border:1px solid #60A5FA;}"
                     );
-                    connect(thumb, &QPushButton::clicked, this, [this, rawMessage]() {
+                    connect(thumb, &QPushButton::clicked, this, [this, rawMessage, isCombined, attachmentPayload]() {
                         QString fileName;
                         QString fileMime;
                         QByteArray fileData;
-                        if (!decodeAttachmentFromStoredMessage(rawMessage, fileName, fileMime, fileData) || fileData.isEmpty())
+                        const QString &msgToDecode = isCombined ? attachmentPayload : rawMessage;
+                        if (!decodeAttachmentMessage(msgToDecode, fileName, fileMime, fileData) || fileData.isEmpty())
                             return;
                         openAttachmentInsideApp(this, fileName, fileMime, fileData);
                     });
                     bubbleL->addWidget(thumb, 0, mine ? Qt::AlignRight : Qt::AlignLeft);
+                    thumb->installEventFilter(this);
                 }
             } else {
                 QPushButton *doc = new QPushButton(QString("Файл\n%1").arg(fileName), bubble);
@@ -2504,15 +2520,17 @@ void TaskChatDialog::refreshMessages(bool fullReload)
                                    .arg(mine ? "#1D4ED8" : "#E2E8F0")
                                    .arg(mine ? "#FFFFFF" : "#334155")
                                    .arg(mine ? "#1E40AF" : "#CBD5E1"));
-                connect(doc, &QPushButton::clicked, this, [this, rawMessage]() {
+                connect(doc, &QPushButton::clicked, this, [this, rawMessage, isCombined, attachmentPayload]() {
                     QString fileName;
                     QString fileMime;
                     QByteArray fileData;
-                    if (!decodeAttachmentFromStoredMessage(rawMessage, fileName, fileMime, fileData) || fileData.isEmpty())
+                    const QString &msgToDecode = isCombined ? attachmentPayload : rawMessage;
+                    if (!decodeAttachmentMessage(msgToDecode, fileName, fileMime, fileData) || fileData.isEmpty())
                         return;
                     openAttachmentInsideApp(this, fileName, fileMime, fileData);
                 });
                 bubbleL->addWidget(doc, 0, mine ? Qt::AlignRight : Qt::AlignLeft);
+                doc->installEventFilter(this);
             }
         }
         // Текст после вложения
@@ -2721,6 +2739,7 @@ void TaskChatDialog::loadOlderMessages()
                     }
 
                     bubbleL->addWidget(imagePreview, 0, mine ? Qt::AlignRight : Qt::AlignLeft);
+                    imagePreview->installEventFilter(this);
                 } else {
                     QPushButton *thumb = new QPushButton(QStringLiteral("Изображение\n%1").arg(fileName), bubble);
                     thumb->setFlat(false);
@@ -2730,15 +2749,17 @@ void TaskChatDialog::loadOlderMessages()
                         "QPushButton{border:1px solid #BFDBFE;border-radius:10px;background:#EFF6FF;color:#1D4ED8;font-weight:800;padding:8px;text-align:left;}"
                         "QPushButton:hover{background:#DBEAFE;border:1px solid #60A5FA;}"
                     );
-                    connect(thumb, &QPushButton::clicked, this, [this, rawMessage]() {
+                    connect(thumb, &QPushButton::clicked, this, [this, rawMessage, isCombined, attachmentPayload]() {
                         QString fileName;
                         QString fileMime;
                         QByteArray fileData;
-                        if (!decodeAttachmentFromStoredMessage(rawMessage, fileName, fileMime, fileData) || fileData.isEmpty())
+                        const QString &msgToDecode = isCombined ? attachmentPayload : rawMessage;
+                        if (!decodeAttachmentMessage(msgToDecode, fileName, fileMime, fileData) || fileData.isEmpty())
                             return;
                         openAttachmentInsideApp(this, fileName, fileMime, fileData);
                     });
                     bubbleL->addWidget(thumb, 0, mine ? Qt::AlignRight : Qt::AlignLeft);
+                    thumb->installEventFilter(this);
                 }
             } else {
                 QPushButton *doc = new QPushButton(QString("Файл\n%1").arg(fileName), bubble);
@@ -2748,15 +2769,17 @@ void TaskChatDialog::loadOlderMessages()
                                    .arg(mine ? "#1D4ED8" : "#E2E8F0")
                                    .arg(mine ? "#FFFFFF" : "#334155")
                                    .arg(mine ? "#1E40AF" : "#CBD5E1"));
-                connect(doc, &QPushButton::clicked, this, [this, rawMessage]() {
+                connect(doc, &QPushButton::clicked, this, [this, rawMessage, isCombined, attachmentPayload]() {
                     QString fileName;
                     QString fileMime;
                     QByteArray fileData;
-                    if (!decodeAttachmentFromStoredMessage(rawMessage, fileName, fileMime, fileData) || fileData.isEmpty())
+                    const QString &msgToDecode = isCombined ? attachmentPayload : rawMessage;
+                    if (!decodeAttachmentMessage(msgToDecode, fileName, fileMime, fileData) || fileData.isEmpty())
                         return;
                     openAttachmentInsideApp(this, fileName, fileMime, fileData);
                 });
                 bubbleL->addWidget(doc, 0, mine ? Qt::AlignRight : Qt::AlignLeft);
+                doc->installEventFilter(this);
             }
         }
         // Текст после вложения
@@ -2995,6 +3018,31 @@ bool TaskChatDialog::eventFilter(QObject *obj, QEvent *event)
                 QByteArray data;
                 if (decodeAttachmentFromStoredMessage(raw, decodedName, decodedMime, data) && !data.isEmpty()) {
                     openAttachmentInsideApp(this, fn, mt, data);
+                    return true;
+                }
+            }
+        }
+        
+        // Обработка кликов по кнопкам файлов
+        QPushButton *fileButton = qobject_cast<QPushButton*>(obj);
+        if (fileButton) {
+            QWidget *row = fileButton;
+            while (row && row->objectName() != "chatMessageRow") {
+                row = row->parentWidget();
+            }
+            if (row && row->property("isAttachment").toBool()) {
+                const QString fn = row->property("attachmentFileName").toString();
+                const QString mt = row->property("attachmentMime").toString();
+                const QString raw = row->property("rawMessage").toString();
+                QString decodedName;
+                QString decodedMime;
+                QByteArray data;
+                if (decodeAttachmentFromStoredMessage(raw, decodedName, decodedMime, data) && !data.isEmpty()) {
+                    if (isImageAttachment(mt, fn)) {
+                        openAttachmentInsideApp(this, fn, mt, data);
+                    } else {
+                        openAttachmentData(this, fn, data);
+                    }
                     return true;
                 }
             }

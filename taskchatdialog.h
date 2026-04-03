@@ -14,7 +14,7 @@
 #include <QKeyEvent>
 #include <QResizeEvent>
 
-class ImagePreviewDialog : public QWidget
+class ImagePreviewDialog : public QDialog
 {
     Q_OBJECT
 public:

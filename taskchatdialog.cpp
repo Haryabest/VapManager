@@ -238,23 +238,9 @@ static bool openAttachmentInsideApp(QWidget *owner, const QString &fileName, con
         QPixmap pm;
         pm.loadFromData(bytes);
 
-        ImagePreviewDialog *dlg = new ImagePreviewDialog(pm, fileName, bytes, owner, currentUser, messageId);
-        
-        // Показываем окно
-        dlg->show();
-        dlg->raise();
-        dlg->activateWindow();
-        
-        // Ждём закрытия через модальный цикл
-        QEventLoop loop;
-        QObject::connect(dlg, &QWidget::destroyed, &loop, &QEventLoop::quit);
-        loop.exec(QEventLoop::AllEvents);
-        
-        // Получаем результат и удаляем
-        int result = dlg->getDialogResult();
-        dlg->deleteLater();
-        
-        return (result == 1);
+        ImagePreviewDialog dlg(pm, fileName, bytes, owner, currentUser, messageId);
+        dlg.exec();
+        return true;
     }
 
     openAttachmentData(owner, fileName, bytes);
@@ -493,7 +479,7 @@ ImagePreviewDialog::ImagePreviewDialog(const QPixmap &image,
                                        QWidget *parent,
                                        const QString &currentUser,
                                        int messageId)
-    : QWidget(parent, Qt::FramelessWindowHint | Qt::WindowSystemMenuHint)
+    : QDialog(parent, Qt::FramelessWindowHint | Qt::WindowSystemMenuHint)
     , image_(image)
     , imageData_(imageData)
     , fileName_(fileName)
@@ -504,12 +490,14 @@ ImagePreviewDialog::ImagePreviewDialog(const QPixmap &image,
 {
     // Настраиваем окно
     setWindowTitle(fileName_);
+    setModal(true);
+    setWindowModality(Qt::ApplicationModal);
     setAttribute(Qt::WA_TranslucentBackground);
-    setAttribute(Qt::WA_DeleteOnClose, false);
     setMouseTracking(true);
     
-    // Получаем геометрию экрана
-    QRect screenGeometry = QGuiApplication::primaryScreen()->geometry();
+    // Получаем геометрию экрана (с защитой от null pointer)
+    QScreen *screen = QGuiApplication::primaryScreen();
+    QRect screenGeometry = screen ? screen->geometry() : QRect(0, 0, 1024, 768);
     setGeometry(screenGeometry);
     
     // Создаём контейнер для изображения
@@ -528,9 +516,6 @@ ImagePreviewDialog::ImagePreviewDialog(const QPixmap &image,
         imageLabel_->setFixedSize(scaled.size());
     }
     
-    // Центрируем изображение
-    centerImage();
-    
     // Создаём панель с кнопками
     buttonsWidget_ = new QWidget(this);
     buttonsWidget_->setObjectName("buttonsPanel");
@@ -542,6 +527,7 @@ ImagePreviewDialog::ImagePreviewDialog(const QPixmap &image,
         "}"
     );
     buttonsWidget_->setFixedHeight(60);
+    buttonsWidget_->setFixedWidth(420);
     buttonsWidget_->setMouseTracking(true);
     
     QHBoxLayout *btnsLayout = new QHBoxLayout(buttonsWidget_);
@@ -634,6 +620,9 @@ ImagePreviewDialog::ImagePreviewDialog(const QPixmap &image,
         (width() - buttonsWidget_->width()) / 2,
         height() - buttonsWidget_->height() - 30
     );
+
+    // Центрируем изображение после инициализации панели кнопок
+    centerImage();
 }
 
 void ImagePreviewDialog::paintEvent(QPaintEvent *event)
@@ -706,8 +695,9 @@ void ImagePreviewDialog::keyPressEvent(QKeyEvent *event)
 void ImagePreviewDialog::centerImage()
 {
     if (imageLabel_) {
+        const int buttonsHeight = buttonsWidget_ ? buttonsWidget_->height() : 0;
         int x = (width() - imageLabel_->width()) / 2;
-        int y = (height() - imageLabel_->height() - buttonsWidget_->height()) / 2;
+        int y = (height() - imageLabel_->height() - buttonsHeight) / 2;
         imageLabel_->move(qMax(0, x), qMax(0, y));
     }
 }

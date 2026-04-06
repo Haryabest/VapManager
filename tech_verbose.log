@@ -1,0 +1,1470 @@
+2026-03-25 14:05:23.173 [AUTOTEST] session_begin | kompleksnyy_test user=Doroshenko pid=2624
+2026-03-25 14:05:23.174 [AUTOTEST] SUITE_START kompleksnyy_extended (всегда отчёт PASS/SKIP; лимит ~600 с)
+2026-03-25 14:05:23.174 [AUTOTEST] SUITE_RANDOMIZED order=1,6,7,2,5,0,4,3,15,35,8,19,13,11,10,14,12,9,20,18,17,16,21,22,23,24,25,26,28,29,31,30,27,32,33,43,36,34,37,49,44,45,47,39,38,51,50,41,40,46,42,48 pick_days=22,4,8,7,13,16,14
+2026-03-25 14:05:23.288 [AUTOTEST] CHECK db_count_8_core_tables PASS ms=53
+2026-03-25 14:05:23.405 [AUTOTEST] CHECK db_missing_user_profile_returns_false PASS ms=40
+2026-03-25 14:05:23.529 [AUTOTEST] CHECK db_missing_user_avatar_safe_empty PASS ms=34
+2026-03-25 14:05:23.641 [AUTOTEST] CHECK db_show_tables PASS ms=36
+2026-03-25 14:05:24.432 [AUTOTEST] CHECK db_hidden_autotest_user_filtered_out PASS ms=714
+2026-03-25 14:05:24.517 [AUTOTEST] CHECK db_ping_select1 PASS ms=10
+2026-03-25 14:05:24.659 [AUTOTEST] CHECK db_ensure_hidden_autotest_chat_user PASS ms=64
+2026-03-25 14:05:24.740 [AUTOTEST] CHECK db_join_agv_list_tasks PASS ms=5
+2026-03-25 14:05:24.892 [AUTOTEST] CHECK ui_show_calendar PASS ms=75
+2026-03-25 14:05:24.892 [AUTOTEST] CHECK calendar_days_in_month_rules PASS ms=0
+2026-03-25 14:05:25.018 [AUTOTEST] CHECK ui_search_unicode_messy PASS ms=49
+2026-03-25 14:05:25.481 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=663
+2026-03-25 14:05:25.861 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=380
+2026-03-25 14:05:26.288 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=426
+2026-03-25 14:05:26.408 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=117
+2026-03-25 14:05:26.425 [AUTOTEST] CHECK ui_calendar_random_month_flips PASS ms=1330
+2026-03-25 14:05:26.551 [AUTOTEST] CHECK ui_search_ascii_simulation PASS ms=50
+2026-03-25 14:05:26.629 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=219
+2026-03-25 14:05:26.671 [AUTOTEST] CLICK_SWEEP calendar -> Чаты
+2026-03-25 14:05:27.361 [AUTOTEST] PAGE_TRANSITION calendar -> chats ms=730
+2026-03-25 14:05:27.410 [AUTOTEST] CLICK_SWEEP calendar -> Doroshenko
+2026-03-25 14:05:29.684 [AUTOTEST] CLICK_SWEEP calendar -> Пользователи
+2026-03-25 14:05:30.322 [AUTOTEST] PAGE_TRANSITION chats -> users ms=2959
+2026-03-25 14:05:31.327 [AUTOTEST] CLICK_SWEEP calendar -> Модель AGV
+2026-03-25 14:05:31.331 [AUTOTEST] PAGE_TRANSITION users -> models ms=1008
+2026-03-25 14:05:31.377 [AUTOTEST] CLICK_SWEEP calendar -> Сформировать годовой отчет
+2026-03-25 14:05:31.589 [AUTOTEST] CLICK_SWEEP calendar -> Настройки
+2026-03-25 14:05:31.765 [AUTOTEST] CLICK_SWEEP calendar -> AGV
+2026-03-25 14:05:31.892 [AUTOTEST] PAGE_TRANSITION models -> agv_list ms=559
+2026-03-25 14:05:31.938 [AUTOTEST] CLICK_SWEEP calendar -> + Добавить AGV
+2026-03-25 14:05:32.145 [AUTOTEST] CLICK_SWEEP calendar -> Назад
+2026-03-25 14:05:32.146 [AUTOTEST] PAGE_TRANSITION agv_list -> calendar ms=253
+2026-03-25 14:05:32.201 [AUTOTEST] PAGE_TRANSITION calendar -> agv_list ms=53
+2026-03-25 14:05:32.243 [AUTOTEST] CLICK_SWEEP agv -> Назад
+2026-03-25 14:05:32.248 [AUTOTEST] PAGE_TRANSITION agv_list -> calendar ms=45
+2026-03-25 14:05:32.294 [AUTOTEST] PAGE_TRANSITION calendar -> models ms=45
+2026-03-25 14:05:32.335 [AUTOTEST] CLICK_SWEEP models -> Назад
+2026-03-25 14:05:32.337 [AUTOTEST] PAGE_TRANSITION models -> calendar ms=42
+2026-03-25 14:05:32.392 [AUTOTEST] PAGE_TRANSITION calendar -> logs ms=54
+2026-03-25 14:05:32.499 [AUTOTEST] CLICK_SWEEP logs -> Назад
+2026-03-25 14:05:32.501 [AUTOTEST] PAGE_TRANSITION logs -> calendar ms=107
+2026-03-25 14:05:33.196 [AUTOTEST] PAGE_TRANSITION calendar -> chats ms=676
+2026-03-25 14:05:33.236 [AUTOTEST] CLICK_SWEEP chats -> Назад
+2026-03-25 14:05:33.237 [AUTOTEST] PAGE_TRANSITION chats -> calendar ms=40
+2026-03-25 14:05:33.366 [AUTOTEST] PAGE_TRANSITION calendar -> profile ms=127
+2026-03-25 14:05:33.406 [AUTOTEST] CLICK_SWEEP profile -> Назад
+2026-03-25 14:05:33.410 [AUTOTEST] PAGE_TRANSITION profile -> calendar ms=41
+2026-03-25 14:05:33.458 [AUTOTEST] PAGE_TRANSITION calendar -> users ms=46
+2026-03-25 14:05:33.508 [AUTOTEST] CLICK_SWEEP users -> Назад
+2026-03-25 14:05:33.510 [AUTOTEST] PAGE_TRANSITION users -> calendar ms=52
+2026-03-25 14:05:33.558 [AUTOTEST] CHECK ui_clickable_sweep_visible_safe_buttons PASS ms=6929
+2026-03-25 14:05:33.661 [AUTOTEST] PAGE_TRANSITION calendar -> logs ms=149
+2026-03-25 14:05:33.887 [AUTOTEST] CHECK ui_logs_filters_random_sweep PASS ms=232
+2026-03-25 14:05:33.988 [AUTOTEST] PAGE_TRANSITION logs -> logs ms=325
+2026-03-25 14:05:34.064 [AUTOTEST] CHECK ui_logs_reload_random_triple PASS ms=101
+2026-03-25 14:05:34.141 [AUTOTEST] ROUTE_GROUP_DONE start=agv_list_area total=3
+2026-03-25 14:05:34.141 [AUTOTEST] ROUTE_PROGRESS 1/15 start=agv_list_area
+2026-03-25 14:05:34.142 [AUTOTEST] ROUTE agv_list_area#1 steps=agv_list_area -> models_area -> calendar_area -> logs_area -> user_area
+2026-03-25 14:05:34.154 [AUTOTEST] PAGE_TRANSITION logs -> agv_list ms=165
+2026-03-25 14:05:34.207 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=51
+2026-03-25 14:05:34.424 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=217
+2026-03-25 14:05:34.501 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=75
+2026-03-25 14:05:34.839 [AUTOTEST] PAGE_TRANSITION agv_list -> models ms=333
+2026-03-25 14:05:34.887 [AUTOTEST] PAGE_TRANSITION models -> models ms=46
+2026-03-25 14:05:35.258 [AUTOTEST] PAGE_TRANSITION models -> models ms=369
+2026-03-25 14:05:35.624 [AUTOTEST] PAGE_TRANSITION models -> calendar ms=365
+2026-03-25 14:05:35.664 [CALENDAR] setSelectedMonthYear 3/2026 — полная пересборка UI календаря
+2026-03-25 14:05:36.179 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=554
+2026-03-25 14:05:36.279 [AUTOTEST] PAGE_TRANSITION calendar -> logs ms=98
+2026-03-25 14:05:37.144 [AUTOTEST] PAGE_TRANSITION logs -> users ms=863
+2026-03-25 14:05:37.405 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=259
+2026-03-25 14:05:37.476 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=70
+2026-03-25 14:05:37.537 [AUTOTEST] ROUTE_PROGRESS 2/15 start=agv_list_area
+2026-03-25 14:05:37.538 [AUTOTEST] ROUTE agv_list_area#2 steps=agv_list_area -> user_area -> logs_area -> calendar_area -> models_area
+2026-03-25 14:05:37.674 [AUTOTEST] PAGE_TRANSITION users -> agv_list ms=197
+2026-03-25 14:05:37.732 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=56
+2026-03-25 14:05:37.960 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=226
+2026-03-25 14:05:38.044 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=83
+2026-03-25 14:05:38.339 [AUTOTEST] PAGE_TRANSITION agv_list -> users ms=293
+2026-03-25 14:05:38.481 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=140
+2026-03-25 14:05:38.553 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=70
+2026-03-25 14:05:38.634 [AUTOTEST] PAGE_TRANSITION users -> logs ms=81
+2026-03-25 14:05:38.721 [AUTOTEST] PAGE_TRANSITION logs -> calendar ms=85
+2026-03-25 14:05:38.763 [CALENDAR] setSelectedMonthYear 2/2026 — полная пересборка UI календаря
+2026-03-25 14:05:39.911 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=1189
+2026-03-25 14:05:40.106 [AUTOTEST] PAGE_TRANSITION calendar -> models ms=193
+2026-03-25 14:05:40.153 [AUTOTEST] PAGE_TRANSITION models -> models ms=46
+2026-03-25 14:05:40.508 [AUTOTEST] PAGE_TRANSITION models -> models ms=352
+2026-03-25 14:05:41.019 [AUTOTEST] ROUTE_PROGRESS 3/15 start=agv_list_area
+2026-03-25 14:05:41.019 [AUTOTEST] ROUTE agv_list_area#3 steps=agv_list_area -> logs_area -> calendar_area -> user_area -> models_area
+2026-03-25 14:05:41.153 [AUTOTEST] PAGE_TRANSITION models -> agv_list ms=643
+2026-03-25 14:05:41.206 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=52
+2026-03-25 14:05:41.430 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=221
+2026-03-25 14:05:41.509 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=77
+2026-03-25 14:05:41.842 [AUTOTEST] PAGE_TRANSITION agv_list -> logs ms=332
+2026-03-25 14:05:41.994 [AUTOTEST] PAGE_TRANSITION logs -> calendar ms=150
+2026-03-25 14:05:42.035 [CALENDAR] setSelectedMonthYear 1/2026 — полная пересборка UI календаря
+2026-03-25 14:05:42.565 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=570
+2026-03-25 14:05:43.396 [AUTOTEST] PAGE_TRANSITION calendar -> users ms=804
+2026-03-25 14:05:43.552 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=155
+2026-03-25 14:05:43.624 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=70
+2026-03-25 14:05:43.688 [AUTOTEST] PAGE_TRANSITION users -> models ms=62
+2026-03-25 14:05:43.735 [AUTOTEST] PAGE_TRANSITION models -> models ms=45
+2026-03-25 14:05:44.035 [AUTOTEST] PAGE_TRANSITION models -> models ms=300
+2026-03-25 14:05:44.568 [AUTOTEST] ROUTE_GROUP_DONE start=models_area total=3
+2026-03-25 14:05:44.569 [AUTOTEST] ROUTE_PROGRESS 4/15 start=models_area
+2026-03-25 14:05:44.569 [AUTOTEST] ROUTE models_area#1 steps=models_area -> agv_list_area -> calendar_area -> logs_area -> user_area
+2026-03-25 14:05:44.571 [AUTOTEST] PAGE_TRANSITION models -> models ms=534
+2026-03-25 14:05:44.617 [AUTOTEST] PAGE_TRANSITION models -> models ms=45
+2026-03-25 14:05:44.944 [AUTOTEST] PAGE_TRANSITION models -> models ms=324
+2026-03-25 14:05:45.631 [AUTOTEST] PAGE_TRANSITION models -> agv_list ms=685
+2026-03-25 14:05:45.683 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=51
+2026-03-25 14:05:45.908 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=224
+2026-03-25 14:05:45.987 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=77
+2026-03-25 14:05:46.295 [AUTOTEST] PAGE_TRANSITION agv_list -> calendar ms=306
+2026-03-25 14:05:46.336 [CALENDAR] setSelectedMonthYear 2/2026 — полная пересборка UI календаря
+2026-03-25 14:05:46.907 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=611
+2026-03-25 14:05:47.002 [AUTOTEST] PAGE_TRANSITION calendar -> logs ms=94
+2026-03-25 14:05:47.770 [AUTOTEST] PAGE_TRANSITION logs -> users ms=766
+2026-03-25 14:05:47.892 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=121
+2026-03-25 14:05:47.966 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=71
+2026-03-25 14:05:48.028 [AUTOTEST] ROUTE_PROGRESS 5/15 start=models_area
+2026-03-25 14:05:48.029 [AUTOTEST] ROUTE models_area#2 steps=models_area -> user_area -> logs_area -> calendar_area -> agv_list_area
+2026-03-25 14:05:48.032 [AUTOTEST] PAGE_TRANSITION users -> models ms=65
+2026-03-25 14:05:48.079 [AUTOTEST] PAGE_TRANSITION models -> models ms=45
+2026-03-25 14:05:48.344 [AUTOTEST] PAGE_TRANSITION models -> models ms=264
+2026-03-25 14:05:48.861 [AUTOTEST] PAGE_TRANSITION models -> users ms=515
+2026-03-25 14:05:48.969 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=107
+2026-03-25 14:05:49.041 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=70
+2026-03-25 14:05:49.136 [AUTOTEST] PAGE_TRANSITION users -> logs ms=93
+2026-03-25 14:05:49.243 [AUTOTEST] PAGE_TRANSITION logs -> calendar ms=105
+2026-03-25 14:05:49.284 [CALENDAR] setSelectedMonthYear 3/2026 — полная пересборка UI календаря
+2026-03-25 14:05:49.962 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=717
+2026-03-25 14:05:50.211 [AUTOTEST] PAGE_TRANSITION calendar -> agv_list ms=247
+2026-03-25 14:05:50.269 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=56
+2026-03-25 14:05:50.490 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=219
+2026-03-25 14:05:50.574 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=82
+2026-03-25 14:05:50.903 [AUTOTEST] ROUTE_PROGRESS 6/15 start=models_area
+2026-03-25 14:05:50.904 [AUTOTEST] ROUTE models_area#3 steps=models_area -> user_area -> calendar_area -> logs_area -> agv_list_area
+2026-03-25 14:05:50.908 [AUTOTEST] PAGE_TRANSITION agv_list -> models ms=332
+2026-03-25 14:05:50.955 [AUTOTEST] PAGE_TRANSITION models -> models ms=46
+2026-03-25 14:05:51.214 [AUTOTEST] PAGE_TRANSITION models -> models ms=258
+2026-03-25 14:05:52.325 [AUTOTEST] PAGE_TRANSITION models -> users ms=1108
+2026-03-25 14:05:52.458 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=132
+2026-03-25 14:05:52.530 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=70
+2026-03-25 14:05:52.591 [AUTOTEST] PAGE_TRANSITION users -> calendar ms=61
+2026-03-25 14:05:52.633 [CALENDAR] setSelectedMonthYear 2/2026 — полная пересборка UI календаря
+2026-03-25 14:05:53.143 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=549
+2026-03-25 14:05:53.242 [AUTOTEST] PAGE_TRANSITION calendar -> logs ms=98
+2026-03-25 14:05:53.575 [AUTOTEST] PAGE_TRANSITION logs -> agv_list ms=331
+2026-03-25 14:05:53.627 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=51
+2026-03-25 14:05:53.826 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=197
+2026-03-25 14:05:53.901 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=74
+2026-03-25 14:05:54.192 [AUTOTEST] ROUTE_GROUP_DONE start=calendar_area total=3
+2026-03-25 14:05:54.193 [AUTOTEST] ROUTE_PROGRESS 7/15 start=calendar_area
+2026-03-25 14:05:54.193 [AUTOTEST] ROUTE calendar_area#1 steps=calendar_area -> agv_list_area -> models_area -> logs_area -> user_area
+2026-03-25 14:05:54.194 [AUTOTEST] PAGE_TRANSITION agv_list -> calendar ms=292
+2026-03-25 14:05:54.235 [CALENDAR] setSelectedMonthYear 3/2026 — полная пересборка UI календаря
+2026-03-25 14:05:54.709 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=514
+2026-03-25 14:05:54.892 [AUTOTEST] PAGE_TRANSITION calendar -> agv_list ms=181
+2026-03-25 14:05:54.944 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=51
+2026-03-25 14:05:55.124 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=178
+2026-03-25 14:05:55.203 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=77
+2026-03-25 14:05:55.509 [AUTOTEST] PAGE_TRANSITION agv_list -> models ms=304
+2026-03-25 14:05:55.555 [AUTOTEST] PAGE_TRANSITION models -> models ms=45
+2026-03-25 14:05:55.813 [AUTOTEST] PAGE_TRANSITION models -> models ms=256
+2026-03-25 14:05:56.123 [AUTOTEST] PAGE_TRANSITION models -> logs ms=308
+2026-03-25 14:05:56.953 [AUTOTEST] PAGE_TRANSITION logs -> users ms=829
+2026-03-25 14:05:57.158 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=203
+2026-03-25 14:05:57.229 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=70
+2026-03-25 14:05:57.290 [AUTOTEST] ROUTE_PROGRESS 8/15 start=calendar_area
+2026-03-25 14:05:57.291 [AUTOTEST] ROUTE calendar_area#2 steps=calendar_area -> user_area -> logs_area -> models_area -> agv_list_area
+2026-03-25 14:05:57.293 [AUTOTEST] PAGE_TRANSITION users -> calendar ms=63
+2026-03-25 14:05:57.335 [CALENDAR] setSelectedMonthYear 2/2026 — полная пересборка UI календаря
+2026-03-25 14:05:57.823 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=529
+2026-03-25 14:05:58.518 [AUTOTEST] PAGE_TRANSITION calendar -> users ms=693
+2026-03-25 14:05:58.967 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=448
+2026-03-25 14:05:59.039 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=71
+2026-03-25 14:05:59.120 [AUTOTEST] PAGE_TRANSITION users -> logs ms=80
+2026-03-25 14:05:59.267 [AUTOTEST] PAGE_TRANSITION logs -> models ms=145
+2026-03-25 14:05:59.315 [AUTOTEST] PAGE_TRANSITION models -> models ms=46
+2026-03-25 14:05:59.578 [AUTOTEST] PAGE_TRANSITION models -> models ms=261
+2026-03-25 14:06:00.209 [AUTOTEST] PAGE_TRANSITION models -> agv_list ms=630
+2026-03-25 14:06:00.259 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=50
+2026-03-25 14:06:00.446 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=185
+2026-03-25 14:06:00.523 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=76
+2026-03-25 14:06:00.816 [AUTOTEST] ROUTE_PROGRESS 9/15 start=calendar_area
+2026-03-25 14:06:00.817 [AUTOTEST] ROUTE calendar_area#3 steps=calendar_area -> user_area -> agv_list_area -> models_area -> logs_area
+2026-03-25 14:06:00.818 [AUTOTEST] PAGE_TRANSITION agv_list -> calendar ms=293
+2026-03-25 14:06:00.859 [CALENDAR] setSelectedMonthYear 1/2026 — полная пересборка UI календаря
+2026-03-25 14:06:01.389 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=569
+2026-03-25 14:06:02.079 [AUTOTEST] PAGE_TRANSITION calendar -> users ms=689
+2026-03-25 14:06:02.186 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=106
+2026-03-25 14:06:02.257 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=70
+2026-03-25 14:06:02.427 [AUTOTEST] PAGE_TRANSITION users -> agv_list ms=168
+2026-03-25 14:06:02.478 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=51
+2026-03-25 14:06:02.666 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=186
+2026-03-25 14:06:02.743 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=76
+2026-03-25 14:06:03.044 [AUTOTEST] PAGE_TRANSITION agv_list -> models ms=299
+2026-03-25 14:06:03.091 [AUTOTEST] PAGE_TRANSITION models -> models ms=45
+2026-03-25 14:06:03.349 [AUTOTEST] PAGE_TRANSITION models -> models ms=256
+2026-03-25 14:06:03.714 [AUTOTEST] PAGE_TRANSITION models -> logs ms=321
+2026-03-25 14:06:04.109 [AUTOTEST] ROUTE_GROUP_DONE start=logs_area total=3
+2026-03-25 14:06:04.110 [AUTOTEST] ROUTE_PROGRESS 10/15 start=logs_area
+2026-03-25 14:06:04.110 [AUTOTEST] ROUTE logs_area#1 steps=logs_area -> agv_list_area -> models_area -> calendar_area -> user_area
+2026-03-25 14:06:04.134 [AUTOTEST] PAGE_TRANSITION logs -> logs ms=416
+2026-03-25 14:06:04.222 [AUTOTEST] PAGE_TRANSITION logs -> agv_list ms=87
+2026-03-25 14:06:04.276 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=52
+2026-03-25 14:06:04.487 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=210
+2026-03-25 14:06:04.569 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=81
+2026-03-25 14:06:04.894 [AUTOTEST] PAGE_TRANSITION agv_list -> models ms=321
+2026-03-25 14:06:04.943 [AUTOTEST] PAGE_TRANSITION models -> models ms=46
+2026-03-25 14:06:05.192 [AUTOTEST] PAGE_TRANSITION models -> models ms=248
+2026-03-25 14:06:05.466 [AUTOTEST] PAGE_TRANSITION models -> calendar ms=273
+2026-03-25 14:06:05.506 [CALENDAR] setSelectedMonthYear 2/2026 — полная пересборка UI календаря
+2026-03-25 14:06:06.209 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=741
+2026-03-25 14:06:06.987 [AUTOTEST] PAGE_TRANSITION calendar -> users ms=777
+2026-03-25 14:06:07.100 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=112
+2026-03-25 14:06:07.172 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=70
+2026-03-25 14:06:07.234 [AUTOTEST] ROUTE_PROGRESS 11/15 start=logs_area
+2026-03-25 14:06:07.235 [AUTOTEST] ROUTE logs_area#2 steps=logs_area -> user_area -> calendar_area -> models_area -> agv_list_area
+2026-03-25 14:06:07.265 [AUTOTEST] PAGE_TRANSITION users -> logs ms=92
+2026-03-25 14:06:07.444 [AUTOTEST] PAGE_TRANSITION logs -> users ms=177
+2026-03-25 14:06:07.585 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=139
+2026-03-25 14:06:07.657 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=70
+2026-03-25 14:06:07.718 [AUTOTEST] PAGE_TRANSITION users -> calendar ms=60
+2026-03-25 14:06:07.758 [CALENDAR] setSelectedMonthYear 3/2026 — полная пересборка UI календаря
+2026-03-25 14:06:08.196 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=478
+2026-03-25 14:06:08.270 [AUTOTEST] PAGE_TRANSITION calendar -> models ms=73
+2026-03-25 14:06:08.316 [AUTOTEST] PAGE_TRANSITION models -> models ms=45
+2026-03-25 14:06:08.595 [AUTOTEST] PAGE_TRANSITION models -> models ms=277
+2026-03-25 14:06:09.232 [AUTOTEST] PAGE_TRANSITION models -> agv_list ms=636
+2026-03-25 14:06:09.288 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=54
+2026-03-25 14:06:09.486 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=197
+2026-03-25 14:06:09.565 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=78
+2026-03-25 14:06:09.848 [AUTOTEST] ROUTE_PROGRESS 12/15 start=logs_area
+2026-03-25 14:06:09.849 [AUTOTEST] ROUTE logs_area#3 steps=logs_area -> models_area -> calendar_area -> user_area -> agv_list_area
+2026-03-25 14:06:09.889 [AUTOTEST] PAGE_TRANSITION agv_list -> logs ms=322
+2026-03-25 14:06:10.195 [AUTOTEST] PAGE_TRANSITION logs -> models ms=306
+2026-03-25 14:06:10.246 [AUTOTEST] PAGE_TRANSITION models -> models ms=48
+2026-03-25 14:06:10.806 [AUTOTEST] PAGE_TRANSITION models -> models ms=560
+2026-03-25 14:06:11.411 [AUTOTEST] PAGE_TRANSITION models -> calendar ms=600
+2026-03-25 14:06:11.452 [CALENDAR] setSelectedMonthYear 4/2026 — полная пересборка UI календаря
+2026-03-25 14:06:12.186 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=773
+2026-03-25 14:06:13.005 [AUTOTEST] PAGE_TRANSITION calendar -> users ms=818
+2026-03-25 14:06:13.496 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=490
+2026-03-25 14:06:13.568 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=71
+2026-03-25 14:06:13.762 [AUTOTEST] PAGE_TRANSITION users -> agv_list ms=175
+2026-03-25 14:06:13.816 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=54
+2026-03-25 14:06:14.016 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=199
+2026-03-25 14:06:14.094 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=77
+2026-03-25 14:06:14.396 [AUTOTEST] ROUTE_GROUP_DONE start=user_area total=3
+2026-03-25 14:06:14.396 [AUTOTEST] ROUTE_PROGRESS 13/15 start=user_area
+2026-03-25 14:06:14.399 [AUTOTEST] ROUTE user_area#1 steps=user_area -> agv_list_area -> models_area -> calendar_area -> logs_area
+2026-03-25 14:06:14.401 [AUTOTEST] PAGE_TRANSITION agv_list -> users ms=305
+2026-03-25 14:06:14.523 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=121
+2026-03-25 14:06:14.596 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=72
+2026-03-25 14:06:14.666 [AUTOTEST] PAGE_TRANSITION users -> agv_list ms=68
+2026-03-25 14:06:14.719 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=51
+2026-03-25 14:06:14.931 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=210
+2026-03-25 14:06:15.008 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=76
+2026-03-25 14:06:15.322 [AUTOTEST] PAGE_TRANSITION agv_list -> models ms=312
+2026-03-25 14:06:15.367 [AUTOTEST] PAGE_TRANSITION models -> models ms=44
+2026-03-25 14:06:15.618 [AUTOTEST] PAGE_TRANSITION models -> models ms=250
+2026-03-25 14:06:15.907 [AUTOTEST] PAGE_TRANSITION models -> calendar ms=286
+2026-03-25 14:06:15.948 [CALENDAR] setSelectedMonthYear 3/2026 — полная пересборка UI календаря
+2026-03-25 14:06:16.654 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=746
+2026-03-25 14:06:16.773 [AUTOTEST] PAGE_TRANSITION calendar -> logs ms=117
+2026-03-25 14:06:16.942 [AUTOTEST] ROUTE_PROGRESS 14/15 start=user_area
+2026-03-25 14:06:16.942 [AUTOTEST] ROUTE user_area#2 steps=user_area -> logs_area -> calendar_area -> models_area -> agv_list_area
+2026-03-25 14:06:17.849 [AUTOTEST] PAGE_TRANSITION logs -> users ms=1074
+2026-03-25 14:06:17.998 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=147
+2026-03-25 14:06:18.070 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=70
+2026-03-25 14:06:18.156 [AUTOTEST] PAGE_TRANSITION users -> logs ms=85
+2026-03-25 14:06:18.241 [AUTOTEST] PAGE_TRANSITION logs -> calendar ms=84
+2026-03-25 14:06:18.282 [CALENDAR] setSelectedMonthYear 4/2026 — полная пересборка UI календаря
+2026-03-25 14:06:18.725 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=484
+2026-03-25 14:06:18.810 [AUTOTEST] PAGE_TRANSITION calendar -> models ms=83
+2026-03-25 14:06:18.858 [AUTOTEST] PAGE_TRANSITION models -> models ms=46
+2026-03-25 14:06:19.126 [AUTOTEST] PAGE_TRANSITION models -> models ms=266
+2026-03-25 14:06:19.766 [AUTOTEST] PAGE_TRANSITION models -> agv_list ms=638
+2026-03-25 14:06:19.820 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=53
+2026-03-25 14:06:20.005 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=184
+2026-03-25 14:06:20.082 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=75
+2026-03-25 14:06:20.422 [AUTOTEST] ROUTE_PROGRESS 15/15 start=user_area
+2026-03-25 14:06:20.424 [AUTOTEST] ROUTE user_area#3 steps=user_area -> models_area -> logs_area -> agv_list_area -> calendar_area
+2026-03-25 14:06:21.065 [AUTOTEST] PAGE_TRANSITION agv_list -> users ms=982
+2026-03-25 14:06:21.202 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=135
+2026-03-25 14:06:21.273 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=70
+2026-03-25 14:06:21.337 [AUTOTEST] PAGE_TRANSITION users -> models ms=62
+2026-03-25 14:06:21.384 [AUTOTEST] PAGE_TRANSITION models -> models ms=46
+2026-03-25 14:06:21.653 [AUTOTEST] PAGE_TRANSITION models -> models ms=267
+2026-03-25 14:06:22.221 [AUTOTEST] PAGE_TRANSITION models -> logs ms=567
+2026-03-25 14:06:28.312 [AUTOTEST] PAGE_TRANSITION logs -> agv_list ms=6071
+2026-03-25 14:06:28.366 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=53
+2026-03-25 14:06:28.581 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=214
+2026-03-25 14:06:28.660 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=78
+2026-03-25 14:06:28.984 [AUTOTEST] PAGE_TRANSITION agv_list -> calendar ms=320
+2026-03-25 14:06:29.025 [CALENDAR] setSelectedMonthYear 5/2026 — полная пересборка UI календаря
+2026-03-25 14:06:29.656 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=670
+2026-03-25 14:06:29.733 [AUTOTEST] ROUTE_TOTAL count=15 errors=0
+2026-03-25 14:06:29.734 [AUTOTEST] CHECK ui_route_permutations_grouped_by_start_area PASS ms=55594
+2026-03-25 14:06:30.215 [AUTOTEST] CHECK ui_notifications_open_and_interact PASS ms=405
+2026-03-25 14:06:30.322 [AUTOTEST] PAGE_TRANSITION calendar -> logs ms=665
+2026-03-25 14:06:30.412 [AUTOTEST] CHECK ui_logs_reload_random_a PASS ms=120
+2026-03-25 14:06:30.492 [AUTOTEST] CHECK ui_search_whitespace_and_long_input PASS ms=5
+2026-03-25 14:06:30.599 [AUTOTEST] PAGE_TRANSITION logs -> logs ms=276
+2026-03-25 14:06:30.617 [AUTOTEST] CHECK ui_show_logs PASS ms=48
+2026-03-25 14:06:30.696 [AUTOTEST] PAGE_TRANSITION logs -> models ms=96
+2026-03-25 14:06:30.704 [AUTOTEST] CHECK ui_show_models PASS ms=9
+2026-03-25 14:06:30.882 [AUTOTEST] PAGE_TRANSITION models -> agv_list ms=185
+2026-03-25 14:06:30.908 [AUTOTEST] CHECK ui_show_agv_list PASS ms=128
+2026-03-25 14:06:31.156 [AUTOTEST] PAGE_TRANSITION agv_list -> profile ms=273
+2026-03-25 14:06:31.171 [AUTOTEST] CHECK ui_show_profile PASS ms=187
+2026-03-25 14:06:32.018 [AUTOTEST] PAGE_TRANSITION profile -> chats ms=861
+2026-03-25 14:06:32.039 [AUTOTEST] CHECK ui_show_chats PASS ms=792
+2026-03-25 14:06:32.765 [AUTOTEST] CHECK ui_chats_reload_list PASS ms=649
+2026-03-25 14:06:33.453 [AUTOTEST] PAGE_TRANSITION chats -> chats ms=1433
+2026-03-25 14:06:35.960 [AUTOTEST] CHECK ui_chats_reload_burst_x4 PASS ms=3119
+2026-03-25 14:06:36.035 [AUTOTEST] CHECK chat_reject_empty_peer PASS ms=0
+2026-03-25 14:06:37.662 [AUTOTEST] PAGE_TRANSITION chats -> chats ms=4207
+2026-03-25 14:06:37.828 [AUTOTEST] CHECK chat_open_or_create_test_thread PASS ms=1716
+2026-03-25 14:06:37.905 [AUTOTEST] CHECK chat_reject_empty_message PASS ms=0
+2026-03-25 14:06:38.176 [AUTOTEST] CHECK chat_send_plain_message PASS ms=194
+2026-03-25 14:06:38.966 [AUTOTEST] CHECK chat_send_burst_3_messages PASS ms=714
+2026-03-25 14:06:39.214 [AUTOTEST] CHECK chat_send_dirty_message PASS ms=171
+2026-03-25 14:06:39.341 [AUTOTEST] CHECK chat_reopen_same_thread_is_stable PASS ms=51
+2026-03-25 14:06:39.436 [AUTOTEST] CHECK chat_reject_invalid_thread_write PASS ms=18
+2026-03-25 14:06:40.189 [AUTOTEST] PAGE_TRANSITION chats -> chats ms=2526
+2026-03-25 14:06:40.860 [AUTOTEST] CHECK chat_back_to_thread_list PASS ms=1346
+2026-03-25 14:06:40.981 [AUTOTEST] CHECK db_load_calendar_events_month PASS ms=45
+2026-03-25 14:06:41.081 [AUTOTEST] PAGE_TRANSITION chats -> logs ms=891
+2026-03-25 14:06:43.451 [AUTOTEST] CHECK ui_databus_6waves_full_on_logs PASS ms=2393
+2026-03-25 14:06:44.257 [AUTOTEST] PAGE_TRANSITION logs -> users ms=3175
+2026-03-25 14:06:44.288 [AUTOTEST] CHECK ui_users_page_admin_or_tech PASS ms=759
+2026-03-25 14:06:44.365 [AUTOTEST] PAGE_TRANSITION users -> models ms=106
+2026-03-25 14:06:44.617 [AUTOTEST] CHECK ui_databus_models_page_burst PASS ms=252
+2026-03-25 14:06:44.719 [AUTOTEST] PAGE_TRANSITION models -> calendar ms=351
+2026-03-25 14:06:44.721 [CALENDAR] setSelectedMonthYear 5/2026 — полная пересборка UI календаря
+2026-03-25 14:06:45.372 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=653
+2026-03-25 14:06:46.284 [AUTOTEST] CHECK ui_calendar_select_random_days PASS ms=1588
+2026-03-25 14:06:46.290 [AUTOTEST] PAGE_TRANSITION calendar -> models ms=915
+2026-03-25 14:06:46.406 [AUTOTEST] CHECK db_load_upcoming_maintenance PASS ms=27
+2026-03-25 14:06:46.520 [AUTOTEST] CHECK db_load_system_status PASS ms=38
+2026-03-25 14:06:47.264 [AUTOTEST] CHECK db_get_all_users_with_avatars PASS ms=667
+2026-03-25 14:06:47.340 [AUTOTEST] CHECK db_touch_user_presence PASS ms=0
+2026-03-25 14:06:47.437 [AUTOTEST] CHECK db_write_logaction_plus_users_update PASS ms=18
+2026-03-25 14:06:47.531 [AUTOTEST] CHECK ui_update_notif_badge PASS ms=17
+2026-03-25 14:06:47.644 [AUTOTEST] PAGE_TRANSITION models -> logs ms=1354
+2026-03-25 14:06:47.773 [AUTOTEST] PAGE_TRANSITION logs -> calendar ms=127
+2026-03-25 14:06:47.788 [AUTOTEST] PAGE_TRANSITION calendar -> models ms=14
+2026-03-25 14:06:47.952 [AUTOTEST] PAGE_TRANSITION models -> agv_list ms=163
+2026-03-25 14:06:47.969 [AUTOTEST] PAGE_TRANSITION agv_list -> models ms=16
+2026-03-25 14:06:47.982 [AUTOTEST] PAGE_TRANSITION models -> agv_list ms=11
+2026-03-25 14:06:47.998 [AUTOTEST] PAGE_TRANSITION agv_list -> calendar ms=15
+2026-03-25 14:06:48.049 [AUTOTEST] PAGE_TRANSITION calendar -> logs ms=50
+2026-03-25 14:06:48.073 [AUTOTEST] CHECK ui_rapid_nav_randomized PASS ms=464
+2026-03-25 14:06:48.168 [AUTOTEST] CHECK db_unread_count_for_user PASS ms=17
+2026-03-25 14:06:48.262 [AUTOTEST] CHECK db_load_notifications_for_user PASS ms=18
+2026-03-25 14:06:48.359 [AUTOTEST] CHECK db_get_all_users_no_avatars PASS ms=19
+2026-03-25 14:06:48.510 [AUTOTEST] CHECK db_load_user_profile PASS ms=53
+2026-03-25 14:06:48.591 [AUTOTEST] CHECK db_count_agv_list PASS ms=5
+2026-03-25 14:06:48.666 [AUTOTEST] SUITE_COMPLETE total_ms=85493 PASS=53 SKIP=0 (session always OK)
+2026-03-25 14:06:48.668 [CALENDAR] setSelectedMonthYear 5/2026 — полная пересборка UI календаря
+2026-04-06 07:28:29.706 [AUTOTEST] session_begin | kompleksnyy_test user=VadimR pid=2512
+2026-04-06 07:28:29.708 [AUTOTEST] SUITE_START kompleksnyy_extended (всегда отчёт PASS/SKIP; лимит ~600 с)
+2026-04-06 07:28:29.709 [AUTOTEST] SUITE_RANDOMIZED order=2,3,7,4,0,1,6,5,8,16,12,18,35,10,13,15,21,17,9,11,14,19,20,22,23,24,25,26,28,30,31,29,27,32,33,48,43,51,47,44,49,42,40,41,50,36,38,46,34,39,37,45 pick_days=15,20,12,11,25,18,24
+2026-04-06 07:28:29.789 [AUTOTEST] CHECK db_show_tables PASS ms=18
+2026-04-06 07:28:29.877 [AUTOTEST] CHECK db_join_agv_list_tasks PASS ms=11
+2026-04-06 07:28:30.238 [AUTOTEST] CHECK db_missing_user_avatar_safe_empty PASS ms=282
+2026-04-06 07:28:30.377 [AUTOTEST] CHECK db_ensure_hidden_autotest_chat_user PASS ms=60
+2026-04-06 07:28:30.458 [AUTOTEST] CHECK db_ping_select1 PASS ms=5
+2026-04-06 07:28:30.609 [AUTOTEST] CHECK db_count_8_core_tables PASS ms=73
+2026-04-06 07:28:30.725 [AUTOTEST] CHECK db_missing_user_profile_returns_false PASS ms=37
+2026-04-06 07:28:33.559 [AUTOTEST] CHECK db_hidden_autotest_user_filtered_out PASS ms=2758
+2026-04-06 07:28:36.270 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=1186
+2026-04-06 07:28:37.155 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=884
+2026-04-06 07:28:39.541 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=2384
+2026-04-06 07:28:39.919 [AUTOTEST] PAGE_TRANSITION calendar -> logs ms=377
+2026-04-06 07:28:40.037 [AUTOTEST] CHECK ui_calendar_random_month_flips PASS ms=5726
+2026-04-06 07:28:40.287 [AUTOTEST] PAGE_TRANSITION logs -> agv_list ms=366
+2026-04-06 07:28:40.308 [AUTOTEST] CHECK ui_show_agv_list PASS ms=194
+2026-04-06 07:28:43.931 [AUTOTEST] CHECK ui_notifications_open_and_interact PASS ms=3545
+2026-04-06 07:28:44.057 [AUTOTEST] PAGE_TRANSITION agv_list -> logs ms=3769
+2026-04-06 07:28:44.069 [AUTOTEST] CHECK ui_show_logs PASS ms=60
+2026-04-06 07:28:44.183 [AUTOTEST] CHECK ui_search_unicode_messy PASS ms=37
+2026-04-06 07:28:44.307 [AUTOTEST] PAGE_TRANSITION logs -> logs ms=249
+2026-04-06 07:29:05.866 [AUTOTEST] CHECK ui_logs_reload_random_triple PASS ms=21580
+2026-04-06 07:29:05.946 [AUTOTEST] PAGE_TRANSITION logs -> calendar ms=21638
+2026-04-06 07:29:05.988 [AUTOTEST] CLICK_SWEEP calendar -> Чаты
+2026-04-06 07:29:06.559 [AUTOTEST] PAGE_TRANSITION calendar -> chats ms=610
+2026-04-06 07:29:06.608 [AUTOTEST] CLICK_SWEEP calendar -> VadimR
+2026-04-06 07:29:06.662 [AUTOTEST] CLICK_SWEEP calendar -> Пользователи
+2026-04-06 07:29:08.950 [AUTOTEST] PAGE_TRANSITION chats -> users ms=2388
+2026-04-06 07:29:08.995 [AUTOTEST] CLICK_SWEEP calendar -> Модель AGV
+2026-04-06 07:29:08.997 [AUTOTEST] PAGE_TRANSITION users -> models ms=47
+2026-04-06 07:29:09.043 [AUTOTEST] CLICK_SWEEP calendar -> Сформировать годовой отчет
+2026-04-06 07:29:09.278 [AUTOTEST] CLICK_SWEEP calendar -> Настройки
+2026-04-06 07:29:09.458 [AUTOTEST] CLICK_SWEEP calendar -> AGV
+2026-04-06 07:29:09.473 [AUTOTEST] PAGE_TRANSITION models -> agv_list ms=474
+2026-04-06 07:29:09.519 [AUTOTEST] CLICK_SWEEP calendar -> + Добавить AGV
+2026-04-06 07:29:10.117 [AUTOTEST] CLICK_SWEEP calendar -> Назад
+2026-04-06 07:29:10.124 [AUTOTEST] PAGE_TRANSITION agv_list -> calendar ms=649
+2026-04-06 07:29:10.199 [AUTOTEST] PAGE_TRANSITION calendar -> agv_list ms=74
+2026-04-06 07:29:10.240 [AUTOTEST] CLICK_SWEEP agv -> Назад
+2026-04-06 07:29:10.242 [AUTOTEST] PAGE_TRANSITION agv_list -> calendar ms=42
+2026-04-06 07:29:10.290 [AUTOTEST] PAGE_TRANSITION calendar -> models ms=46
+2026-04-06 07:29:10.332 [AUTOTEST] CLICK_SWEEP models -> Назад
+2026-04-06 07:29:10.337 [AUTOTEST] PAGE_TRANSITION models -> calendar ms=45
+2026-04-06 07:29:32.186 [AUTOTEST] PAGE_TRANSITION calendar -> logs ms=21707
+2026-04-06 07:29:32.366 [AUTOTEST] CLICK_SWEEP logs -> Назад
+2026-04-06 07:29:32.369 [AUTOTEST] PAGE_TRANSITION logs -> calendar ms=181
+2026-04-06 07:29:33.230 [AUTOTEST] PAGE_TRANSITION calendar -> chats ms=858
+2026-04-06 07:29:33.271 [AUTOTEST] CLICK_SWEEP chats -> Назад
+2026-04-06 07:29:33.274 [AUTOTEST] PAGE_TRANSITION chats -> calendar ms=44
+2026-04-06 07:29:35.953 [AUTOTEST] PAGE_TRANSITION calendar -> profile ms=2677
+2026-04-06 07:29:35.994 [AUTOTEST] CLICK_SWEEP profile -> Назад
+2026-04-06 07:29:35.995 [AUTOTEST] PAGE_TRANSITION profile -> calendar ms=41
+2026-04-06 07:29:36.043 [AUTOTEST] PAGE_TRANSITION calendar -> users ms=46
+2026-04-06 07:29:36.095 [AUTOTEST] CLICK_SWEEP users -> Назад
+2026-04-06 07:29:36.098 [AUTOTEST] PAGE_TRANSITION users -> calendar ms=53
+2026-04-06 07:29:36.144 [AUTOTEST] CHECK ui_clickable_sweep_visible_safe_buttons PASS ms=30200
+2026-04-06 07:29:36.222 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=123
+2026-04-06 07:29:36.242 [AUTOTEST] CHECK ui_show_calendar PASS ms=21
+2026-04-06 07:29:36.242 [AUTOTEST] CHECK calendar_days_in_month_rules PASS ms=0
+2026-04-06 07:29:36.319 [AUTOTEST] PAGE_TRANSITION calendar -> profile ms=94
+2026-04-06 07:29:36.332 [AUTOTEST] CHECK ui_show_profile PASS ms=14
+2026-04-06 07:29:36.410 [AUTOTEST] PAGE_TRANSITION profile -> models ms=89
+2026-04-06 07:29:36.419 [AUTOTEST] CHECK ui_show_models PASS ms=10
+2026-04-06 07:29:36.508 [AUTOTEST] PAGE_TRANSITION models -> logs ms=96
+2026-04-06 07:29:36.600 [AUTOTEST] CHECK ui_logs_reload_random_a PASS ms=104
+2026-04-06 07:29:36.710 [AUTOTEST] PAGE_TRANSITION logs -> logs ms=202
+2026-04-06 07:29:36.847 [AUTOTEST] CHECK ui_logs_filters_random_sweep PASS ms=169
+2026-04-06 07:29:36.923 [AUTOTEST] ROUTE_GROUP_DONE start=agv_list_area total=3
+2026-04-06 07:29:36.924 [AUTOTEST] ROUTE_PROGRESS 1/15 start=agv_list_area
+2026-04-06 07:29:36.924 [AUTOTEST] ROUTE agv_list_area#1 steps=agv_list_area -> models_area -> calendar_area -> logs_area -> user_area
+2026-04-06 07:29:36.935 [AUTOTEST] PAGE_TRANSITION logs -> agv_list ms=224
+2026-04-06 07:29:37.020 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=82
+2026-04-06 07:29:37.635 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=613
+2026-04-06 07:29:37.716 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=79
+2026-04-06 07:29:38.076 [AUTOTEST] PAGE_TRANSITION agv_list -> models ms=359
+2026-04-06 07:29:38.124 [AUTOTEST] PAGE_TRANSITION models -> models ms=46
+2026-04-06 07:29:38.496 [AUTOTEST] PAGE_TRANSITION models -> models ms=367
+2026-04-06 07:29:38.773 [AUTOTEST] PAGE_TRANSITION models -> calendar ms=276
+2026-04-06 07:29:38.814 [CALENDAR] setSelectedMonthYear 3/2026 — полная пересборка UI календаря
+2026-04-06 07:29:40.036 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=1262
+2026-04-06 07:29:40.241 [AUTOTEST] PAGE_TRANSITION calendar -> logs ms=203
+2026-04-06 07:29:43.686 [AUTOTEST] PAGE_TRANSITION logs -> users ms=3389
+2026-04-06 07:29:44.001 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=314
+2026-04-06 07:29:44.072 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=70
+2026-04-06 07:29:44.133 [AUTOTEST] ROUTE_PROGRESS 2/15 start=agv_list_area
+2026-04-06 07:29:44.136 [AUTOTEST] ROUTE agv_list_area#2 steps=agv_list_area -> user_area -> logs_area -> calendar_area -> models_area
+2026-04-06 07:29:44.455 [AUTOTEST] PAGE_TRANSITION users -> agv_list ms=380
+2026-04-06 07:29:44.520 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=65
+2026-04-06 07:29:44.874 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=353
+2026-04-06 07:29:44.959 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=84
+2026-04-06 07:29:45.257 [AUTOTEST] PAGE_TRANSITION agv_list -> users ms=295
+2026-04-06 07:29:45.519 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=261
+2026-04-06 07:29:45.591 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=72
+2026-04-06 07:29:49.306 [AUTOTEST] PAGE_TRANSITION users -> logs ms=3713
+2026-04-06 07:29:49.396 [AUTOTEST] PAGE_TRANSITION logs -> calendar ms=89
+2026-04-06 07:29:49.437 [CALENDAR] setSelectedMonthYear 4/2026 — полная пересборка UI календаря
+2026-04-06 07:29:50.702 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=1304
+2026-04-06 07:29:50.851 [AUTOTEST] PAGE_TRANSITION calendar -> models ms=148
+2026-04-06 07:29:50.897 [AUTOTEST] PAGE_TRANSITION models -> models ms=45
+2026-04-06 07:29:51.248 [AUTOTEST] PAGE_TRANSITION models -> models ms=349
+2026-04-06 07:29:51.526 [AUTOTEST] ROUTE_PROGRESS 3/15 start=agv_list_area
+2026-04-06 07:29:51.527 [AUTOTEST] ROUTE agv_list_area#3 steps=agv_list_area -> models_area -> user_area -> logs_area -> calendar_area
+2026-04-06 07:29:51.710 [AUTOTEST] PAGE_TRANSITION models -> agv_list ms=459
+2026-04-06 07:29:51.765 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=54
+2026-04-06 07:29:52.112 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=345
+2026-04-06 07:29:52.200 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=86
+2026-04-06 07:29:52.490 [AUTOTEST] PAGE_TRANSITION agv_list -> models ms=288
+2026-04-06 07:29:52.540 [AUTOTEST] PAGE_TRANSITION models -> models ms=46
+2026-04-06 07:29:52.866 [AUTOTEST] PAGE_TRANSITION models -> models ms=324
+2026-04-06 07:29:56.520 [AUTOTEST] PAGE_TRANSITION models -> users ms=3613
+2026-04-06 07:29:56.746 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=224
+2026-04-06 07:29:56.817 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=70
+2026-04-06 07:29:56.905 [AUTOTEST] PAGE_TRANSITION users -> logs ms=87
+2026-04-06 07:29:57.062 [AUTOTEST] PAGE_TRANSITION logs -> calendar ms=155
+2026-04-06 07:29:57.103 [CALENDAR] setSelectedMonthYear 3/2026 — полная пересборка UI календаря
+2026-04-06 07:29:58.513 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=1450
+2026-04-06 07:29:58.784 [AUTOTEST] ROUTE_GROUP_DONE start=models_area total=3
+2026-04-06 07:29:58.785 [AUTOTEST] ROUTE_PROGRESS 4/15 start=models_area
+2026-04-06 07:29:58.785 [AUTOTEST] ROUTE models_area#1 steps=models_area -> agv_list_area -> calendar_area -> logs_area -> user_area
+2026-04-06 07:29:58.788 [AUTOTEST] PAGE_TRANSITION calendar -> models ms=274
+2026-04-06 07:29:58.834 [AUTOTEST] PAGE_TRANSITION models -> models ms=45
+2026-04-06 07:29:59.199 [AUTOTEST] PAGE_TRANSITION models -> models ms=363
+2026-04-06 07:29:59.966 [AUTOTEST] PAGE_TRANSITION models -> agv_list ms=766
+2026-04-06 07:30:00.032 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=64
+2026-04-06 07:30:00.431 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=397
+2026-04-06 07:30:00.513 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=80
+2026-04-06 07:30:00.875 [AUTOTEST] PAGE_TRANSITION agv_list -> calendar ms=361
+2026-04-06 07:30:00.920 [CALENDAR] setSelectedMonthYear 4/2026 — полная пересборка UI календаря
+2026-04-06 07:30:02.054 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=1175
+2026-04-06 07:30:02.255 [AUTOTEST] PAGE_TRANSITION calendar -> logs ms=199
+2026-04-06 07:30:06.377 [AUTOTEST] PAGE_TRANSITION logs -> users ms=4121
+2026-04-06 07:30:06.815 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=387
+2026-04-06 07:30:06.888 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=71
+2026-04-06 07:30:06.949 [AUTOTEST] ROUTE_PROGRESS 5/15 start=models_area
+2026-04-06 07:30:06.950 [AUTOTEST] ROUTE models_area#2 steps=models_area -> user_area -> logs_area -> calendar_area -> agv_list_area
+2026-04-06 07:30:06.953 [AUTOTEST] PAGE_TRANSITION users -> models ms=64
+2026-04-06 07:30:06.999 [AUTOTEST] PAGE_TRANSITION models -> models ms=44
+2026-04-06 07:30:07.352 [AUTOTEST] PAGE_TRANSITION models -> models ms=351
+2026-04-06 07:30:07.863 [AUTOTEST] PAGE_TRANSITION models -> users ms=509
+2026-04-06 07:30:08.100 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=235
+2026-04-06 07:30:08.171 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=70
+2026-04-06 07:30:17.197 [AUTOTEST] PAGE_TRANSITION users -> logs ms=8991
+2026-04-06 07:30:17.301 [AUTOTEST] PAGE_TRANSITION logs -> calendar ms=102
+2026-04-06 07:30:17.342 [CALENDAR] setSelectedMonthYear 5/2026 — полная пересборка UI календаря
+2026-04-06 07:30:18.591 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=1288
+2026-04-06 07:30:19.022 [AUTOTEST] PAGE_TRANSITION calendar -> agv_list ms=429
+2026-04-06 07:30:19.087 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=63
+2026-04-06 07:30:19.437 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=348
+2026-04-06 07:30:19.518 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=80
+2026-04-06 07:30:19.834 [AUTOTEST] ROUTE_PROGRESS 6/15 start=models_area
+2026-04-06 07:30:19.835 [AUTOTEST] ROUTE models_area#3 steps=models_area -> agv_list_area -> logs_area -> user_area -> calendar_area
+2026-04-06 07:30:19.839 [AUTOTEST] PAGE_TRANSITION agv_list -> models ms=318
+2026-04-06 07:30:19.885 [AUTOTEST] PAGE_TRANSITION models -> models ms=45
+2026-04-06 07:30:20.227 [AUTOTEST] PAGE_TRANSITION models -> models ms=340
+2026-04-06 07:30:20.559 [AUTOTEST] PAGE_TRANSITION models -> agv_list ms=329
+2026-04-06 07:30:20.620 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=59
+2026-04-06 07:30:20.930 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=308
+2026-04-06 07:30:21.027 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=94
+2026-04-06 07:30:21.368 [AUTOTEST] PAGE_TRANSITION agv_list -> logs ms=341
+2026-04-06 07:30:24.779 [AUTOTEST] PAGE_TRANSITION logs -> users ms=3409
+2026-04-06 07:30:24.942 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=161
+2026-04-06 07:30:25.014 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=70
+2026-04-06 07:30:25.076 [AUTOTEST] PAGE_TRANSITION users -> calendar ms=60
+2026-04-06 07:30:25.117 [CALENDAR] setSelectedMonthYear 6/2026 — полная пересборка UI календаря
+2026-04-06 07:30:25.888 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=810
+2026-04-06 07:30:28.148 [AUTOTEST] ROUTE_GROUP_DONE start=calendar_area total=3
+2026-04-06 07:30:28.150 [AUTOTEST] ROUTE_PROGRESS 7/15 start=calendar_area
+2026-04-06 07:30:28.153 [AUTOTEST] ROUTE calendar_area#1 steps=calendar_area -> agv_list_area -> models_area -> logs_area -> user_area
+2026-04-06 07:30:28.156 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=2266
+2026-04-06 07:30:28.197 [CALENDAR] setSelectedMonthYear 5/2026 — полная пересборка UI календаря
+2026-04-06 07:30:29.646 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=1489
+2026-04-06 07:30:29.933 [AUTOTEST] PAGE_TRANSITION calendar -> agv_list ms=285
+2026-04-06 07:30:29.988 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=53
+2026-04-06 07:30:30.451 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=461
+2026-04-06 07:30:30.529 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=76
+2026-04-06 07:30:30.865 [AUTOTEST] PAGE_TRANSITION agv_list -> models ms=334
+2026-04-06 07:30:30.911 [AUTOTEST] PAGE_TRANSITION models -> models ms=44
+2026-04-06 07:30:31.184 [AUTOTEST] PAGE_TRANSITION models -> models ms=271
+2026-04-06 07:30:31.547 [AUTOTEST] PAGE_TRANSITION models -> logs ms=362
+2026-04-06 07:30:34.938 [AUTOTEST] PAGE_TRANSITION logs -> users ms=3388
+2026-04-06 07:30:36.943 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=2003
+2026-04-06 07:30:37.014 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=70
+2026-04-06 07:30:37.075 [AUTOTEST] ROUTE_PROGRESS 8/15 start=calendar_area
+2026-04-06 07:30:37.075 [AUTOTEST] ROUTE calendar_area#2 steps=calendar_area -> user_area -> logs_area -> models_area -> agv_list_area
+2026-04-06 07:30:37.078 [AUTOTEST] PAGE_TRANSITION users -> calendar ms=63
+2026-04-06 07:30:37.120 [CALENDAR] setSelectedMonthYear 4/2026 — полная пересборка UI календаря
+2026-04-06 07:30:38.549 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=1469
+2026-04-06 07:30:41.230 [AUTOTEST] PAGE_TRANSITION calendar -> users ms=2680
+2026-04-06 07:30:41.521 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=290
+2026-04-06 07:30:41.593 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=70
+2026-04-06 07:30:41.698 [AUTOTEST] PAGE_TRANSITION users -> logs ms=103
+2026-04-06 07:30:41.920 [AUTOTEST] PAGE_TRANSITION logs -> models ms=221
+2026-04-06 07:30:41.967 [AUTOTEST] PAGE_TRANSITION models -> models ms=46
+2026-04-06 07:30:42.268 [AUTOTEST] PAGE_TRANSITION models -> models ms=297
+2026-04-06 07:30:42.961 [AUTOTEST] PAGE_TRANSITION models -> agv_list ms=689
+2026-04-06 07:30:43.036 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=75
+2026-04-06 07:30:43.500 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=462
+2026-04-06 07:30:43.582 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=80
+2026-04-06 07:30:43.906 [AUTOTEST] ROUTE_PROGRESS 9/15 start=calendar_area
+2026-04-06 07:30:43.911 [AUTOTEST] ROUTE calendar_area#3 steps=calendar_area -> user_area -> models_area -> logs_area -> agv_list_area
+2026-04-06 07:30:43.914 [AUTOTEST] PAGE_TRANSITION agv_list -> calendar ms=329
+2026-04-06 07:30:43.956 [CALENDAR] setSelectedMonthYear 5/2026 — полная пересборка UI календаря
+2026-04-06 07:30:45.154 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=1240
+2026-04-06 07:30:47.782 [AUTOTEST] PAGE_TRANSITION calendar -> users ms=2627
+2026-04-06 07:30:47.909 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=125
+2026-04-06 07:30:47.983 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=72
+2026-04-06 07:30:48.047 [AUTOTEST] PAGE_TRANSITION users -> models ms=62
+2026-04-06 07:30:48.095 [AUTOTEST] PAGE_TRANSITION models -> models ms=45
+2026-04-06 07:30:48.407 [AUTOTEST] PAGE_TRANSITION models -> models ms=309
+2026-04-06 07:30:48.950 [AUTOTEST] PAGE_TRANSITION models -> logs ms=540
+2026-04-06 07:30:49.243 [AUTOTEST] PAGE_TRANSITION logs -> agv_list ms=291
+2026-04-06 07:30:49.297 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=52
+2026-04-06 07:30:49.518 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=220
+2026-04-06 07:30:49.596 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=76
+2026-04-06 07:30:49.917 [AUTOTEST] ROUTE_GROUP_DONE start=logs_area total=3
+2026-04-06 07:30:49.922 [AUTOTEST] ROUTE_PROGRESS 10/15 start=logs_area
+2026-04-06 07:30:49.923 [AUTOTEST] ROUTE logs_area#1 steps=logs_area -> agv_list_area -> models_area -> calendar_area -> user_area
+2026-04-06 07:30:49.940 [AUTOTEST] PAGE_TRANSITION agv_list -> logs ms=342
+2026-04-06 07:30:50.048 [AUTOTEST] PAGE_TRANSITION logs -> agv_list ms=107
+2026-04-06 07:30:50.105 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=55
+2026-04-06 07:30:50.307 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=200
+2026-04-06 07:30:50.387 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=79
+2026-04-06 07:30:50.726 [AUTOTEST] PAGE_TRANSITION agv_list -> models ms=336
+2026-04-06 07:30:50.772 [AUTOTEST] PAGE_TRANSITION models -> models ms=45
+2026-04-06 07:30:51.046 [AUTOTEST] PAGE_TRANSITION models -> models ms=273
+2026-04-06 07:30:51.390 [AUTOTEST] PAGE_TRANSITION models -> calendar ms=343
+2026-04-06 07:30:51.431 [CALENDAR] setSelectedMonthYear 4/2026 — полная пересборка UI календаря
+2026-04-06 07:30:52.221 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=830
+2026-04-06 07:30:54.755 [AUTOTEST] PAGE_TRANSITION calendar -> users ms=2532
+2026-04-06 07:30:55.182 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=426
+2026-04-06 07:30:55.254 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=70
+2026-04-06 07:30:55.317 [AUTOTEST] ROUTE_PROGRESS 11/15 start=logs_area
+2026-04-06 07:30:55.318 [AUTOTEST] ROUTE logs_area#2 steps=logs_area -> user_area -> calendar_area -> models_area -> agv_list_area
+2026-04-06 07:30:55.371 [AUTOTEST] PAGE_TRANSITION users -> logs ms=114
+2026-04-06 07:30:55.532 [AUTOTEST] PAGE_TRANSITION logs -> users ms=160
+2026-04-06 07:30:55.677 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=143
+2026-04-06 07:30:55.752 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=72
+2026-04-06 07:30:55.814 [AUTOTEST] PAGE_TRANSITION users -> calendar ms=60
+2026-04-06 07:30:55.855 [CALENDAR] setSelectedMonthYear 3/2026 — полная пересборка UI календаря
+2026-04-06 07:30:56.612 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=797
+2026-04-06 07:30:56.974 [AUTOTEST] PAGE_TRANSITION calendar -> models ms=360
+2026-04-06 07:30:57.019 [AUTOTEST] PAGE_TRANSITION models -> models ms=45
+2026-04-06 07:30:57.535 [AUTOTEST] PAGE_TRANSITION models -> models ms=514
+2026-04-06 07:30:58.180 [AUTOTEST] PAGE_TRANSITION models -> agv_list ms=642
+2026-04-06 07:30:58.237 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=55
+2026-04-06 07:30:58.478 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=240
+2026-04-06 07:30:58.776 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=297
+2026-04-06 07:30:59.072 [AUTOTEST] ROUTE_PROGRESS 12/15 start=logs_area
+2026-04-06 07:30:59.073 [AUTOTEST] ROUTE logs_area#3 steps=logs_area -> models_area -> agv_list_area -> calendar_area -> user_area
+2026-04-06 07:30:59.101 [AUTOTEST] PAGE_TRANSITION agv_list -> logs ms=323
+2026-04-06 07:30:59.231 [AUTOTEST] PAGE_TRANSITION logs -> models ms=129
+2026-04-06 07:30:59.278 [AUTOTEST] PAGE_TRANSITION models -> models ms=45
+2026-04-06 07:30:59.574 [AUTOTEST] PAGE_TRANSITION models -> models ms=294
+2026-04-06 07:31:00.099 [AUTOTEST] PAGE_TRANSITION models -> agv_list ms=523
+2026-04-06 07:31:00.153 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=53
+2026-04-06 07:31:00.355 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=200
+2026-04-06 07:31:00.437 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=80
+2026-04-06 07:31:00.752 [AUTOTEST] PAGE_TRANSITION agv_list -> calendar ms=308
+2026-04-06 07:31:00.796 [CALENDAR] setSelectedMonthYear 4/2026 — полная пересборка UI календаря
+2026-04-06 07:31:01.878 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=1126
+2026-04-06 07:31:04.647 [AUTOTEST] PAGE_TRANSITION calendar -> users ms=2767
+2026-04-06 07:31:04.784 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=136
+2026-04-06 07:31:04.858 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=72
+2026-04-06 07:31:04.921 [AUTOTEST] ROUTE_GROUP_DONE start=user_area total=3
+2026-04-06 07:31:04.924 [AUTOTEST] ROUTE_PROGRESS 13/15 start=user_area
+2026-04-06 07:31:04.925 [AUTOTEST] ROUTE user_area#1 steps=user_area -> agv_list_area -> models_area -> calendar_area -> logs_area
+2026-04-06 07:31:04.928 [AUTOTEST] PAGE_TRANSITION users -> users ms=68
+2026-04-06 07:31:05.090 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=162
+2026-04-06 07:31:05.163 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=70
+2026-04-06 07:31:05.398 [AUTOTEST] PAGE_TRANSITION users -> agv_list ms=233
+2026-04-06 07:31:05.454 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=53
+2026-04-06 07:31:05.722 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=266
+2026-04-06 07:31:05.803 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=79
+2026-04-06 07:31:06.123 [AUTOTEST] PAGE_TRANSITION agv_list -> models ms=318
+2026-04-06 07:31:06.170 [AUTOTEST] PAGE_TRANSITION models -> models ms=45
+2026-04-06 07:31:06.444 [AUTOTEST] PAGE_TRANSITION models -> models ms=271
+2026-04-06 07:31:06.802 [AUTOTEST] PAGE_TRANSITION models -> calendar ms=356
+2026-04-06 07:31:06.843 [CALENDAR] setSelectedMonthYear 3/2026 — полная пересборка UI календаря
+2026-04-06 07:31:07.573 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=770
+2026-04-06 07:31:07.704 [AUTOTEST] PAGE_TRANSITION calendar -> logs ms=129
+2026-04-06 07:31:07.856 [AUTOTEST] ROUTE_PROGRESS 14/15 start=user_area
+2026-04-06 07:31:07.857 [AUTOTEST] ROUTE user_area#2 steps=user_area -> logs_area -> calendar_area -> models_area -> agv_list_area
+2026-04-06 07:31:13.249 [AUTOTEST] PAGE_TRANSITION logs -> users ms=5512
+2026-04-06 07:31:15.283 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=2032
+2026-04-06 07:31:15.356 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=70
+2026-04-06 07:31:15.480 [AUTOTEST] PAGE_TRANSITION users -> logs ms=122
+2026-04-06 07:31:15.560 [AUTOTEST] PAGE_TRANSITION logs -> calendar ms=78
+2026-04-06 07:31:15.601 [CALENDAR] setSelectedMonthYear 2/2026 — полная пересборка UI календаря
+2026-04-06 07:31:16.305 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=744
+2026-04-06 07:31:16.411 [AUTOTEST] PAGE_TRANSITION calendar -> models ms=104
+2026-04-06 07:31:16.458 [AUTOTEST] PAGE_TRANSITION models -> models ms=45
+2026-04-06 07:31:16.751 [AUTOTEST] PAGE_TRANSITION models -> models ms=289
+2026-04-06 07:31:17.404 [AUTOTEST] PAGE_TRANSITION models -> agv_list ms=651
+2026-04-06 07:31:17.458 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=52
+2026-04-06 07:31:17.939 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=480
+2026-04-06 07:31:18.020 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=79
+2026-04-06 07:31:18.314 [AUTOTEST] ROUTE_PROGRESS 15/15 start=user_area
+2026-04-06 07:31:18.314 [AUTOTEST] ROUTE user_area#3 steps=user_area -> agv_list_area -> models_area -> logs_area -> calendar_area
+2026-04-06 07:31:21.052 [AUTOTEST] PAGE_TRANSITION agv_list -> users ms=3030
+2026-04-06 07:31:21.192 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=139
+2026-04-06 07:31:21.265 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=71
+2026-04-06 07:31:21.337 [AUTOTEST] PAGE_TRANSITION users -> agv_list ms=70
+2026-04-06 07:31:21.393 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=53
+2026-04-06 07:31:21.623 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=229
+2026-04-06 07:31:21.702 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=77
+2026-04-06 07:31:22.054 [AUTOTEST] PAGE_TRANSITION agv_list -> models ms=351
+2026-04-06 07:31:22.103 [AUTOTEST] PAGE_TRANSITION models -> models ms=47
+2026-04-06 07:31:22.396 [AUTOTEST] PAGE_TRANSITION models -> models ms=290
+2026-04-06 07:31:22.725 [AUTOTEST] PAGE_TRANSITION models -> logs ms=328
+2026-04-06 07:31:22.926 [AUTOTEST] PAGE_TRANSITION logs -> calendar ms=199
+2026-04-06 07:31:22.967 [CALENDAR] setSelectedMonthYear 3/2026 — полная пересборка UI календаря
+2026-04-06 07:31:24.469 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=1542
+2026-04-06 07:31:24.544 [AUTOTEST] ROUTE_TOTAL count=15 errors=0
+2026-04-06 07:31:24.544 [AUTOTEST] CHECK ui_route_permutations_grouped_by_start_area PASS ms=107620
+2026-04-06 07:31:24.654 [AUTOTEST] CHECK ui_search_ascii_simulation PASS ms=32
+2026-04-06 07:31:24.747 [AUTOTEST] CHECK ui_search_whitespace_and_long_input PASS ms=17
+2026-04-06 07:31:25.277 [AUTOTEST] PAGE_TRANSITION calendar -> chats ms=806
+2026-04-06 07:31:25.283 [AUTOTEST] CHECK ui_show_chats PASS ms=460
+2026-04-06 07:31:25.778 [AUTOTEST] CHECK ui_chats_reload_list PASS ms=419
+2026-04-06 07:31:26.287 [AUTOTEST] PAGE_TRANSITION chats -> chats ms=1009
+2026-04-06 07:31:27.927 [AUTOTEST] CHECK ui_chats_reload_burst_x4 PASS ms=2072
+2026-04-06 07:31:28.005 [AUTOTEST] CHECK chat_reject_empty_peer PASS ms=0
+2026-04-06 07:31:31.221 [AUTOTEST] PAGE_TRANSITION chats -> chats ms=4933
+2026-04-06 07:31:31.489 [AUTOTEST] CHECK chat_open_or_create_test_thread PASS ms=3406
+2026-04-06 07:31:31.567 [AUTOTEST] CHECK chat_reject_empty_message PASS ms=1
+2026-04-06 07:31:32.195 [AUTOTEST] CHECK chat_send_dirty_message PASS ms=549
+2026-04-06 07:31:33.454 [AUTOTEST] CHECK chat_send_burst_3_messages PASS ms=1112
+2026-04-06 07:31:34.502 [AUTOTEST] CHECK chat_send_plain_message PASS ms=971
+2026-04-06 07:31:34.930 [AUTOTEST] CHECK chat_reopen_same_thread_is_stable PASS ms=351
+2026-04-06 07:31:35.031 [AUTOTEST] CHECK chat_reject_invalid_thread_write PASS ms=23
+2026-04-06 07:31:35.578 [AUTOTEST] PAGE_TRANSITION chats -> chats ms=4356
+2026-04-06 07:31:36.114 [AUTOTEST] CHECK chat_back_to_thread_list PASS ms=1005
+2026-04-06 07:31:36.197 [AUTOTEST] CHECK db_count_agv_list PASS ms=6
+2026-04-06 07:31:36.332 [AUTOTEST] CHECK db_load_calendar_events_month PASS ms=58
+2026-04-06 07:31:36.433 [AUTOTEST] CHECK ui_update_notif_badge PASS ms=24
+2026-04-06 07:31:39.022 [AUTOTEST] CHECK db_get_all_users_with_avatars PASS ms=2512
+2026-04-06 07:31:39.167 [AUTOTEST] CHECK db_load_upcoming_maintenance PASS ms=68
+2026-04-06 07:31:39.246 [AUTOTEST] PAGE_TRANSITION chats -> calendar ms=3666
+2026-04-06 07:31:40.252 [AUTOTEST] CHECK ui_calendar_select_random_days PASS ms=1005
+2026-04-06 07:31:40.627 [AUTOTEST] PAGE_TRANSITION calendar -> chats ms=1379
+2026-04-06 07:31:40.708 [AUTOTEST] CHECK db_load_user_profile PASS ms=0
+2026-04-06 07:31:40.844 [AUTOTEST] CHECK db_load_notifications_for_user PASS ms=57
+2026-04-06 07:31:40.945 [AUTOTEST] CHECK db_unread_count_for_user PASS ms=23
+2026-04-06 07:31:41.028 [AUTOTEST] PAGE_TRANSITION chats -> models ms=399
+2026-04-06 07:31:41.037 [AUTOTEST] PAGE_TRANSITION models -> calendar ms=7
+2026-04-06 07:31:41.097 [AUTOTEST] PAGE_TRANSITION calendar -> logs ms=59
+2026-04-06 07:31:41.435 [AUTOTEST] PAGE_TRANSITION logs -> agv_list ms=336
+2026-04-06 07:31:41.461 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=24
+2026-04-06 07:31:41.476 [AUTOTEST] PAGE_TRANSITION agv_list -> calendar ms=14
+2026-04-06 07:31:41.522 [AUTOTEST] PAGE_TRANSITION calendar -> logs ms=44
+2026-04-06 07:31:41.534 [AUTOTEST] PAGE_TRANSITION logs -> models ms=11
+2026-04-06 07:31:41.537 [AUTOTEST] CHECK ui_rapid_nav_randomized PASS ms=514
+2026-04-06 07:31:41.658 [AUTOTEST] PAGE_TRANSITION models -> logs ms=123
+2026-04-06 07:31:49.142 [AUTOTEST] CHECK ui_databus_6waves_full_on_logs PASS ms=7527
+2026-04-06 07:31:49.244 [AUTOTEST] CHECK db_write_logaction_plus_users_update PASS ms=24
+2026-04-06 07:31:49.340 [AUTOTEST] CHECK db_get_all_users_no_avatars PASS ms=17
+2026-04-06 07:31:51.700 [AUTOTEST] PAGE_TRANSITION logs -> users ms=10040
+2026-04-06 07:31:51.719 [AUTOTEST] CHECK ui_users_page_admin_or_tech PASS ms=2297
+2026-04-06 07:31:51.826 [AUTOTEST] CHECK db_touch_user_presence PASS ms=30
+2026-04-06 07:31:51.904 [AUTOTEST] PAGE_TRANSITION users -> models ms=202
+2026-04-06 07:31:52.337 [AUTOTEST] CHECK ui_databus_models_page_burst PASS ms=434
+2026-04-06 07:31:52.454 [AUTOTEST] CHECK db_load_system_status PASS ms=39
+2026-04-06 07:31:52.531 [AUTOTEST] SUITE_COMPLETE total_ms=202822 PASS=53 SKIP=0 (session always OK)
+2026-04-06 07:31:52.609 [CALENDAR] setSelectedMonthYear 3/2026 — полная пересборка UI календаря
+2026-04-06 08:42:28.420 [AUTOTEST] session_begin | kompleksnyy_test user=VadimR pid=2360
+2026-04-06 08:42:28.422 [AUTOTEST] SUITE_START kompleksnyy_extended (всегда отчёт PASS/SKIP; лимит ~600 с)
+2026-04-06 08:42:28.423 [AUTOTEST] SUITE_RANDOMIZED order=0,6,2,1,4,5,7,3,13,15,16,14,21,36,8,9,18,10,20,12,19,17,11,22,23,24,25,26,28,29,30,27,31,32,33,34,44,40,39,42,43,37,35,47,50,49,52,51,45,46,48,38,41 pick_days=1,19,2,18,28,21,5
+2026-04-06 08:42:28.508 [AUTOTEST] CHECK db_ping_select1 PASS ms=24
+2026-04-06 08:42:28.772 [AUTOTEST] CHECK db_missing_user_profile_returns_false PASS ms=187
+2026-04-06 08:42:28.866 [AUTOTEST] CHECK db_show_tables PASS ms=18
+2026-04-06 08:42:29.140 [AUTOTEST] CHECK db_count_8_core_tables PASS ms=197
+2026-04-06 08:42:29.278 [AUTOTEST] CHECK db_ensure_hidden_autotest_chat_user PASS ms=60
+2026-04-06 08:42:32.653 [AUTOTEST] CHECK db_hidden_autotest_user_filtered_out PASS ms=3297
+2026-04-06 08:42:32.882 [AUTOTEST] CHECK db_missing_user_avatar_safe_empty PASS ms=54
+2026-04-06 08:42:32.974 [AUTOTEST] CHECK db_join_agv_list_tasks PASS ms=14
+2026-04-06 08:42:33.092 [AUTOTEST] CLICK_SWEEP calendar -> Чаты
+2026-04-06 08:42:33.884 [AUTOTEST] PAGE_TRANSITION calendar -> chats ms=832
+2026-04-06 08:42:33.932 [AUTOTEST] CLICK_SWEEP calendar -> VadimR
+2026-04-06 08:42:34.269 [AUTOTEST] CLICK_SWEEP calendar -> Пользователи
+2026-04-06 08:42:38.450 [AUTOTEST] PAGE_TRANSITION chats -> users ms=4564
+2026-04-06 08:42:38.495 [AUTOTEST] CLICK_SWEEP calendar -> Модель AGV
+2026-04-06 08:42:38.499 [AUTOTEST] PAGE_TRANSITION users -> models ms=48
+2026-04-06 08:42:38.546 [AUTOTEST] CLICK_SWEEP calendar -> Сформировать годовой отчет
+2026-04-06 08:42:38.793 [AUTOTEST] CLICK_SWEEP calendar -> Настройки
+2026-04-06 08:42:39.176 [AUTOTEST] CLICK_SWEEP calendar -> AGV
+2026-04-06 08:42:39.375 [AUTOTEST] PAGE_TRANSITION models -> agv_list ms=874
+2026-04-06 08:42:39.422 [AUTOTEST] CLICK_SWEEP calendar -> + Добавить AGV
+2026-04-06 08:42:39.920 [AUTOTEST] CLICK_SWEEP calendar -> Назад
+2026-04-06 08:42:39.923 [AUTOTEST] PAGE_TRANSITION agv_list -> calendar ms=546
+2026-04-06 08:42:40.007 [AUTOTEST] PAGE_TRANSITION calendar -> agv_list ms=84
+2026-04-06 08:42:40.050 [AUTOTEST] CLICK_SWEEP agv -> Назад
+2026-04-06 08:42:40.060 [AUTOTEST] PAGE_TRANSITION agv_list -> calendar ms=47
+2026-04-06 08:42:40.107 [AUTOTEST] PAGE_TRANSITION calendar -> models ms=46
+2026-04-06 08:42:40.149 [AUTOTEST] CLICK_SWEEP models -> Назад
+2026-04-06 08:42:40.152 [AUTOTEST] PAGE_TRANSITION models -> calendar ms=43
+2026-04-06 08:42:40.307 [AUTOTEST] PAGE_TRANSITION calendar -> logs ms=153
+2026-04-06 08:42:40.351 [AUTOTEST] CLICK_SWEEP logs -> Назад
+2026-04-06 08:42:40.352 [AUTOTEST] PAGE_TRANSITION logs -> calendar ms=44
+2026-04-06 08:42:41.117 [AUTOTEST] PAGE_TRANSITION calendar -> chats ms=763
+2026-04-06 08:42:41.159 [AUTOTEST] CLICK_SWEEP chats -> Назад
+2026-04-06 08:42:41.161 [AUTOTEST] PAGE_TRANSITION chats -> calendar ms=42
+2026-04-06 08:42:43.600 [AUTOTEST] PAGE_TRANSITION calendar -> profile ms=2438
+2026-04-06 08:42:43.641 [AUTOTEST] CLICK_SWEEP profile -> Назад
+2026-04-06 08:42:43.643 [AUTOTEST] PAGE_TRANSITION profile -> calendar ms=42
+2026-04-06 08:42:43.690 [AUTOTEST] PAGE_TRANSITION calendar -> users ms=46
+2026-04-06 08:42:43.742 [AUTOTEST] CLICK_SWEEP users -> Назад
+2026-04-06 08:42:43.744 [AUTOTEST] PAGE_TRANSITION users -> calendar ms=52
+2026-04-06 08:42:43.791 [AUTOTEST] CHECK ui_clickable_sweep_visible_safe_buttons PASS ms=10740
+2026-04-06 08:42:43.868 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=122
+2026-04-06 08:42:43.874 [AUTOTEST] CHECK ui_show_calendar PASS ms=6
+2026-04-06 08:42:43.876 [AUTOTEST] CHECK calendar_days_in_month_rules PASS ms=0
+2026-04-06 08:42:43.965 [AUTOTEST] PAGE_TRANSITION calendar -> agv_list ms=93
+2026-04-06 08:42:43.980 [AUTOTEST] CHECK ui_show_agv_list PASS ms=26
+2026-04-06 08:42:44.057 [AUTOTEST] ROUTE_GROUP_DONE start=agv_list_area total=3
+2026-04-06 08:42:44.057 [AUTOTEST] ROUTE_PROGRESS 1/15 start=agv_list_area
+2026-04-06 08:42:44.058 [AUTOTEST] ROUTE agv_list_area#1 steps=agv_list_area -> models_area -> calendar_area -> logs_area -> user_area
+2026-04-06 08:42:44.070 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=103
+2026-04-06 08:42:44.134 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=62
+2026-04-06 08:42:44.495 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=359
+2026-04-06 08:42:44.577 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=81
+2026-04-06 08:42:44.895 [AUTOTEST] PAGE_TRANSITION agv_list -> models ms=315
+2026-04-06 08:42:44.945 [AUTOTEST] PAGE_TRANSITION models -> models ms=45
+2026-04-06 08:42:45.324 [AUTOTEST] PAGE_TRANSITION models -> models ms=377
+2026-04-06 08:42:45.595 [AUTOTEST] PAGE_TRANSITION models -> calendar ms=270
+2026-04-06 08:42:45.636 [CALENDAR] setSelectedMonthYear 3/2026 — полная пересборка UI календаря
+2026-04-06 08:42:46.922 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=1326
+2026-04-06 08:42:47.055 [AUTOTEST] PAGE_TRANSITION calendar -> logs ms=131
+2026-04-06 08:42:50.401 [AUTOTEST] PAGE_TRANSITION logs -> users ms=3312
+2026-04-06 08:42:51.111 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=709
+2026-04-06 08:42:51.183 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=70
+2026-04-06 08:42:51.245 [AUTOTEST] ROUTE_PROGRESS 2/15 start=agv_list_area
+2026-04-06 08:42:51.246 [AUTOTEST] ROUTE agv_list_area#2 steps=agv_list_area -> user_area -> logs_area -> calendar_area -> models_area
+2026-04-06 08:42:51.417 [AUTOTEST] PAGE_TRANSITION users -> agv_list ms=232
+2026-04-06 08:42:51.490 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=72
+2026-04-06 08:42:51.758 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=267
+2026-04-06 08:42:51.867 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=107
+2026-04-06 08:42:52.263 [AUTOTEST] PAGE_TRANSITION agv_list -> users ms=394
+2026-04-06 08:42:52.521 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=253
+2026-04-06 08:42:52.592 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=70
+2026-04-06 08:43:08.400 [AUTOTEST] PAGE_TRANSITION users -> logs ms=15771
+2026-04-06 08:43:08.497 [AUTOTEST] PAGE_TRANSITION logs -> calendar ms=95
+2026-04-06 08:43:08.537 [CALENDAR] setSelectedMonthYear 4/2026 — полная пересборка UI календаря
+2026-04-06 08:43:09.698 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=1200
+2026-04-06 08:43:09.853 [AUTOTEST] PAGE_TRANSITION calendar -> models ms=154
+2026-04-06 08:43:09.901 [AUTOTEST] PAGE_TRANSITION models -> models ms=45
+2026-04-06 08:43:10.175 [AUTOTEST] PAGE_TRANSITION models -> models ms=270
+2026-04-06 08:43:10.679 [AUTOTEST] ROUTE_PROGRESS 3/15 start=agv_list_area
+2026-04-06 08:43:10.680 [AUTOTEST] ROUTE agv_list_area#3 steps=agv_list_area -> logs_area -> calendar_area -> user_area -> models_area
+2026-04-06 08:43:10.867 [AUTOTEST] PAGE_TRANSITION models -> agv_list ms=691
+2026-04-06 08:43:10.925 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=57
+2026-04-06 08:43:11.214 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=287
+2026-04-06 08:43:11.300 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=84
+2026-04-06 08:43:11.632 [AUTOTEST] PAGE_TRANSITION agv_list -> logs ms=329
+2026-04-06 08:43:11.784 [AUTOTEST] PAGE_TRANSITION logs -> calendar ms=151
+2026-04-06 08:43:11.825 [CALENDAR] setSelectedMonthYear 5/2026 — полная пересборка UI календаря
+2026-04-06 08:43:12.948 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=1162
+2026-04-06 08:43:15.427 [AUTOTEST] PAGE_TRANSITION calendar -> users ms=2477
+2026-04-06 08:43:15.963 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=535
+2026-04-06 08:43:16.035 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=70
+2026-04-06 08:43:16.101 [AUTOTEST] PAGE_TRANSITION users -> models ms=64
+2026-04-06 08:43:16.148 [AUTOTEST] PAGE_TRANSITION models -> models ms=45
+2026-04-06 08:43:16.479 [AUTOTEST] PAGE_TRANSITION models -> models ms=327
+2026-04-06 08:43:16.989 [AUTOTEST] ROUTE_GROUP_DONE start=models_area total=3
+2026-04-06 08:43:16.991 [AUTOTEST] ROUTE_PROGRESS 4/15 start=models_area
+2026-04-06 08:43:16.992 [AUTOTEST] ROUTE models_area#1 steps=models_area -> agv_list_area -> calendar_area -> logs_area -> user_area
+2026-04-06 08:43:16.995 [AUTOTEST] PAGE_TRANSITION models -> models ms=514
+2026-04-06 08:43:17.043 [AUTOTEST] PAGE_TRANSITION models -> models ms=46
+2026-04-06 08:43:17.331 [AUTOTEST] PAGE_TRANSITION models -> models ms=285
+2026-04-06 08:43:17.727 [AUTOTEST] PAGE_TRANSITION models -> agv_list ms=395
+2026-04-06 08:43:17.780 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=51
+2026-04-06 08:43:18.028 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=246
+2026-04-06 08:43:18.112 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=81
+2026-04-06 08:43:18.492 [AUTOTEST] PAGE_TRANSITION agv_list -> calendar ms=338
+2026-04-06 08:43:18.534 [CALENDAR] setSelectedMonthYear 4/2026 — полная пересборка UI календаря
+2026-04-06 08:43:19.492 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=998
+2026-04-06 08:43:19.625 [AUTOTEST] PAGE_TRANSITION calendar -> logs ms=132
+2026-04-06 08:43:22.374 [AUTOTEST] PAGE_TRANSITION logs -> users ms=2747
+2026-04-06 08:43:22.525 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=150
+2026-04-06 08:43:22.598 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=71
+2026-04-06 08:43:22.659 [AUTOTEST] ROUTE_PROGRESS 5/15 start=models_area
+2026-04-06 08:43:22.661 [AUTOTEST] ROUTE models_area#2 steps=models_area -> user_area -> logs_area -> calendar_area -> agv_list_area
+2026-04-06 08:43:22.668 [AUTOTEST] PAGE_TRANSITION users -> models ms=69
+2026-04-06 08:43:22.716 [AUTOTEST] PAGE_TRANSITION models -> models ms=45
+2026-04-06 08:43:22.974 [AUTOTEST] PAGE_TRANSITION models -> models ms=256
+2026-04-06 08:43:23.482 [AUTOTEST] PAGE_TRANSITION models -> users ms=506
+2026-04-06 08:43:23.705 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=221
+2026-04-06 08:43:23.776 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=71
+2026-04-06 08:43:23.856 [AUTOTEST] PAGE_TRANSITION users -> logs ms=78
+2026-04-06 08:43:23.934 [AUTOTEST] PAGE_TRANSITION logs -> calendar ms=77
+2026-04-06 08:43:23.975 [CALENDAR] setSelectedMonthYear 3/2026 — полная пересборка UI календаря
+2026-04-06 08:43:24.660 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=725
+2026-04-06 08:43:25.234 [AUTOTEST] PAGE_TRANSITION calendar -> agv_list ms=572
+2026-04-06 08:43:25.292 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=56
+2026-04-06 08:43:25.542 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=248
+2026-04-06 08:43:25.627 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=83
+2026-04-06 08:43:25.946 [AUTOTEST] ROUTE_PROGRESS 6/15 start=models_area
+2026-04-06 08:43:25.948 [AUTOTEST] ROUTE models_area#3 steps=models_area -> agv_list_area -> user_area -> logs_area -> calendar_area
+2026-04-06 08:43:25.954 [AUTOTEST] PAGE_TRANSITION agv_list -> models ms=325
+2026-04-06 08:43:26.002 [AUTOTEST] PAGE_TRANSITION models -> models ms=46
+2026-04-06 08:43:26.339 [AUTOTEST] PAGE_TRANSITION models -> models ms=335
+2026-04-06 08:43:26.631 [AUTOTEST] PAGE_TRANSITION models -> agv_list ms=289
+2026-04-06 08:43:26.686 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=53
+2026-04-06 08:43:27.162 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=475
+2026-04-06 08:43:27.242 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=78
+2026-04-06 08:43:30.004 [AUTOTEST] PAGE_TRANSITION agv_list -> users ms=2741
+2026-04-06 08:43:30.262 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=257
+2026-04-06 08:43:30.333 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=70
+2026-04-06 08:43:30.424 [AUTOTEST] PAGE_TRANSITION users -> logs ms=89
+2026-04-06 08:43:30.538 [AUTOTEST] PAGE_TRANSITION logs -> calendar ms=113
+2026-04-06 08:43:30.579 [CALENDAR] setSelectedMonthYear 2/2026 — полная пересборка UI календаря
+2026-04-06 08:43:32.195 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=1656
+2026-04-06 08:43:32.361 [AUTOTEST] ROUTE_GROUP_DONE start=calendar_area total=3
+2026-04-06 08:43:32.362 [AUTOTEST] ROUTE_PROGRESS 7/15 start=calendar_area
+2026-04-06 08:43:32.363 [AUTOTEST] ROUTE calendar_area#1 steps=calendar_area -> agv_list_area -> models_area -> logs_area -> user_area
+2026-04-06 08:43:32.364 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=168
+2026-04-06 08:43:32.406 [CALENDAR] setSelectedMonthYear 3/2026 — полная пересборка UI календаря
+2026-04-06 08:43:33.262 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=895
+2026-04-06 08:43:33.861 [AUTOTEST] PAGE_TRANSITION calendar -> agv_list ms=598
+2026-04-06 08:43:33.922 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=60
+2026-04-06 08:43:34.211 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=286
+2026-04-06 08:43:34.291 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=79
+2026-04-06 08:43:34.610 [AUTOTEST] PAGE_TRANSITION agv_list -> models ms=317
+2026-04-06 08:43:34.658 [AUTOTEST] PAGE_TRANSITION models -> models ms=46
+2026-04-06 08:43:34.981 [AUTOTEST] PAGE_TRANSITION models -> models ms=322
+2026-04-06 08:43:35.308 [AUTOTEST] PAGE_TRANSITION models -> logs ms=325
+2026-04-06 08:43:38.160 [AUTOTEST] PAGE_TRANSITION logs -> users ms=2851
+2026-04-06 08:43:38.377 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=215
+2026-04-06 08:43:38.451 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=72
+2026-04-06 08:43:38.512 [AUTOTEST] ROUTE_PROGRESS 8/15 start=calendar_area
+2026-04-06 08:43:38.512 [AUTOTEST] ROUTE calendar_area#2 steps=calendar_area -> user_area -> logs_area -> models_area -> agv_list_area
+2026-04-06 08:43:38.514 [AUTOTEST] PAGE_TRANSITION users -> calendar ms=62
+2026-04-06 08:43:38.559 [CALENDAR] setSelectedMonthYear 2/2026 — полная пересборка UI календаря
+2026-04-06 08:43:39.652 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=1137
+2026-04-06 08:43:42.385 [AUTOTEST] PAGE_TRANSITION calendar -> users ms=2668
+2026-04-06 08:43:42.810 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=424
+2026-04-06 08:43:42.883 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=70
+2026-04-06 08:43:42.974 [AUTOTEST] PAGE_TRANSITION users -> logs ms=90
+2026-04-06 08:43:43.069 [AUTOTEST] PAGE_TRANSITION logs -> models ms=94
+2026-04-06 08:43:43.115 [AUTOTEST] PAGE_TRANSITION models -> models ms=44
+2026-04-06 08:43:43.404 [AUTOTEST] PAGE_TRANSITION models -> models ms=285
+2026-04-06 08:43:44.072 [AUTOTEST] PAGE_TRANSITION models -> agv_list ms=666
+2026-04-06 08:43:44.126 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=52
+2026-04-06 08:43:44.445 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=316
+2026-04-06 08:43:44.523 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=77
+2026-04-06 08:43:44.840 [AUTOTEST] ROUTE_PROGRESS 9/15 start=calendar_area
+2026-04-06 08:43:44.841 [AUTOTEST] ROUTE calendar_area#3 steps=calendar_area -> agv_list_area -> user_area -> models_area -> logs_area
+2026-04-06 08:43:44.843 [AUTOTEST] PAGE_TRANSITION agv_list -> calendar ms=318
+2026-04-06 08:43:44.883 [CALENDAR] setSelectedMonthYear 3/2026 — полная пересборка UI календаря
+2026-04-06 08:43:45.641 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=798
+2026-04-06 08:43:46.125 [AUTOTEST] PAGE_TRANSITION calendar -> agv_list ms=481
+2026-04-06 08:43:46.182 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=56
+2026-04-06 08:43:46.409 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=225
+2026-04-06 08:43:46.489 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=78
+2026-04-06 08:43:49.473 [AUTOTEST] PAGE_TRANSITION agv_list -> users ms=2982
+2026-04-06 08:43:51.497 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=2022
+2026-04-06 08:43:51.568 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=70
+2026-04-06 08:43:51.637 [AUTOTEST] PAGE_TRANSITION users -> models ms=66
+2026-04-06 08:43:51.685 [AUTOTEST] PAGE_TRANSITION models -> models ms=45
+2026-04-06 08:43:51.993 [AUTOTEST] PAGE_TRANSITION models -> models ms=306
+2026-04-06 08:43:52.573 [AUTOTEST] PAGE_TRANSITION models -> logs ms=561
+2026-04-06 08:43:52.706 [AUTOTEST] ROUTE_GROUP_DONE start=logs_area total=3
+2026-04-06 08:43:52.707 [AUTOTEST] ROUTE_PROGRESS 10/15 start=logs_area
+2026-04-06 08:43:52.707 [AUTOTEST] ROUTE logs_area#1 steps=logs_area -> agv_list_area -> models_area -> calendar_area -> user_area
+2026-04-06 08:43:52.722 [AUTOTEST] PAGE_TRANSITION logs -> logs ms=149
+2026-04-06 08:43:52.816 [AUTOTEST] PAGE_TRANSITION logs -> agv_list ms=93
+2026-04-06 08:43:52.872 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=53
+2026-04-06 08:43:53.105 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=233
+2026-04-06 08:43:53.185 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=78
+2026-04-06 08:43:53.516 [AUTOTEST] PAGE_TRANSITION agv_list -> models ms=330
+2026-04-06 08:43:53.565 [AUTOTEST] PAGE_TRANSITION models -> models ms=46
+2026-04-06 08:43:53.822 [AUTOTEST] PAGE_TRANSITION models -> models ms=256
+2026-04-06 08:43:54.184 [AUTOTEST] PAGE_TRANSITION models -> calendar ms=359
+2026-04-06 08:43:54.224 [CALENDAR] setSelectedMonthYear 2/2026 — полная пересборка UI календаря
+2026-04-06 08:43:55.175 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=990
+2026-04-06 08:43:57.950 [AUTOTEST] PAGE_TRANSITION calendar -> users ms=2774
+2026-04-06 08:43:58.149 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=198
+2026-04-06 08:43:58.223 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=71
+2026-04-06 08:43:58.285 [AUTOTEST] ROUTE_PROGRESS 11/15 start=logs_area
+2026-04-06 08:43:58.287 [AUTOTEST] ROUTE logs_area#2 steps=logs_area -> user_area -> calendar_area -> models_area -> agv_list_area
+2026-04-06 08:43:58.318 [AUTOTEST] PAGE_TRANSITION users -> logs ms=94
+2026-04-06 08:43:58.458 [AUTOTEST] PAGE_TRANSITION logs -> users ms=138
+2026-04-06 08:43:58.603 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=143
+2026-04-06 08:43:58.676 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=71
+2026-04-06 08:43:58.739 [AUTOTEST] PAGE_TRANSITION users -> calendar ms=61
+2026-04-06 08:43:58.781 [CALENDAR] setSelectedMonthYear 3/2026 — полная пересборка UI календаря
+2026-04-06 08:43:59.985 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=1244
+2026-04-06 08:44:00.106 [AUTOTEST] PAGE_TRANSITION calendar -> models ms=119
+2026-04-06 08:44:00.153 [AUTOTEST] PAGE_TRANSITION models -> models ms=45
+2026-04-06 08:44:00.434 [AUTOTEST] PAGE_TRANSITION models -> models ms=278
+2026-04-06 08:44:01.127 [AUTOTEST] PAGE_TRANSITION models -> agv_list ms=691
+2026-04-06 08:44:01.184 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=56
+2026-04-06 08:44:01.449 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=262
+2026-04-06 08:44:01.529 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=78
+2026-04-06 08:44:01.877 [AUTOTEST] ROUTE_PROGRESS 12/15 start=logs_area
+2026-04-06 08:44:01.878 [AUTOTEST] ROUTE logs_area#3 steps=logs_area -> user_area -> models_area -> calendar_area -> agv_list_area
+2026-04-06 08:44:01.902 [AUTOTEST] PAGE_TRANSITION agv_list -> logs ms=372
+2026-04-06 08:44:04.510 [AUTOTEST] PAGE_TRANSITION logs -> users ms=2572
+2026-04-06 08:44:04.791 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=279
+2026-04-06 08:44:04.863 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=70
+2026-04-06 08:44:04.928 [AUTOTEST] PAGE_TRANSITION users -> models ms=63
+2026-04-06 08:44:04.979 [AUTOTEST] PAGE_TRANSITION models -> models ms=48
+2026-04-06 08:44:05.535 [AUTOTEST] PAGE_TRANSITION models -> models ms=553
+2026-04-06 08:44:06.050 [AUTOTEST] PAGE_TRANSITION models -> calendar ms=512
+2026-04-06 08:44:06.093 [CALENDAR] setSelectedMonthYear 2/2026 — полная пересборка UI календаря
+2026-04-06 08:44:06.965 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=912
+2026-04-06 08:44:07.253 [AUTOTEST] PAGE_TRANSITION calendar -> agv_list ms=287
+2026-04-06 08:44:07.306 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=52
+2026-04-06 08:44:07.560 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=252
+2026-04-06 08:44:07.657 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=96
+2026-04-06 08:44:08.058 [AUTOTEST] ROUTE_GROUP_DONE start=user_area total=3
+2026-04-06 08:44:08.059 [AUTOTEST] ROUTE_PROGRESS 13/15 start=user_area
+2026-04-06 08:44:08.063 [AUTOTEST] ROUTE user_area#1 steps=user_area -> agv_list_area -> models_area -> calendar_area -> logs_area
+2026-04-06 08:44:10.561 [AUTOTEST] PAGE_TRANSITION agv_list -> users ms=2901
+2026-04-06 08:44:10.985 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=423
+2026-04-06 08:44:11.058 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=71
+2026-04-06 08:44:11.129 [AUTOTEST] PAGE_TRANSITION users -> agv_list ms=68
+2026-04-06 08:44:11.187 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=56
+2026-04-06 08:44:11.479 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=291
+2026-04-06 08:44:11.559 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=79
+2026-04-06 08:44:11.854 [AUTOTEST] PAGE_TRANSITION agv_list -> models ms=293
+2026-04-06 08:44:11.903 [AUTOTEST] PAGE_TRANSITION models -> models ms=48
+2026-04-06 08:44:12.164 [AUTOTEST] PAGE_TRANSITION models -> models ms=258
+2026-04-06 08:44:12.445 [AUTOTEST] PAGE_TRANSITION models -> calendar ms=279
+2026-04-06 08:44:12.486 [CALENDAR] setSelectedMonthYear 1/2026 — полная пересборка UI календаря
+2026-04-06 08:44:13.442 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=996
+2026-04-06 08:44:13.598 [AUTOTEST] PAGE_TRANSITION calendar -> logs ms=156
+2026-04-06 08:44:13.740 [AUTOTEST] ROUTE_PROGRESS 14/15 start=user_area
+2026-04-06 08:44:13.741 [AUTOTEST] ROUTE user_area#2 steps=user_area -> logs_area -> calendar_area -> models_area -> agv_list_area
+2026-04-06 08:44:16.558 [AUTOTEST] PAGE_TRANSITION logs -> users ms=2928
+2026-04-06 08:44:16.753 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=193
+2026-04-06 08:44:16.826 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=70
+2026-04-06 08:44:16.917 [AUTOTEST] PAGE_TRANSITION users -> logs ms=90
+2026-04-06 08:44:16.995 [AUTOTEST] PAGE_TRANSITION logs -> calendar ms=76
+2026-04-06 08:44:17.036 [CALENDAR] setSelectedMonthYear 2/2026 — полная пересборка UI календаря
+2026-04-06 08:44:17.918 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=922
+2026-04-06 08:44:18.067 [AUTOTEST] PAGE_TRANSITION calendar -> models ms=147
+2026-04-06 08:44:18.114 [AUTOTEST] PAGE_TRANSITION models -> models ms=45
+2026-04-06 08:44:18.394 [AUTOTEST] PAGE_TRANSITION models -> models ms=278
+2026-04-06 08:44:19.097 [AUTOTEST] PAGE_TRANSITION models -> agv_list ms=700
+2026-04-06 08:44:19.153 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=55
+2026-04-06 08:44:19.469 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=314
+2026-04-06 08:44:19.558 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=87
+2026-04-06 08:44:19.866 [AUTOTEST] ROUTE_PROGRESS 15/15 start=user_area
+2026-04-06 08:44:19.866 [AUTOTEST] ROUTE user_area#3 steps=user_area -> agv_list_area -> logs_area -> calendar_area -> models_area
+2026-04-06 08:44:22.296 [AUTOTEST] PAGE_TRANSITION agv_list -> users ms=2736
+2026-04-06 08:44:22.774 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=476
+2026-04-06 08:44:22.846 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=70
+2026-04-06 08:44:22.932 [AUTOTEST] PAGE_TRANSITION users -> agv_list ms=83
+2026-04-06 08:44:22.987 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=52
+2026-04-06 08:44:23.479 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=491
+2026-04-06 08:44:23.559 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=78
+2026-04-06 08:44:23.901 [AUTOTEST] PAGE_TRANSITION agv_list -> logs ms=339
+2026-04-06 08:44:24.027 [AUTOTEST] PAGE_TRANSITION logs -> calendar ms=124
+2026-04-06 08:44:24.067 [CALENDAR] setSelectedMonthYear 3/2026 — полная пересборка UI календаря
+2026-04-06 08:44:24.909 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=882
+2026-04-06 08:44:25.035 [AUTOTEST] PAGE_TRANSITION calendar -> models ms=123
+2026-04-06 08:44:25.083 [AUTOTEST] PAGE_TRANSITION models -> models ms=45
+2026-04-06 08:44:25.360 [AUTOTEST] PAGE_TRANSITION models -> models ms=275
+2026-04-06 08:44:25.865 [AUTOTEST] ROUTE_TOTAL count=15 errors=0
+2026-04-06 08:44:25.867 [AUTOTEST] CHECK ui_route_permutations_grouped_by_start_area PASS ms=101810
+2026-04-06 08:44:26.076 [AUTOTEST] PAGE_TRANSITION models -> profile ms=715
+2026-04-06 08:44:26.078 [AUTOTEST] CHECK ui_show_profile PASS ms=133
+2026-04-06 08:44:26.169 [AUTOTEST] CHECK ui_search_unicode_messy PASS ms=15
+2026-04-06 08:44:26.861 [AUTOTEST] PAGE_TRANSITION profile -> calendar ms=785
+2026-04-06 08:44:27.525 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=661
+2026-04-06 08:44:28.611 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=1086
+2026-04-06 08:44:29.884 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=1271
+2026-04-06 08:44:30.085 [AUTOTEST] PAGE_TRANSITION calendar -> profile ms=200
+2026-04-06 08:44:30.086 [AUTOTEST] CHECK ui_calendar_random_month_flips PASS ms=3841
+2026-04-06 08:44:30.207 [AUTOTEST] PAGE_TRANSITION profile -> logs ms=121
+2026-04-06 08:44:30.280 [AUTOTEST] CHECK ui_logs_reload_random_a PASS ms=118
+2026-04-06 08:44:30.392 [AUTOTEST] PAGE_TRANSITION logs -> logs ms=184
+2026-04-06 08:44:30.393 [AUTOTEST] CHECK ui_show_logs PASS ms=38
+2026-04-06 08:44:30.509 [AUTOTEST] PAGE_TRANSITION logs -> logs ms=116
+2026-04-06 08:44:30.547 [AUTOTEST] CHECK ui_logs_reload_random_triple PASS ms=79
+2026-04-06 08:44:30.628 [AUTOTEST] CHECK ui_search_whitespace_and_long_input PASS ms=3
+2026-04-06 08:44:30.993 [AUTOTEST] CHECK ui_notifications_open_and_interact PASS ms=289
+2026-04-06 08:44:31.231 [AUTOTEST] CHECK ui_search_ascii_simulation PASS ms=2
+2026-04-06 08:44:31.315 [AUTOTEST] PAGE_TRANSITION logs -> models ms=804
+2026-04-06 08:44:31.318 [AUTOTEST] CHECK ui_show_models PASS ms=9
+2026-04-06 08:44:31.443 [AUTOTEST] PAGE_TRANSITION models -> logs ms=126
+2026-04-06 08:44:54.518 [AUTOTEST] CHECK ui_logs_filters_random_sweep PASS ms=23102
+2026-04-06 08:44:55.072 [AUTOTEST] PAGE_TRANSITION logs -> chats ms=23627
+2026-04-06 08:44:55.106 [AUTOTEST] CHECK ui_show_chats PASS ms=510
+2026-04-06 08:44:55.651 [AUTOTEST] CHECK ui_chats_reload_list PASS ms=469
+2026-04-06 08:44:56.128 [AUTOTEST] PAGE_TRANSITION chats -> chats ms=1055
+2026-04-06 08:44:57.911 [AUTOTEST] CHECK ui_chats_reload_burst_x4 PASS ms=2183
+2026-04-06 08:44:57.988 [AUTOTEST] CHECK chat_reject_empty_peer PASS ms=0
+2026-04-06 08:44:58.562 [AUTOTEST] PAGE_TRANSITION chats -> chats ms=2430
+2026-04-06 08:44:58.761 [AUTOTEST] CHECK chat_open_or_create_test_thread PASS ms=695
+2026-04-06 08:44:58.838 [AUTOTEST] CHECK chat_reject_empty_message PASS ms=0
+2026-04-06 08:44:59.211 [AUTOTEST] CHECK chat_send_plain_message PASS ms=296
+2026-04-06 08:44:59.882 [AUTOTEST] CHECK chat_send_dirty_message PASS ms=594
+2026-04-06 08:45:00.097 [AUTOTEST] CHECK chat_reopen_same_thread_is_stable PASS ms=136
+2026-04-06 08:45:01.124 [AUTOTEST] CHECK chat_send_burst_3_messages PASS ms=950
+2026-04-06 08:45:01.199 [AUTOTEST] CHECK chat_text_selection PASS ms=0
+2026-04-06 08:45:01.296 [AUTOTEST] CHECK chat_reject_invalid_thread_write PASS ms=19
+2026-04-06 08:45:01.990 [AUTOTEST] PAGE_TRANSITION chats -> chats ms=3427
+2026-04-06 08:45:02.486 [AUTOTEST] CHECK chat_back_to_thread_list PASS ms=1112
+2026-04-06 08:45:02.624 [AUTOTEST] CHECK db_load_calendar_events_month PASS ms=61
+2026-04-06 08:45:02.702 [AUTOTEST] CHECK db_touch_user_presence PASS ms=0
+2026-04-06 08:45:02.808 [AUTOTEST] CHECK db_write_logaction_plus_users_update PASS ms=29
+2026-04-06 08:45:02.904 [AUTOTEST] CHECK db_unread_count_for_user PASS ms=18
+2026-04-06 08:45:02.982 [AUTOTEST] CHECK db_load_user_profile PASS ms=0
+2026-04-06 08:45:33.436 [AUTOTEST] PAGE_TRANSITION chats -> logs ms=31424
+2026-04-06 08:45:41.410 [AUTOTEST] CHECK ui_databus_6waves_full_on_logs PASS ms=38352
+2026-04-06 08:45:44.539 [AUTOTEST] PAGE_TRANSITION logs -> users ms=11078
+2026-04-06 08:45:44.581 [AUTOTEST] CHECK ui_users_page_admin_or_tech PASS ms=3093
+2026-04-06 08:45:44.678 [AUTOTEST] CHECK db_get_all_users_no_avatars PASS ms=19
+2026-04-06 08:45:44.867 [AUTOTEST] PAGE_TRANSITION users -> calendar ms=326
+2026-04-06 08:45:44.908 [CALENDAR] setSelectedMonthYear 5/2026 — полная пересборка UI календаря
+2026-04-06 08:45:48.137 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=3268
+2026-04-06 08:45:48.963 [AUTOTEST] CHECK ui_calendar_select_random_days PASS ms=4206
+2026-04-06 08:45:51.812 [AUTOTEST] PAGE_TRANSITION calendar -> users ms=3672
+2026-04-06 08:45:51.912 [AUTOTEST] CHECK db_count_agv_list PASS ms=6
+2026-04-06 08:45:52.012 [AUTOTEST] CHECK ui_update_notif_badge PASS ms=23
+2026-04-06 08:45:52.125 [AUTOTEST] PAGE_TRANSITION users -> logs ms=312
+2026-04-06 08:45:52.503 [AUTOTEST] PAGE_TRANSITION logs -> agv_list ms=376
+2026-04-06 08:45:52.509 [AUTOTEST] PAGE_TRANSITION agv_list -> models ms=5
+2026-04-06 08:45:52.512 [AUTOTEST] PAGE_TRANSITION models -> calendar ms=1
+2026-04-06 08:45:52.517 [AUTOTEST] PAGE_TRANSITION calendar -> models ms=3
+2026-04-06 08:45:52.564 [AUTOTEST] PAGE_TRANSITION models -> logs ms=46
+2026-04-06 08:45:52.575 [AUTOTEST] PAGE_TRANSITION logs -> agv_list ms=9
+2026-04-06 08:45:52.579 [AUTOTEST] PAGE_TRANSITION agv_list -> calendar ms=2
+2026-04-06 08:45:52.581 [AUTOTEST] CHECK ui_rapid_nav_randomized PASS ms=493
+2026-04-06 08:45:52.703 [AUTOTEST] CHECK db_load_upcoming_maintenance PASS ms=46
+2026-04-06 08:45:52.879 [AUTOTEST] CHECK db_load_system_status PASS ms=98
+2026-04-06 08:45:55.621 [AUTOTEST] CHECK db_get_all_users_with_avatars PASS ms=2650
+2026-04-06 08:45:55.700 [AUTOTEST] PAGE_TRANSITION calendar -> models ms=3119
+2026-04-06 08:45:56.238 [AUTOTEST] CHECK ui_databus_models_page_burst PASS ms=539
+2026-04-06 08:45:56.355 [AUTOTEST] CHECK db_load_notifications_for_user PASS ms=38
+2026-04-06 08:45:56.432 [AUTOTEST] SUITE_COMPLETE total_ms=208010 PASS=54 SKIP=0 (session always OK)
+2026-04-06 08:45:56.436 [CALENDAR] setSelectedMonthYear 5/2026 — полная пересборка UI календаря
+2026-04-06 09:04:01.304 [AUTOTEST] session_begin | kompleksnyy_test user=VadimR pid=13992
+2026-04-06 09:04:01.310 [AUTOTEST] SUITE_START kompleksnyy_extended (всегда отчёт PASS/SKIP; лимит ~600 с)
+2026-04-06 09:04:01.311 [AUTOTEST] SUITE_RANDOMIZED order=0,3,5,4,6,2,7,1,8,14,12,16,11,20,10,9,19,13,21,17,18,15,36,22,23,24,25,26,28,29,32,27,31,30,33,34,35,49,40,39,38,51,48,43,46,44,52,50,42,45,41,47,37 pick_days=22,13,7,20,1,23,16
+2026-04-06 09:04:01.343 [AUTOTEST] CHECK db_ping_select1 PASS ms=10
+2026-04-06 09:04:01.373 [AUTOTEST] CHECK db_join_agv_list_tasks PASS ms=12
+2026-04-06 09:04:04.233 [AUTOTEST] CHECK db_hidden_autotest_user_filtered_out PASS ms=2843
+2026-04-06 09:04:04.690 [AUTOTEST] CHECK db_ensure_hidden_autotest_chat_user PASS ms=421
+2026-04-06 09:04:04.768 [AUTOTEST] CHECK db_missing_user_profile_returns_false PASS ms=58
+2026-04-06 09:04:04.795 [AUTOTEST] CHECK db_show_tables PASS ms=7
+2026-04-06 09:04:04.850 [AUTOTEST] CHECK db_missing_user_avatar_safe_empty PASS ms=38
+2026-04-06 09:04:04.934 [AUTOTEST] CHECK db_count_8_core_tables PASS ms=66
+2026-04-06 09:04:06.794 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=636
+2026-04-06 09:04:07.670 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=874
+2026-04-06 09:04:08.414 [AUTOTEST] PAGE_TRANSITION calendar -> logs ms=742
+2026-04-06 09:04:08.546 [AUTOTEST] CHECK ui_calendar_random_month_flips PASS ms=3596
+2026-04-06 09:04:08.563 [AUTOTEST] ROUTE_GROUP_DONE start=agv_list_area total=3
+2026-04-06 09:04:08.564 [AUTOTEST] ROUTE_PROGRESS 1/15 start=agv_list_area
+2026-04-06 09:04:08.565 [AUTOTEST] ROUTE agv_list_area#1 steps=agv_list_area -> models_area -> calendar_area -> logs_area -> user_area
+2026-04-06 09:04:08.748 [AUTOTEST] PAGE_TRANSITION logs -> agv_list ms=333
+2026-04-06 09:04:08.794 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=44
+2026-04-06 09:04:09.127 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=331
+2026-04-06 09:04:09.185 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=56
+2026-04-06 09:04:09.472 [AUTOTEST] PAGE_TRANSITION agv_list -> models ms=284
+2026-04-06 09:04:09.497 [AUTOTEST] PAGE_TRANSITION models -> models ms=23
+2026-04-06 09:04:09.782 [AUTOTEST] PAGE_TRANSITION models -> models ms=283
+2026-04-06 09:04:10.045 [AUTOTEST] PAGE_TRANSITION models -> calendar ms=261
+2026-04-06 09:04:10.060 [CALENDAR] setSelectedMonthYear 6/2026 — полная пересборка UI календаря
+2026-04-06 09:04:10.827 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=782
+2026-04-06 09:04:10.917 [AUTOTEST] PAGE_TRANSITION calendar -> logs ms=88
+2026-04-06 09:04:13.622 [AUTOTEST] PAGE_TRANSITION logs -> users ms=2703
+2026-04-06 09:04:13.750 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=126
+2026-04-06 09:04:13.776 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=25
+2026-04-06 09:04:13.802 [AUTOTEST] ROUTE_PROGRESS 2/15 start=agv_list_area
+2026-04-06 09:04:13.803 [AUTOTEST] ROUTE agv_list_area#2 steps=agv_list_area -> user_area -> logs_area -> calendar_area -> models_area
+2026-04-06 09:04:13.959 [AUTOTEST] PAGE_TRANSITION users -> agv_list ms=181
+2026-04-06 09:04:13.981 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=21
+2026-04-06 09:04:14.457 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=475
+2026-04-06 09:04:14.493 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=34
+2026-04-06 09:04:14.734 [AUTOTEST] PAGE_TRANSITION agv_list -> users ms=240
+2026-04-06 09:04:15.008 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=273
+2026-04-06 09:04:15.045 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=34
+2026-04-06 09:04:15.112 [AUTOTEST] PAGE_TRANSITION users -> logs ms=66
+2026-04-06 09:04:35.021 [AUTOTEST] PAGE_TRANSITION logs -> calendar ms=19879
+2026-04-06 09:04:35.046 [CALENDAR] setSelectedMonthYear 5/2026 — полная пересборка UI календаря
+2026-04-06 09:04:35.863 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=842
+2026-04-06 09:04:35.947 [AUTOTEST] PAGE_TRANSITION calendar -> models ms=82
+2026-04-06 09:04:35.962 [AUTOTEST] PAGE_TRANSITION models -> models ms=14
+2026-04-06 09:04:36.182 [AUTOTEST] PAGE_TRANSITION models -> models ms=218
+2026-04-06 09:04:36.421 [AUTOTEST] ROUTE_PROGRESS 3/15 start=agv_list_area
+2026-04-06 09:04:36.422 [AUTOTEST] ROUTE agv_list_area#3 steps=agv_list_area -> logs_area -> models_area -> user_area -> calendar_area
+2026-04-06 09:04:36.561 [AUTOTEST] PAGE_TRANSITION models -> agv_list ms=378
+2026-04-06 09:04:36.586 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=25
+2026-04-06 09:04:36.873 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=285
+2026-04-06 09:04:36.903 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=29
+2026-04-06 09:04:37.164 [AUTOTEST] PAGE_TRANSITION agv_list -> logs ms=259
+2026-04-06 09:04:37.314 [AUTOTEST] PAGE_TRANSITION logs -> models ms=149
+2026-04-06 09:04:37.331 [AUTOTEST] PAGE_TRANSITION models -> models ms=16
+2026-04-06 09:04:37.552 [AUTOTEST] PAGE_TRANSITION models -> models ms=220
+2026-04-06 09:04:40.304 [AUTOTEST] PAGE_TRANSITION models -> users ms=2751
+2026-04-06 09:04:40.817 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=512
+2026-04-06 09:04:40.845 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=27
+2026-04-06 09:04:40.874 [AUTOTEST] PAGE_TRANSITION users -> calendar ms=27
+2026-04-06 09:04:40.892 [CALENDAR] setSelectedMonthYear 4/2026 — полная пересборка UI календаря
+2026-04-06 09:04:41.707 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=829
+2026-04-06 09:04:41.813 [AUTOTEST] ROUTE_GROUP_DONE start=models_area total=3
+2026-04-06 09:04:41.814 [AUTOTEST] ROUTE_PROGRESS 4/15 start=models_area
+2026-04-06 09:04:41.814 [AUTOTEST] ROUTE models_area#1 steps=models_area -> agv_list_area -> calendar_area -> logs_area -> user_area
+2026-04-06 09:04:41.816 [AUTOTEST] PAGE_TRANSITION calendar -> models ms=107
+2026-04-06 09:04:41.831 [AUTOTEST] PAGE_TRANSITION models -> models ms=14
+2026-04-06 09:04:42.032 [AUTOTEST] PAGE_TRANSITION models -> models ms=198
+2026-04-06 09:04:42.444 [AUTOTEST] PAGE_TRANSITION models -> agv_list ms=411
+2026-04-06 09:04:42.470 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=25
+2026-04-06 09:04:42.700 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=228
+2026-04-06 09:04:42.732 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=31
+2026-04-06 09:04:42.960 [AUTOTEST] PAGE_TRANSITION agv_list -> calendar ms=226
+2026-04-06 09:04:42.977 [CALENDAR] setSelectedMonthYear 5/2026 — полная пересборка UI календаря
+2026-04-06 09:04:44.083 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=1123
+2026-04-06 09:04:44.405 [AUTOTEST] PAGE_TRANSITION calendar -> logs ms=319
+2026-04-06 09:04:46.974 [AUTOTEST] PAGE_TRANSITION logs -> users ms=2515
+2026-04-06 09:04:47.100 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=125
+2026-04-06 09:04:47.127 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=25
+2026-04-06 09:04:47.154 [AUTOTEST] ROUTE_PROGRESS 5/15 start=models_area
+2026-04-06 09:04:47.156 [AUTOTEST] ROUTE models_area#2 steps=models_area -> user_area -> logs_area -> calendar_area -> agv_list_area
+2026-04-06 09:04:47.160 [AUTOTEST] PAGE_TRANSITION users -> models ms=32
+2026-04-06 09:04:47.176 [AUTOTEST] PAGE_TRANSITION models -> models ms=15
+2026-04-06 09:04:47.433 [AUTOTEST] PAGE_TRANSITION models -> models ms=254
+2026-04-06 09:04:47.675 [AUTOTEST] PAGE_TRANSITION models -> users ms=241
+2026-04-06 09:04:48.021 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=343
+2026-04-06 09:04:48.048 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=25
+2026-04-06 09:04:48.098 [AUTOTEST] PAGE_TRANSITION users -> logs ms=50
+2026-04-06 09:04:48.165 [AUTOTEST] PAGE_TRANSITION logs -> calendar ms=66
+2026-04-06 09:04:48.180 [CALENDAR] setSelectedMonthYear 4/2026 — полная пересборка UI календаря
+2026-04-06 09:04:48.875 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=709
+2026-04-06 09:04:49.089 [AUTOTEST] PAGE_TRANSITION calendar -> agv_list ms=212
+2026-04-06 09:04:49.112 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=22
+2026-04-06 09:04:49.342 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=229
+2026-04-06 09:04:49.379 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=35
+2026-04-06 09:04:49.704 [AUTOTEST] ROUTE_PROGRESS 6/15 start=models_area
+2026-04-06 09:04:49.705 [AUTOTEST] ROUTE models_area#3 steps=models_area -> logs_area -> user_area -> agv_list_area -> calendar_area
+2026-04-06 09:04:49.711 [AUTOTEST] PAGE_TRANSITION agv_list -> models ms=331
+2026-04-06 09:04:49.728 [AUTOTEST] PAGE_TRANSITION models -> models ms=15
+2026-04-06 09:04:50.029 [AUTOTEST] PAGE_TRANSITION models -> models ms=300
+2026-04-06 09:04:50.281 [AUTOTEST] PAGE_TRANSITION models -> logs ms=251
+2026-04-06 09:04:52.925 [AUTOTEST] PAGE_TRANSITION logs -> users ms=2642
+2026-04-06 09:04:53.053 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=127
+2026-04-06 09:04:53.079 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=25
+2026-04-06 09:04:53.115 [AUTOTEST] PAGE_TRANSITION users -> agv_list ms=35
+2026-04-06 09:04:53.155 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=39
+2026-04-06 09:04:53.429 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=272
+2026-04-06 09:04:53.468 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=37
+2026-04-06 09:04:53.723 [AUTOTEST] PAGE_TRANSITION agv_list -> calendar ms=254
+2026-04-06 09:04:53.744 [CALENDAR] setSelectedMonthYear 5/2026 — полная пересборка UI календаря
+2026-04-06 09:04:54.511 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=786
+2026-04-06 09:04:54.594 [AUTOTEST] ROUTE_GROUP_DONE start=calendar_area total=3
+2026-04-06 09:04:54.595 [AUTOTEST] ROUTE_PROGRESS 7/15 start=calendar_area
+2026-04-06 09:04:54.595 [AUTOTEST] ROUTE calendar_area#1 steps=calendar_area -> agv_list_area -> models_area -> logs_area -> user_area
+2026-04-06 09:04:54.596 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=85
+2026-04-06 09:04:54.612 [CALENDAR] setSelectedMonthYear 6/2026 — полная пересборка UI календаря
+2026-04-06 09:04:55.195 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=598
+2026-04-06 09:04:55.674 [AUTOTEST] PAGE_TRANSITION calendar -> agv_list ms=478
+2026-04-06 09:04:55.731 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=55
+2026-04-06 09:04:56.187 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=455
+2026-04-06 09:04:56.223 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=35
+2026-04-06 09:04:56.470 [AUTOTEST] PAGE_TRANSITION agv_list -> models ms=243
+2026-04-06 09:04:56.486 [AUTOTEST] PAGE_TRANSITION models -> models ms=15
+2026-04-06 09:04:56.707 [AUTOTEST] PAGE_TRANSITION models -> models ms=219
+2026-04-06 09:04:56.962 [AUTOTEST] PAGE_TRANSITION models -> logs ms=255
+2026-04-06 09:04:59.455 [AUTOTEST] PAGE_TRANSITION logs -> users ms=2491
+2026-04-06 09:04:59.672 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=216
+2026-04-06 09:04:59.698 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=24
+2026-04-06 09:04:59.724 [AUTOTEST] ROUTE_PROGRESS 8/15 start=calendar_area
+2026-04-06 09:04:59.725 [AUTOTEST] ROUTE calendar_area#2 steps=calendar_area -> user_area -> logs_area -> models_area -> agv_list_area
+2026-04-06 09:04:59.726 [AUTOTEST] PAGE_TRANSITION users -> calendar ms=27
+2026-04-06 09:04:59.747 [CALENDAR] setSelectedMonthYear 7/2026 — полная пересборка UI календаря
+2026-04-06 09:05:00.802 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=1076
+2026-04-06 09:05:03.276 [AUTOTEST] PAGE_TRANSITION calendar -> users ms=2472
+2026-04-06 09:05:03.365 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=88
+2026-04-06 09:05:03.390 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=24
+2026-04-06 09:05:03.432 [AUTOTEST] PAGE_TRANSITION users -> logs ms=40
+2026-04-06 09:05:03.575 [AUTOTEST] PAGE_TRANSITION logs -> models ms=142
+2026-04-06 09:05:03.592 [AUTOTEST] PAGE_TRANSITION models -> models ms=15
+2026-04-06 09:05:03.796 [AUTOTEST] PAGE_TRANSITION models -> models ms=204
+2026-04-06 09:05:04.235 [AUTOTEST] PAGE_TRANSITION models -> agv_list ms=437
+2026-04-06 09:05:04.267 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=30
+2026-04-06 09:05:04.457 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=189
+2026-04-06 09:05:04.491 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=33
+2026-04-06 09:05:04.753 [AUTOTEST] ROUTE_PROGRESS 9/15 start=calendar_area
+2026-04-06 09:05:04.754 [AUTOTEST] ROUTE calendar_area#3 steps=calendar_area -> agv_list_area -> models_area -> user_area -> logs_area
+2026-04-06 09:05:04.755 [AUTOTEST] PAGE_TRANSITION agv_list -> calendar ms=263
+2026-04-06 09:05:04.778 [CALENDAR] setSelectedMonthYear 6/2026 — полная пересборка UI календаря
+2026-04-06 09:05:05.732 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=976
+2026-04-06 09:05:05.987 [AUTOTEST] PAGE_TRANSITION calendar -> agv_list ms=253
+2026-04-06 09:05:06.032 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=44
+2026-04-06 09:05:06.304 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=270
+2026-04-06 09:05:06.356 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=51
+2026-04-06 09:05:06.584 [AUTOTEST] PAGE_TRANSITION agv_list -> models ms=227
+2026-04-06 09:05:06.600 [AUTOTEST] PAGE_TRANSITION models -> models ms=15
+2026-04-06 09:05:06.801 [AUTOTEST] PAGE_TRANSITION models -> models ms=200
+2026-04-06 09:05:09.476 [AUTOTEST] PAGE_TRANSITION models -> users ms=2655
+2026-04-06 09:05:09.606 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=129
+2026-04-06 09:05:09.633 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=24
+2026-04-06 09:05:09.675 [AUTOTEST] PAGE_TRANSITION users -> logs ms=41
+2026-04-06 09:05:09.838 [AUTOTEST] ROUTE_GROUP_DONE start=logs_area total=3
+2026-04-06 09:05:09.838 [AUTOTEST] ROUTE_PROGRESS 10/15 start=logs_area
+2026-04-06 09:05:09.840 [AUTOTEST] ROUTE logs_area#1 steps=logs_area -> agv_list_area -> models_area -> calendar_area -> user_area
+2026-04-06 09:05:09.874 [AUTOTEST] PAGE_TRANSITION logs -> logs ms=197
+2026-04-06 09:05:09.944 [AUTOTEST] PAGE_TRANSITION logs -> agv_list ms=68
+2026-04-06 09:05:09.965 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=20
+2026-04-06 09:05:10.167 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=201
+2026-04-06 09:05:10.203 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=35
+2026-04-06 09:05:10.438 [AUTOTEST] PAGE_TRANSITION agv_list -> models ms=234
+2026-04-06 09:05:10.467 [AUTOTEST] PAGE_TRANSITION models -> models ms=27
+2026-04-06 09:05:10.688 [AUTOTEST] PAGE_TRANSITION models -> models ms=220
+2026-04-06 09:05:10.950 [AUTOTEST] PAGE_TRANSITION models -> calendar ms=261
+2026-04-06 09:05:10.971 [CALENDAR] setSelectedMonthYear 7/2026 — полная пересборка UI календаря
+2026-04-06 09:05:12.209 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=1258
+2026-04-06 09:05:14.778 [AUTOTEST] PAGE_TRANSITION calendar -> users ms=2567
+2026-04-06 09:05:15.144 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=364
+2026-04-06 09:05:15.169 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=24
+2026-04-06 09:05:15.195 [AUTOTEST] ROUTE_PROGRESS 11/15 start=logs_area
+2026-04-06 09:05:15.196 [AUTOTEST] ROUTE logs_area#2 steps=logs_area -> user_area -> calendar_area -> models_area -> agv_list_area
+2026-04-06 09:05:15.218 [AUTOTEST] PAGE_TRANSITION users -> logs ms=48
+2026-04-06 09:05:15.381 [AUTOTEST] PAGE_TRANSITION logs -> users ms=161
+2026-04-06 09:05:17.220 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=1838
+2026-04-06 09:05:17.245 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=24
+2026-04-06 09:05:17.273 [AUTOTEST] PAGE_TRANSITION users -> calendar ms=25
+2026-04-06 09:05:17.292 [CALENDAR] setSelectedMonthYear 6/2026 — полная пересборка UI календаря
+2026-04-06 09:05:22.233 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=4960
+2026-04-06 09:05:22.851 [AUTOTEST] PAGE_TRANSITION calendar -> models ms=617
+2026-04-06 09:05:22.866 [AUTOTEST] PAGE_TRANSITION models -> models ms=14
+2026-04-06 09:05:23.074 [AUTOTEST] PAGE_TRANSITION models -> models ms=206
+2026-04-06 09:05:23.710 [AUTOTEST] PAGE_TRANSITION models -> agv_list ms=634
+2026-04-06 09:05:23.753 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=42
+2026-04-06 09:05:24.009 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=255
+2026-04-06 09:05:24.052 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=41
+2026-04-06 09:05:24.288 [AUTOTEST] ROUTE_PROGRESS 12/15 start=logs_area
+2026-04-06 09:05:24.288 [AUTOTEST] ROUTE logs_area#3 steps=logs_area -> user_area -> calendar_area -> agv_list_area -> models_area
+2026-04-06 09:05:24.317 [AUTOTEST] PAGE_TRANSITION agv_list -> logs ms=263
+2026-04-06 09:05:27.758 [AUTOTEST] PAGE_TRANSITION logs -> users ms=3440
+2026-04-06 09:05:30.053 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=2294
+2026-04-06 09:05:30.079 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=24
+2026-04-06 09:05:30.106 [AUTOTEST] PAGE_TRANSITION users -> calendar ms=25
+2026-04-06 09:05:30.122 [CALENDAR] setSelectedMonthYear 7/2026 — полная пересборка UI календаря
+2026-04-06 09:05:31.604 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=1498
+2026-04-06 09:05:32.327 [AUTOTEST] PAGE_TRANSITION calendar -> agv_list ms=722
+2026-04-06 09:05:32.349 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=21
+2026-04-06 09:05:32.554 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=203
+2026-04-06 09:05:32.588 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=31
+2026-04-06 09:05:32.840 [AUTOTEST] PAGE_TRANSITION agv_list -> models ms=250
+2026-04-06 09:05:32.856 [AUTOTEST] PAGE_TRANSITION models -> models ms=15
+2026-04-06 09:05:33.084 [AUTOTEST] PAGE_TRANSITION models -> models ms=227
+2026-04-06 09:05:33.332 [AUTOTEST] ROUTE_GROUP_DONE start=user_area total=3
+2026-04-06 09:05:33.333 [AUTOTEST] ROUTE_PROGRESS 13/15 start=user_area
+2026-04-06 09:05:33.333 [AUTOTEST] ROUTE user_area#1 steps=user_area -> agv_list_area -> models_area -> calendar_area -> logs_area
+2026-04-06 09:05:35.911 [AUTOTEST] PAGE_TRANSITION models -> users ms=2825
+2026-04-06 09:05:36.071 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=159
+2026-04-06 09:05:36.097 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=25
+2026-04-06 09:05:36.133 [AUTOTEST] PAGE_TRANSITION users -> agv_list ms=35
+2026-04-06 09:05:36.169 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=35
+2026-04-06 09:05:36.419 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=249
+2026-04-06 09:05:36.454 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=34
+2026-04-06 09:05:36.718 [AUTOTEST] PAGE_TRANSITION agv_list -> models ms=262
+2026-04-06 09:05:36.738 [AUTOTEST] PAGE_TRANSITION models -> models ms=19
+2026-04-06 09:05:36.949 [AUTOTEST] PAGE_TRANSITION models -> models ms=209
+2026-04-06 09:05:37.215 [AUTOTEST] PAGE_TRANSITION models -> calendar ms=265
+2026-04-06 09:05:37.238 [CALENDAR] setSelectedMonthYear 6/2026 — полная пересборка UI календаря
+2026-04-06 09:05:38.221 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=1005
+2026-04-06 09:05:38.347 [AUTOTEST] PAGE_TRANSITION calendar -> logs ms=124
+2026-04-06 09:05:38.454 [AUTOTEST] ROUTE_PROGRESS 14/15 start=user_area
+2026-04-06 09:05:38.455 [AUTOTEST] ROUTE user_area#2 steps=user_area -> logs_area -> calendar_area -> models_area -> agv_list_area
+2026-04-06 09:05:40.921 [AUTOTEST] PAGE_TRANSITION logs -> users ms=2573
+2026-04-06 09:05:41.069 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=148
+2026-04-06 09:05:41.096 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=24
+2026-04-06 09:05:41.139 [AUTOTEST] PAGE_TRANSITION users -> logs ms=42
+2026-04-06 09:05:41.209 [AUTOTEST] PAGE_TRANSITION logs -> calendar ms=68
+2026-04-06 09:05:41.224 [CALENDAR] setSelectedMonthYear 5/2026 — полная пересборка UI календаря
+2026-04-06 09:05:42.000 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=791
+2026-04-06 09:05:42.084 [AUTOTEST] PAGE_TRANSITION calendar -> models ms=82
+2026-04-06 09:05:42.102 [AUTOTEST] PAGE_TRANSITION models -> models ms=15
+2026-04-06 09:05:42.556 [AUTOTEST] PAGE_TRANSITION models -> models ms=453
+2026-04-06 09:05:43.191 [AUTOTEST] PAGE_TRANSITION models -> agv_list ms=633
+2026-04-06 09:05:43.234 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=42
+2026-04-06 09:05:43.785 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=549
+2026-04-06 09:05:43.819 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=34
+2026-04-06 09:05:44.073 [AUTOTEST] ROUTE_PROGRESS 15/15 start=user_area
+2026-04-06 09:05:44.074 [AUTOTEST] ROUTE user_area#3 steps=user_area -> models_area -> logs_area -> agv_list_area -> calendar_area
+2026-04-06 09:05:46.634 [AUTOTEST] PAGE_TRANSITION agv_list -> users ms=2813
+2026-04-06 09:05:46.783 [AUTOTEST] PAGE_TRANSITION users -> user_profile ms=148
+2026-04-06 09:05:46.809 [AUTOTEST] PAGE_TRANSITION user_profile -> users ms=25
+2026-04-06 09:05:46.839 [AUTOTEST] PAGE_TRANSITION users -> models ms=27
+2026-04-06 09:05:46.857 [AUTOTEST] PAGE_TRANSITION models -> models ms=16
+2026-04-06 09:05:47.086 [AUTOTEST] PAGE_TRANSITION models -> models ms=228
+2026-04-06 09:05:47.388 [AUTOTEST] PAGE_TRANSITION models -> logs ms=300
+2026-04-06 09:05:47.810 [AUTOTEST] PAGE_TRANSITION logs -> agv_list ms=420
+2026-04-06 09:05:47.861 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_list ms=50
+2026-04-06 09:05:48.119 [AUTOTEST] PAGE_TRANSITION agv_list -> agv_detail ms=256
+2026-04-06 09:05:48.154 [AUTOTEST] PAGE_TRANSITION agv_detail -> agv_list ms=34
+2026-04-06 09:05:48.401 [AUTOTEST] PAGE_TRANSITION agv_list -> calendar ms=245
+2026-04-06 09:05:48.423 [CALENDAR] setSelectedMonthYear 6/2026 — полная пересборка UI календаря
+2026-04-06 09:05:49.554 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=1152
+2026-04-06 09:05:49.636 [AUTOTEST] ROUTE_TOTAL count=15 errors=0
+2026-04-06 09:05:49.637 [AUTOTEST] CHECK ui_route_permutations_grouped_by_start_area PASS ms=101074
+2026-04-06 09:05:49.900 [AUTOTEST] CHECK ui_notifications_open_and_interact PASS ms=246
+2026-04-06 09:05:50.117 [AUTOTEST] PAGE_TRANSITION calendar -> agv_list ms=561
+2026-04-06 09:05:50.133 [AUTOTEST] CHECK ui_show_agv_list PASS ms=144
+2026-04-06 09:05:50.179 [AUTOTEST] PAGE_TRANSITION agv_list -> logs ms=62
+2026-04-06 09:05:50.409 [AUTOTEST] CHECK ui_logs_filters_random_sweep PASS ms=259
+2026-04-06 09:05:50.494 [AUTOTEST] CHECK ui_search_whitespace_and_long_input PASS ms=14
+2026-04-06 09:05:50.544 [AUTOTEST] PAGE_TRANSITION logs -> logs ms=363
+2026-04-06 09:05:50.588 [AUTOTEST] CHECK ui_logs_reload_random_triple PASS ms=78
+2026-04-06 09:05:50.639 [AUTOTEST] PAGE_TRANSITION logs -> logs ms=94
+2026-04-06 09:05:50.657 [AUTOTEST] CHECK ui_logs_reload_random_a PASS ms=53
+2026-04-06 09:05:50.677 [AUTOTEST] CHECK ui_search_ascii_simulation PASS ms=4
+2026-04-06 09:05:50.693 [AUTOTEST] PAGE_TRANSITION logs -> calendar ms=53
+2026-04-06 09:05:50.734 [AUTOTEST] CLICK_SWEEP calendar -> Чаты
+2026-04-06 09:05:51.256 [AUTOTEST] PAGE_TRANSITION calendar -> chats ms=562
+2026-04-06 09:05:51.281 [AUTOTEST] CLICK_SWEEP calendar -> VadimR
+2026-04-06 09:05:51.311 [AUTOTEST] CLICK_SWEEP calendar -> Пользователи
+2026-04-06 09:05:53.751 [AUTOTEST] PAGE_TRANSITION chats -> users ms=2453
+2026-04-06 09:05:53.781 [AUTOTEST] CLICK_SWEEP calendar -> Модель AGV
+2026-04-06 09:05:53.783 [AUTOTEST] PAGE_TRANSITION users -> models ms=30
+2026-04-06 09:05:53.798 [AUTOTEST] CLICK_SWEEP calendar -> Сформировать годовой отчет
+2026-04-06 09:05:54.019 [AUTOTEST] CLICK_SWEEP calendar -> Настройки
+2026-04-06 09:05:54.168 [AUTOTEST] CLICK_SWEEP calendar -> AGV
+2026-04-06 09:05:54.177 [AUTOTEST] PAGE_TRANSITION models -> agv_list ms=394
+2026-04-06 09:05:54.199 [AUTOTEST] CLICK_SWEEP calendar -> + Добавить AGV
+2026-04-06 09:05:54.433 [AUTOTEST] CLICK_SWEEP calendar -> Назад
+2026-04-06 09:05:54.435 [AUTOTEST] PAGE_TRANSITION agv_list -> calendar ms=256
+2026-04-06 09:05:54.465 [AUTOTEST] PAGE_TRANSITION calendar -> agv_list ms=29
+2026-04-06 09:05:54.507 [AUTOTEST] CLICK_SWEEP agv -> Назад
+2026-04-06 09:05:54.509 [AUTOTEST] PAGE_TRANSITION agv_list -> calendar ms=43
+2026-04-06 09:05:54.531 [AUTOTEST] PAGE_TRANSITION calendar -> models ms=21
+2026-04-06 09:05:54.572 [AUTOTEST] CLICK_SWEEP models -> Назад
+2026-04-06 09:05:54.573 [AUTOTEST] PAGE_TRANSITION models -> calendar ms=40
+2026-04-06 09:05:54.617 [AUTOTEST] PAGE_TRANSITION calendar -> logs ms=42
+2026-04-06 09:05:54.658 [AUTOTEST] CLICK_SWEEP logs -> Назад
+2026-04-06 09:05:54.660 [AUTOTEST] PAGE_TRANSITION logs -> calendar ms=42
+2026-04-06 09:05:55.084 [AUTOTEST] PAGE_TRANSITION calendar -> chats ms=423
+2026-04-06 09:05:55.125 [AUTOTEST] CLICK_SWEEP chats -> Назад
+2026-04-06 09:05:55.126 [AUTOTEST] PAGE_TRANSITION chats -> calendar ms=41
+2026-04-06 09:05:55.274 [AUTOTEST] PAGE_TRANSITION calendar -> profile ms=146
+2026-04-06 09:05:55.315 [AUTOTEST] CLICK_SWEEP profile -> Назад
+2026-04-06 09:05:55.317 [AUTOTEST] PAGE_TRANSITION profile -> calendar ms=42
+2026-04-06 09:05:55.340 [AUTOTEST] PAGE_TRANSITION calendar -> users ms=21
+2026-04-06 09:05:55.363 [AUTOTEST] CLICK_SWEEP users -> Назад
+2026-04-06 09:05:55.366 [AUTOTEST] PAGE_TRANSITION users -> calendar ms=24
+2026-04-06 09:05:55.381 [AUTOTEST] CHECK ui_clickable_sweep_visible_safe_buttons PASS ms=4688
+2026-04-06 09:05:55.397 [AUTOTEST] PAGE_TRANSITION calendar -> profile ms=30
+2026-04-06 09:05:55.412 [AUTOTEST] CHECK ui_show_profile PASS ms=15
+2026-04-06 09:05:55.429 [AUTOTEST] PAGE_TRANSITION profile -> models ms=30
+2026-04-06 09:05:55.436 [AUTOTEST] CHECK ui_show_models PASS ms=7
+2026-04-06 09:05:55.457 [AUTOTEST] PAGE_TRANSITION models -> logs ms=28
+2026-04-06 09:05:55.548 [AUTOTEST] CHECK ui_show_logs PASS ms=95
+2026-04-06 09:05:55.565 [AUTOTEST] PAGE_TRANSITION logs -> calendar ms=106
+2026-04-06 09:05:55.578 [AUTOTEST] CHECK ui_show_calendar PASS ms=14
+2026-04-06 09:05:55.579 [AUTOTEST] CHECK calendar_days_in_month_rules PASS ms=0
+2026-04-06 09:05:55.629 [AUTOTEST] CHECK ui_search_unicode_messy PASS ms=33
+2026-04-06 09:05:56.360 [AUTOTEST] PAGE_TRANSITION calendar -> chats ms=794
+2026-04-06 09:05:56.372 [AUTOTEST] CHECK ui_show_chats PASS ms=728
+2026-04-06 09:05:56.825 [AUTOTEST] CHECK ui_chats_reload_list PASS ms=435
+2026-04-06 09:05:57.268 [AUTOTEST] PAGE_TRANSITION chats -> chats ms=907
+2026-04-06 09:05:59.070 [AUTOTEST] CHECK ui_chats_reload_burst_x4 PASS ms=2230
+2026-04-06 09:05:59.086 [AUTOTEST] CHECK chat_reject_empty_peer PASS ms=0
+2026-04-06 09:06:00.164 [AUTOTEST] PAGE_TRANSITION chats -> chats ms=2894
+2026-04-06 09:06:00.408 [AUTOTEST] CHECK chat_open_or_create_test_thread PASS ms=1305
+2026-04-06 09:06:00.425 [AUTOTEST] CHECK chat_reject_empty_message PASS ms=0
+2026-04-06 09:06:01.037 [AUTOTEST] CHECK chat_send_plain_message PASS ms=596
+2026-04-06 09:06:01.054 [AUTOTEST] CHECK chat_text_selection PASS ms=0
+2026-04-06 09:06:01.208 [AUTOTEST] CHECK chat_reopen_same_thread_is_stable PASS ms=138
+2026-04-06 09:06:03.237 [AUTOTEST] CHECK chat_send_burst_3_messages PASS ms=1995
+2026-04-06 09:06:03.834 [AUTOTEST] CHECK chat_send_dirty_message PASS ms=554
+2026-04-06 09:06:03.936 [AUTOTEST] CHECK chat_reject_invalid_thread_write PASS ms=74
+2026-04-06 09:06:04.430 [AUTOTEST] PAGE_TRANSITION chats -> chats ms=4265
+2026-04-06 09:06:04.877 [AUTOTEST] CHECK chat_back_to_thread_list PASS ms=921
+2026-04-06 09:06:04.893 [AUTOTEST] PAGE_TRANSITION chats -> users ms=462
+2026-04-06 09:06:04.911 [AUTOTEST] CHECK ui_users_page_admin_or_tech PASS ms=18
+2026-04-06 09:06:04.933 [AUTOTEST] CHECK db_count_agv_list PASS ms=5
+2026-04-06 09:06:04.949 [AUTOTEST] CHECK db_touch_user_presence PASS ms=0
+2026-04-06 09:06:05.381 [AUTOTEST] CHECK db_write_logaction_plus_users_update PASS ms=415
+2026-04-06 09:06:05.399 [AUTOTEST] PAGE_TRANSITION users -> models ms=504
+2026-04-06 09:06:05.884 [AUTOTEST] CHECK ui_databus_models_page_burst PASS ms=486
+2026-04-06 09:06:05.902 [AUTOTEST] PAGE_TRANSITION models -> calendar ms=501
+2026-04-06 09:06:05.903 [CALENDAR] setSelectedMonthYear 6/2026 — полная пересборка UI календаря
+2026-04-06 09:06:06.780 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=876
+2026-04-06 09:06:06.967 [AUTOTEST] PAGE_TRANSITION calendar -> agv_list ms=185
+2026-04-06 09:06:07.090 [AUTOTEST] PAGE_TRANSITION agv_list -> models ms=122
+2026-04-06 09:06:07.127 [AUTOTEST] PAGE_TRANSITION models -> logs ms=36
+2026-04-06 09:06:07.477 [AUTOTEST] PAGE_TRANSITION logs -> agv_list ms=348
+2026-04-06 09:06:07.499 [AUTOTEST] PAGE_TRANSITION agv_list -> models ms=20
+2026-04-06 09:06:07.534 [AUTOTEST] PAGE_TRANSITION models -> logs ms=33
+2026-04-06 09:06:07.554 [AUTOTEST] PAGE_TRANSITION logs -> calendar ms=19
+2026-04-06 09:06:07.571 [AUTOTEST] CHECK ui_rapid_nav_randomized PASS ms=1670
+2026-04-06 09:06:09.947 [AUTOTEST] CHECK db_get_all_users_with_avatars PASS ms=2360
+2026-04-06 09:06:09.963 [AUTOTEST] CHECK db_load_user_profile PASS ms=0
+2026-04-06 09:06:10.019 [AUTOTEST] CHECK db_load_system_status PASS ms=39
+2026-04-06 09:06:10.105 [AUTOTEST] CHECK db_load_calendar_events_month PASS ms=69
+2026-04-06 09:06:10.147 [AUTOTEST] CHECK ui_update_notif_badge PASS ms=25
+2026-04-06 09:06:10.165 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=2609
+2026-04-06 09:06:10.577 [AUTOTEST] CHECK ui_calendar_select_random_days PASS ms=412
+2026-04-06 09:06:10.579 [AUTOTEST] PAGE_TRANSITION calendar -> calendar ms=412
+2026-04-06 09:06:10.647 [AUTOTEST] CHECK db_unread_count_for_user PASS ms=34
+2026-04-06 09:06:10.818 [AUTOTEST] CHECK db_load_upcoming_maintenance PASS ms=154
+2026-04-06 09:06:10.870 [AUTOTEST] CHECK db_load_notifications_for_user PASS ms=34
+2026-04-06 09:06:10.908 [AUTOTEST] CHECK db_get_all_users_no_avatars PASS ms=20
+2026-04-06 09:06:10.966 [AUTOTEST] PAGE_TRANSITION calendar -> logs ms=385
+2026-04-06 09:06:13.770 [AUTOTEST] CHECK ui_databus_6waves_full_on_logs PASS ms=2844
+2026-04-06 09:06:13.787 [AUTOTEST] SUITE_COMPLETE total_ms=132478 PASS=54 SKIP=0 (session always OK)
+2026-04-06 09:06:13.864 [CALENDAR] setSelectedMonthYear 6/2026 — полная пересборка UI календаря

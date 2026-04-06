@@ -906,6 +906,43 @@ bool TaskChatWidget::autotestRejectsEmptyMessage(QString *error)
     return true;
 }
 
+bool TaskChatWidget::autotestTextSelection(QString *error)
+{
+    if (threadId_ <= 0) {
+        if (error) *error = QStringLiteral("Тестовый тред не открыт");
+        return false;
+    }
+    if (!messagesLayout_) {
+        if (error) *error = QStringLiteral("Layout сообщений не найден");
+        return false;
+    }
+
+    QLabel *textLabel = nullptr;
+    for (int i = 0; i < messagesLayout_->count(); ++i) {
+        QLayoutItem *item = messagesLayout_->itemAt(i);
+        if (!item || !item->widget()) continue;
+        QWidget *row = item->widget();
+        if (row->objectName() != "chatMessageRow") continue;
+        QLabel *lbl = row->findChild<QLabel*>("messageText");
+        if (lbl) {
+            textLabel = lbl;
+            break;
+        }
+    }
+
+    if (!textLabel) {
+        if (error) *error = QStringLiteral("Текстовая метка сообщения не найдена");
+        return false;
+    }
+
+    if (textLabel->textInteractionFlags() != Qt::TextSelectableByMouse) {
+        if (error) *error = QStringLiteral("Текст не интерактивен для выделения");
+        return false;
+    }
+
+    return true;
+}
+
 void TaskChatWidget::updatePeerHeaderMeta()
 {
     QString peerDisplay = peerUsername_;

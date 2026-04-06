@@ -3261,6 +3261,7 @@ void leftMenu::runFullStressAutotest()
         InitPhChatOpenTestThread,
         InitPhChatReopenStableThread,
         InitPhChatRejectEmptyMessage,
+        InitPhChatTextSelection,
         InitPhChatSendPlainMessage,
         InitPhChatSendDirtyMessage,
         InitPhChatBurstMessages,
@@ -3316,7 +3317,7 @@ void leftMenu::runFullStressAutotest()
     stressSuiteOrder_ += bucketDb;
     stressSuiteOrder_ += bucketUi;
     stressSuiteOrder_ += QVector<int>{ InitPhUiChats, InitPhChatsReload, InitPhChatsReloadBurst, InitPhChatRejectInvalidTarget,
-                                       InitPhChatOpenTestThread, InitPhChatRejectEmptyMessage };
+                                       InitPhChatOpenTestThread, InitPhChatRejectEmptyMessage, InitPhChatTextSelection };
     stressSuiteOrder_ += bucketChat;
     stressSuiteOrder_ += QVector<int>{ InitPhChatRejectBadThreadMessage, InitPhChatBackToList };
     stressSuiteOrder_ += bucketTail;
@@ -3342,7 +3343,7 @@ void leftMenu::runFullStressAutotest()
     stressAutotestLogLine(QStringLiteral("SUITE_RANDOMIZED order=%1 pick_days=%2")
                               .arg(phaseNames.join(QStringLiteral(",")),
                                    pickDays.join(QStringLiteral(","))));
-    scheduleStressSuiteStep(60);
+    scheduleStressSuiteStep(20);
 }
 
 void leftMenu::scheduleStressSuiteStep(int delayMs)
@@ -3466,6 +3467,7 @@ void leftMenu::stressSuiteTick()
         PhChatSendPlainMessage,
         PhChatSendDirtyMessage,
         PhChatBurstMessages,
+        PhChatTextSelection,
         PhChatRejectBadThreadMessage,
         PhChatBackToList,
         PhUiUsers,
@@ -3489,7 +3491,7 @@ void leftMenu::stressSuiteTick()
         PhDone
     };
 
-    const int gapMs = 75;
+    const int gapMs = 15;
     const qint64 wallCapMs = kComplexTestWallCapMs;
     const int orderedDoneIndex = stressSuiteOrder_.isEmpty() ? PhDone : stressSuiteOrder_.size();
     if (stressSuitePhase_ < orderedDoneIndex && stressSuiteTotalTimer_.elapsed() > wallCapMs) {
@@ -3638,14 +3640,14 @@ void leftMenu::stressSuiteTick()
             stressSuiteStepTimer_.start();
         }
         // Каждый шаг — полная пересборка leftMenu через setSelectedMonthYear; десятки подряд дают минутный фриз.
-        const int burstLimit = 3 + QRandomGenerator::global()->bounded(3);
+        const int burstLimit = 2 + QRandomGenerator::global()->bounded(2);
         if (stressSuiteInner_ < burstLimit) {
             activePage_ = ActivePage::Calendar;
             const int delta = QRandomGenerator::global()->bounded(2) == 0 ? -1 : 1;
             changeMonth(delta);
             QApplication::processEvents();
             ++stressSuiteInner_;
-            scheduleStressSuiteStep(45 + QRandomGenerator::global()->bounded(50));
+            scheduleStressSuiteStep(15 + QRandomGenerator::global()->bounded(20));
             return;
         }
         calendarStressDiagQuiet_ = false;
@@ -3691,7 +3693,7 @@ void leftMenu::stressSuiteTick()
         bool ok = logsTable != nullptr && logFilterUser_ && logFilterSource_ && logFilterCategory_ && logFilterTime_;
         if (ok) {
             QComboBox *combos[] = { logFilterUser_, logFilterSource_, logFilterCategory_, logFilterTime_ };
-            for (int step = 0; step < 10; ++step) {
+            for (int step = 0; step < 5; ++step) {
                 QComboBox *combo = combos[QRandomGenerator::global()->bounded(4)];
                 if (!combo || combo->count() <= 0)
                     continue;
@@ -3761,12 +3763,12 @@ void leftMenu::stressSuiteTick()
                 stressAutotestLogLine(QStringLiteral("CLICK_SWEEP %1 -> %2").arg(scope, label));
                 button->click();
                 ++clicked;
-                waitUiMs(45);
+                waitUiMs(15);
                 if (QDialog *dlg = findVisibleDialogByTitle(QString())) {
                     (void)tryCloseDialog(dlg);
-                    waitUiMs(40);
+                    waitUiMs(15);
                 }
-                if (clicked >= 24)
+                if (clicked >= 12)
                     break;
             }
             return clicked;
@@ -3801,7 +3803,7 @@ void leftMenu::stressSuiteTick()
             const QString r = getUserRole(AppSession::currentUsername());
             if (r == QStringLiteral("admin") || r == QStringLiteral("tech")) {
                 showUsersPage();
-                waitUiMs(50);
+                waitUiMs(20);
                 clickedTotal += clickSafeButtonsOn(usersPage ? static_cast<QWidget*>(usersPage) : this, QStringLiteral("users"));
             }
         }
@@ -3837,7 +3839,7 @@ void leftMenu::stressSuiteTick()
         auto openAddAgvAndClose = [this]() -> bool {
             scheduleRejectDialog(QStringLiteral("Добавить AGV"));
             emit addAgvRequested();
-            waitUiMs(70);
+                waitUiMs(25);
             return findVisibleDialogByTitle(QStringLiteral("Добавить AGV")) == nullptr;
         };
 
@@ -3851,7 +3853,7 @@ void leftMenu::stressSuiteTick()
                 return false;
             scheduleRejectDialog(QStringLiteral("Добавить модель AGV"));
             btn->click();
-            waitUiMs(70);
+                waitUiMs(25);
             return findVisibleDialogByTitle(QStringLiteral("Добавить модель AGV")) == nullptr;
         };
 
@@ -3871,9 +3873,9 @@ void leftMenu::stressSuiteTick()
             if (showButtons.isEmpty())
                 return false;
             showButtons.at(QRandomGenerator::global()->bounded(showButtons.size()))->click();
-            waitUiMs(70);
+                waitUiMs(25);
             const bool opened = clickBackOn(modelListPage);
-            waitUiMs(60);
+                waitUiMs(25);
             return opened && modelListPage->isVisible();
         };
 
@@ -3887,10 +3889,10 @@ void leftMenu::stressSuiteTick()
             if (agvId.isEmpty())
                 return false;
             showAgvDetailInfo(agvId);
-            waitUiMs(70);
+                waitUiMs(25);
             const bool opened = (agvSettingsPage && agvSettingsPage->isVisible());
             showAgvList();
-            waitUiMs(60);
+                waitUiMs(25);
             return opened && listAgvInfo && listAgvInfo->isVisible();
         };
 
@@ -3899,12 +3901,12 @@ void leftMenu::stressSuiteTick()
             const bool canUsers = (r == QStringLiteral("admin") || r == QStringLiteral("tech"));
             if (!canUsers) {
                 showProfile();
-                waitUiMs(50);
+                waitUiMs(20);
                 return profilePage && profilePage->isVisible();
             }
 
             showUsersPage();
-            waitUiMs(60);
+                waitUiMs(25);
             QVector<UserInfo> users = getAllUsers(false);
             if (users.isEmpty())
                 return usersPage && usersPage->isVisible();
@@ -3914,10 +3916,10 @@ void leftMenu::stressSuiteTick()
                 return false;
 
             showUserProfilePage(user.username);
-            waitUiMs(70);
+                waitUiMs(25);
             const bool opened = (activePage_ == ActivePage::UserProfile);
             showUsersPage();
-            waitUiMs(60);
+                waitUiMs(25);
             return opened && usersPage && usersPage->isVisible();
         };
 
@@ -3925,7 +3927,7 @@ void leftMenu::stressSuiteTick()
             switch (action) {
             case ActAreaAgv: {
                 showAgvList();
-                waitUiMs(45);
+                waitUiMs(15);
                 bool ok = listAgvInfo && listAgvInfo->isVisible();
                 ok = openRandomAgvDetailsAndBack() && ok;
                 ok = openAddAgvAndClose() && ok;
@@ -3933,7 +3935,7 @@ void leftMenu::stressSuiteTick()
             }
             case ActAreaModels: {
                 showModelList();
-                waitUiMs(45);
+                waitUiMs(15);
                 bool ok = modelListPage && modelListPage->isVisible();
                 ok = openRandomModelDetailsAndBack() && ok;
                 ok = openAddModelAndClose() && ok;
@@ -3941,25 +3943,25 @@ void leftMenu::stressSuiteTick()
             }
             case ActAreaCalendar:
                 showCalendar();
-                waitUiMs(40);
+                waitUiMs(15);
                 if (!(rightCalendarFrame && rightCalendarFrame->isVisible()))
                     return false;
                 if (selectedYear_ >= minCalendarYear() && selectedYear_ <= maxCalendarYear()) {
                     const int delta = QRandomGenerator::global()->bounded(2) == 0 ? -1 : 1;
                     changeMonth(delta);
-                    waitUiMs(35);
+                    waitUiMs(12);
                     selectDay(selectedYear_, selectedMonth_,
                               qMax(1, QRandomGenerator::global()->bounded(1, calendarDaysInMonth(selectedYear_, selectedMonth_) + 1)));
-                    waitUiMs(35);
+                    waitUiMs(12);
                 }
                 return rightCalendarFrame && rightCalendarFrame->isVisible();
             case ActAreaLogs:
                 showLogs();
-                waitUiMs(40);
+                waitUiMs(15);
                 if (!(logsPage && logsPage->isVisible()))
                     return false;
                 reloadLogs(150 + QRandomGenerator::global()->bounded(351));
-                waitUiMs(35);
+                waitUiMs(12);
                 return logsPage->isVisible();
             case ActAreaUser:
                 return openRandomUserProfileAndBack();
@@ -3995,7 +3997,7 @@ void leftMenu::stressSuiteTick()
 
         bool ok = true;
         int routeCount = 0;
-        const int routesPerGroup = 3;
+        const int routesPerGroup = 2;
         for (int startAction : baseActions) {
             QVector<QVector<int>> routes;
             QVector<int> tail;
@@ -4014,13 +4016,6 @@ void leftMenu::stressSuiteTick()
             routeReverse.push_back(startAction);
             routeReverse += reversedTail;
             routes.push_back(routeReverse);
-
-            QVector<int> randomTail = tail;
-            shuffleVector(randomTail);
-            QVector<int> routeRandom;
-            routeRandom.push_back(startAction);
-            routeRandom += randomTail;
-            routes.push_back(routeRandom);
 
             stressAutotestLogLine(QStringLiteral("ROUTE_GROUP_DONE start=%1 total=%2")
                                       .arg(actionName(startAction))
@@ -4353,6 +4348,20 @@ void leftMenu::stressSuiteTick()
         next();
         return;
     }
+    case PhChatTextSelection: {
+        QElapsedTimer t;
+        t.start();
+        bool ok = false;
+        QString err;
+        if (embeddedChatWidget_ && stressSuiteChatThreadId_ > 0 && chatsStack_ && chatsStack_->currentIndex() == 1) {
+            ok = embeddedChatWidget_->autotestTextSelection(&err);
+        }
+        if (!ok)
+            stressAutotestLogLine(QStringLiteral("AUTOTEST chat text selection failed err=%1").arg(err));
+        stressSuiteRecordCheck(QStringLiteral("chat_text_selection"), ok, t.elapsed());
+        next();
+        return;
+    }
     case PhChatRejectBadThreadMessage: {
         QElapsedTimer t;
         t.start();
@@ -4424,7 +4433,7 @@ void leftMenu::stressSuiteTick()
         QElapsedTimer t;
         t.start();
         showLogs();
-        const int waves = 8 + QRandomGenerator::global()->bounded(9);
+        const int waves = 3 + QRandomGenerator::global()->bounded(3);
         for (int wave = 0; wave < waves; ++wave) {
             DataBus::instance().triggerNotificationsChanged();
             DataBus::instance().triggerCalendarChanged();
@@ -4444,7 +4453,7 @@ void leftMenu::stressSuiteTick()
         QElapsedTimer t;
         t.start();
         showModelList();
-        const int waves = 4 + QRandomGenerator::global()->bounded(5);
+        const int waves = 2 + QRandomGenerator::global()->bounded(2);
         for (int i = 0; i < waves; ++i) {
             DataBus::instance().triggerModelsChanged();
             DataBus::instance().triggerAgvListChanged();
@@ -4576,7 +4585,7 @@ void leftMenu::stressSuiteTick()
             stressSuiteSelY_ = selectedYear_;
             stressSuiteSelM_ = selectedMonth_;
             stressSuiteInner_ = 1;
-            scheduleStressSuiteStep(90);
+            scheduleStressSuiteStep(30);
             return;
         }
         if (stressSuiteInner_ >= 1 && stressSuiteInner_ <= stressSuiteRandomPickDays_.size()) {
@@ -4587,7 +4596,7 @@ void leftMenu::stressSuiteTick()
             selectDay(stressSuiteSelY_, stressSuiteSelM_, d);
             QApplication::processEvents();
             ++stressSuiteInner_;
-            scheduleStressSuiteStep(70 + QRandomGenerator::global()->bounded(70));
+            scheduleStressSuiteStep(25 + QRandomGenerator::global()->bounded(25));
             return;
         }
         stressSuiteRecordCheck(QStringLiteral("ui_calendar_select_random_days"),

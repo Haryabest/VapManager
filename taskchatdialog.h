@@ -91,6 +91,7 @@ public:
     int threadId() const { return threadId_; }
     bool autotestSendTextMessage(const QString &message, QString *error = nullptr);
     bool autotestRejectsEmptyMessage(QString *error = nullptr);
+    bool autotestTextSelection(QString *error = nullptr);
 
 signals:
     void backRequested();

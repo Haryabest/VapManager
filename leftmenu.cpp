@@ -648,7 +648,6 @@ public:
         btnRow->addWidget(cancelBtn);
         btnRow->addWidget(okBtn);
         layout->addLayout(btnRow);
-        connect(btns, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
         if (qApp->property("autotest_running").toBool()) {
             for (int attempt = 0; attempt < 6; ++attempt) {
@@ -786,8 +785,37 @@ void leftMenu::initUI()
         QTimer *presenceTimer = new QTimer(this);
         presenceTimer->setObjectName("presenceHeartbeatTimer");
         presenceTimer->setInterval(15000);
-        connect(presenceTimer, &QTimer::timeout, this, []() {
-            touchUserPresence(AppSession::currentUsername());
+        connect(presenceTimer, &QTimer::timeout, this, [this, presenceTimer]() {
+            const QString username = AppSession::currentUsername();
+            if (username.trimmed().isEmpty())
+                return;
+
+            if (!isCurrentSessionValid(username)) {
+                presenceTimer->stop();
+                logAction(username, "session_invalidated", "Сессия завершена: вход выполнен на другом устройстве");
+                logoutUser();
+
+                QMessageBox::warning(
+                    this,
+                    tr("Сессия завершена"),
+                    tr("Для этого аккаунта выполнен вход на другом устройстве. Текущая сессия завершена.")
+                );
+
+                LoginDialog dlg(this);
+                if (dlg.exec() == QDialog::Accepted) {
+                    const UserInfo newUser = dlg.user();
+                    AppSession::setCurrentUsername(newUser.username);
+                    enableRememberMe(newUser.username);
+                    touchUserPresence(newUser.username);
+                    presenceTimer->start();
+                    return;
+                }
+
+                qApp->quit();
+                return;
+            }
+
+            touchUserPresence(username);
         });
         presenceTimer->start();
     }

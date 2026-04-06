@@ -67,6 +67,7 @@ bool loginUser(const QString &username,
 
 bool enableRememberMe(const QString &username);
 bool tryAutoLogin(UserInfo &outUser);
+bool isCurrentSessionValid(const QString &username);
 void logoutUser();
 
 bool verifyPermanentRecoveryKey(const QString &key,

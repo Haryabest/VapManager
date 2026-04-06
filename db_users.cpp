@@ -29,6 +29,35 @@ static QString hashPassword(const QString &password)
     return QString::fromLatin1(hash.toHex());
 }
 
+static QString rememberTokenFilePath()
+{
+    return QStringLiteral("config/remember_me.txt");
+}
+
+static QString sessionTokenFilePath()
+{
+    return QStringLiteral("config/session_token.txt");
+}
+
+static bool writeTextFile(const QString &path, const QString &value)
+{
+    QFile f(path);
+    if (!f.open(QIODevice::WriteOnly | QIODevice::Text))
+        return false;
+    f.write(value.toUtf8());
+    return true;
+}
+
+static QString readTextFileTrimmed(const QString &path)
+{
+    QFile f(path);
+    if (!f.exists())
+        return QString();
+    if (!f.open(QIODevice::ReadOnly | QIODevice::Text))
+        return QString();
+    return QString::fromUtf8(f.readAll()).trimmed();
+}
+
 static QString randomToken()
 {
     QByteArray bytes;
@@ -177,6 +206,7 @@ bool initUsersTable()
             is_active TINYINT(1) NOT NULL DEFAULT 1,
             last_login DATETIME NULL,
             remember_token VARCHAR(128) NULL,
+            active_session_token VARCHAR(128) NULL,
             permanent_recovery_key VARCHAR(32) NULL,
             admin_invite_key VARCHAR(16) NULL,
             admin_invite_key_expire DATETIME NULL,
@@ -202,6 +232,7 @@ bool initUsersTable()
         q.exec("ALTER TABLE users CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
 
         q.exec("ALTER TABLE users ADD COLUMN permanent_recovery_key VARCHAR(32) NULL");
+        q.exec("ALTER TABLE users ADD COLUMN active_session_token VARCHAR(128) NULL");
         q.exec("ALTER TABLE users ADD COLUMN admin_invite_key VARCHAR(16) NULL");
         q.exec("ALTER TABLE users ADD COLUMN admin_invite_key_expire DATETIME NULL");
         q.exec("ALTER TABLE users ADD COLUMN tech_invite_key VARCHAR(16) NULL");
@@ -582,31 +613,29 @@ bool loginUser(const QString &username,
 
 bool enableRememberMe(const QString &username)
 {
-    QString token = randomToken();
+    const QString rememberToken = randomToken();
+    const QString sessionToken = randomToken();
 
     QSqlDatabase db = QSqlDatabase::database("main_connection");
     QSqlQuery q(db);
-    q.prepare("UPDATE users SET remember_token = :t WHERE username = :u");
-    q.bindValue(":t", token);
+    q.prepare("UPDATE users SET remember_token = :rt, active_session_token = :st WHERE username = :u");
+    q.bindValue(":rt", rememberToken);
+    q.bindValue(":st", sessionToken);
     q.bindValue(":u", username);
     if (!q.exec()) return false;
 
     QDir().mkpath("config");
-    QFile f("config/remember_me.txt");
-    if (f.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        f.write(token.toUtf8());
-    }
+    const bool rememberSaved = writeTextFile(rememberTokenFilePath(), rememberToken);
+    const bool sessionSaved = writeTextFile(sessionTokenFilePath(), sessionToken);
+    if (!rememberSaved || !sessionSaved)
+        return false;
 
     return true;
 }
 
 bool tryAutoLogin(UserInfo &outUser)
 {
-    QFile f("config/remember_me.txt");
-    if (!f.exists()) return false;
-    if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) return false;
-
-    QString token = QString::fromUtf8(f.readAll()).trimmed();
+    QString token = readTextFileTrimmed(rememberTokenFilePath());
     if (token.isEmpty()) return false;
 
     QSqlDatabase db = QSqlDatabase::database("main_connection");
@@ -653,9 +682,34 @@ bool tryAutoLogin(UserInfo &outUser)
     return true;
 }
 
+bool isCurrentSessionValid(const QString &username)
+{
+    const QString u = username.trimmed();
+    if (u.isEmpty())
+        return false;
+
+    const QString sessionToken = readTextFileTrimmed(sessionTokenFilePath());
+    if (sessionToken.isEmpty())
+        return false;
+
+    QSqlDatabase db = QSqlDatabase::database("main_connection");
+    if (!db.isOpen())
+        return false;
+
+    QSqlQuery q(db);
+    q.prepare("SELECT 1 FROM users WHERE username = :u AND active_session_token = :st AND is_active = 1 LIMIT 1");
+    q.bindValue(":u", u);
+    q.bindValue(":st", sessionToken);
+    if (!q.exec())
+        return false;
+
+    return q.next();
+}
+
 void logoutUser()
 {
-    QFile::remove("config/remember_me.txt");
+    QFile::remove(rememberTokenFilePath());
+    QFile::remove(sessionTokenFilePath());
 }
 
 bool verifyPermanentRecoveryKey(const QString &key, QString &outUsername, QString &error)

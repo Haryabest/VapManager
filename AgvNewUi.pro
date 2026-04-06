@@ -16,55 +16,89 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    diag_logger.cpp \
-    accountinfodialog.cpp \
-    app_session.cpp \
-    addagvdialog.cpp \
-    agvsettingspage.cpp \
-    databus.cpp \
-    db.cpp \
-    db_agv_tasks.cpp \
-    db_models.cpp \
-    db_task_chat.cpp \
-    db_users.cpp \
-    leftmenu.cpp \
-    listagvinfo.cpp \
-    logindialog.cpp \
-    main.cpp \
-    maintenanceitemwidget.cpp \
-    mainwindow.cpp \
-    modellistpage.cpp \
-    multisectionwidget.cpp \
-    notifications_logs.cpp \
-    taskchatdialog.cpp \
-    ui_action_logger.cpp \
-    userspage.cpp
+    src/core/logging/diag_logger.cpp \
+    src/features/account/ui/accountinfodialog.cpp \
+    src/core/session/app_session.cpp \
+    src/features/agv/ui/addagvdialog.cpp \
+    src/features/agv/ui/agvsettingspage.cpp \
+    src/features/agv/ui/internal/listagvinfo_ui_modules.cpp \
+    src/features/agv/ui/internal/listagvinfo_agv_item.cpp \
+    src/features/agv/ui/internal/listagvinfo_storage.cpp \
+    src/features/agv/ui/internal/listagvinfo_undo.cpp \
+    src/features/agv/ui/internal/listagvinfo_render.cpp \
+    src/features/agv/ui/internal/listagvinfo_constructor.cpp \
+    src/app/internal/app_bootstrap.cpp \
+    src/features/shell/ui/internal/mainwindow_impl.cpp \
+    src/features/common/ui/internal/maintenanceitemwidget_impl.cpp \
+    src/features/models/ui/internal/modellistpage_impl.cpp \
+    src/features/users/ui/internal/userspage_impl.cpp \
+    src/features/chat/ui/internal/taskchatdialog_impl.cpp \
+    src/core/events/databus.cpp \
+    src/data/db/db.cpp \
+    src/data/repositories/db_agv_tasks.cpp \
+    src/data/repositories/db_models.cpp \
+    src/data/repositories/db_task_chat.cpp \
+    src/data/repositories/db_users.cpp \
+    src/features/shell/ui/internal/leftmenu_calendar_utils.cpp \
+    src/features/shell/ui/internal/leftmenu_settings_dialogs.cpp \
+    src/features/shell/ui/leftmenu.cpp \
+    src/features/agv/ui/listagvinfo.cpp \
+    src/features/account/ui/logindialog.cpp \
+    src/app/main.cpp \
+    src/features/common/ui/maintenanceitemwidget.cpp \
+    src/features/shell/ui/mainwindow.cpp \
+    src/features/models/ui/modellistpage.cpp \
+    src/features/common/ui/multisectionwidget.cpp \
+    src/features/notifications/ui/notifications_logs.cpp \
+    src/features/chat/ui/taskchatdialog.cpp \
+    src/core/logging/ui_action_logger.cpp \
+    src/features/users/ui/userspage.cpp
 
 HEADERS += \
-    diag_logger.h \
-    accountinfodialog.h \
-    app_session.h \
-    addagvdialog.h \
-    agvsettingspage.h \
-    databus.h \
-    db.h \
-    db_agv_tasks.h \
-    db_models.h \
-    db_task_chat.h \
-    db_users.h \
-    leftmenu.h \
-    listagvinfo.h \
-    logindialog.h \
-    maintenanceitemwidget.h \
-    mainwindow.h \
-    modellistpage.h \
-    multisectionwidget.h \
-    notifications_logs.h \
-    taskchatdialog.h \
-    ui_action_logger.h \
-    userspage.h
+    src/app/internal/app_bootstrap.h \
+    src/core/logging/diag_logger.h \
+    src/features/account/ui/accountinfodialog.h \
+    src/core/session/app_session.h \
+    src/features/agv/ui/addagvdialog.h \
+    src/features/agv/ui/agvsettingspage.h \
+    src/features/agv/ui/internal/listagvinfo_ui_modules.h \
+    src/core/events/databus.h \
+    src/data/db/db.h \
+    src/data/repositories/db_agv_tasks.h \
+    src/data/repositories/db_models.h \
+    src/data/repositories/db_task_chat.h \
+    src/data/repositories/db_users.h \
+    src/features/shell/ui/internal/leftmenu_calendar_utils.h \
+    src/features/shell/ui/internal/leftmenu_settings_dialogs.h \
+    src/features/shell/ui/leftmenu.h \
+    src/features/agv/ui/listagvinfo.h \
+    src/features/account/ui/logindialog.h \
+    src/features/common/ui/maintenanceitemwidget.h \
+    src/features/shell/ui/mainwindow.h \
+    src/features/models/ui/modellistpage.h \
+    src/features/common/ui/multisectionwidget.h \
+    src/features/notifications/ui/notifications_logs.h \
+    src/features/chat/ui/taskchatdialog.h \
+    src/core/logging/ui_action_logger.h \
+    src/features/users/ui/userspage.h
 
 FORMS +=
+
+INCLUDEPATH += \
+    src/app \
+    src/features/account/ui \
+    src/features/agv/ui \
+    src/features/common/ui \
+    src/features/models/ui \
+    src/features/notifications/ui \
+    src/features/chat/ui \
+    src/features/shell/ui \
+    src/features/users/ui \
+    src/core/session \
+    src/core/events \
+    src/core/logging \
+    src/data/db \
+    src/data/repositories
 
 TRANSLATIONS += AgvNewUi_en.ts AgvNewUi_zh.ts
 

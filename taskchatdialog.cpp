@@ -53,6 +53,8 @@
 #include <QPainter>
 #include <QGuiApplication>
 #include <QScreen>
+#include <QFileIconProvider>
+#include <QFontMetrics>
 #include <QStyle>
 #include <QDragEnterEvent>
 #include <QDropEvent>
@@ -212,6 +214,97 @@ static QString shortFileTypeLabel(const QString &fileName)
     const QString ext = QFileInfo(fileName).suffix().toUpper();
     if (ext.isEmpty()) return QStringLiteral("FILE");
     return ext.left(6);
+}
+
+/// Размер полезной нагрузки вложения без полного Base64-декодирования (для подписи в чате).
+static qint64 attachmentBase64DecodedByteCount(const QString &rawAttachmentPayload)
+{
+    if (!rawAttachmentPayload.startsWith(kAttachmentPrefix) || !rawAttachmentPayload.endsWith(QStringLiteral("]]")))
+        return 0;
+    const QString body = rawAttachmentPayload.mid(
+        kAttachmentPrefix.size(), rawAttachmentPayload.size() - kAttachmentPrefix.size() - 2);
+    const int p1 = body.indexOf('|');
+    if (p1 <= 0) return 0;
+    const int p2 = body.indexOf('|', p1 + 1);
+    if (p2 <= p1 + 1) return 0;
+    const QByteArray b64 = body.mid(p2 + 1).toLatin1();
+    if (b64.isEmpty()) return 0;
+    const int n = b64.size();
+    int pad = 0;
+    if (b64.endsWith("==")) pad = 2;
+    else if (b64.endsWith('=')) pad = 1;
+    return static_cast<qint64>((n / 4) * 3 - pad);
+}
+
+static QString formatAttachmentByteSize(qint64 bytes)
+{
+    if (bytes <= 0)
+        return QStringLiteral("—");
+    static const qint64 KB = 1024;
+    static const qint64 MB = KB * 1024;
+    static const qint64 GB = MB * 1024;
+    if (bytes < KB)
+        return QStringLiteral("%1 Б").arg(bytes);
+    if (bytes < MB) {
+        const double x = bytes / double(KB);
+        return x < 10 ? QStringLiteral("%1 КБ").arg(x, 0, 'f', 1)
+                      : QStringLiteral("%1 КБ").arg(qRound(x));
+    }
+    if (bytes < GB) {
+        const double x = bytes / double(MB);
+        return x < 10 ? QStringLiteral("%1 МБ").arg(x, 0, 'f', 1)
+                      : QStringLiteral("%1 МБ").arg(qRound(x));
+    }
+    const double x = bytes / double(GB);
+    return x < 10 ? QStringLiteral("%1 ГБ").arg(x, 0, 'f', 1)
+                  : QStringLiteral("%1 ГБ").arg(qRound(x));
+}
+
+static QIcon iconForChatDocumentAttachment(const QString &fileName)
+{
+    QFileIconProvider prov;
+    const QIcon ico = prov.icon(QFileInfo(fileName));
+    const QPixmap pm = ico.pixmap(40, 40);
+    if (!pm.isNull())
+        return QIcon(pm);
+    QPixmap docPm(40, 40);
+    docPm.fill(QColor("#E2E8F0"));
+    QPainter p(&docPm);
+    p.setPen(QColor("#334155"));
+    QFont f = p.font();
+    f.setBold(true);
+    f.setPointSize(10);
+    p.setFont(f);
+    p.drawText(docPm.rect(), Qt::AlignCenter, shortFileTypeLabel(fileName));
+    return QIcon(docPm);
+}
+
+static QPushButton *makeDocumentAttachmentBubbleControl(QWidget *bubble, bool mine,
+                                                      const QString &fileName, qint64 decodedBytes)
+{
+    QPushButton *doc = new QPushButton(bubble);
+    doc->setCursor(Qt::PointingHandCursor);
+    doc->setIcon(iconForChatDocumentAttachment(fileName));
+    doc->setIconSize(QSize(40, 40));
+    QFontMetrics fm(doc->font());
+    const QString elidedName = fm.elidedText(fileName, Qt::ElideMiddle, 200);
+    const QString sizeStr = formatAttachmentByteSize(decodedBytes);
+    doc->setText(QStringLiteral("%1\n%2").arg(elidedName, sizeStr));
+    doc->setFocusPolicy(Qt::NoFocus);
+    doc->setStyleSheet(mine
+                           ? QStringLiteral(
+                                 "QPushButton{background:rgba(255,255,255,0.14);border:1px solid rgba(255,255,255,0.22);"
+                                 "border-radius:10px;padding:8px 10px;text-align:left;color:#FFFFFF;font-size:13px;}"
+                                 "QPushButton:hover{background:rgba(255,255,255,0.22);}"
+                                 "QPushButton:pressed{background:rgba(255,255,255,0.28);}")
+                           : QStringLiteral(
+                                 "QPushButton{background:#F1F5F9;border:1px solid #E2E8F0;border-radius:10px;padding:8px 10px;text-align:left;color:#0F172A;font-size:13px;}"
+                                 "QPushButton:hover{background:#E8EEF4;}"
+                                 "QPushButton:pressed{background:#E2E8F0;}"));
+    doc->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+    doc->setMinimumHeight(52);
+    doc->setMaximumWidth(280);
+    return doc;
 }
 
 static bool saveAttachmentAs(QWidget *owner, const QString &fileName, const QByteArray &bytes)
@@ -1192,8 +1285,7 @@ QWidget* TaskChatWidget::createMessageRow(const TaskChatMessage &m)
             QString decodedName;
             QString decodedMime;
             QByteArray imageData;
-            // Для комбинированных сообщений используем attachmentPayload, для обычных - m.message
-            const QString &msgToDecode = isCombined ? attachmentPayload : m.message;
+            const QString &msgToDecode = payload;
             bool hasImage = decodeAttachmentMessage(msgToDecode, decodedName, decodedMime, imageData);
 
             if (hasImage && !imageData.isEmpty()) {
@@ -1230,7 +1322,8 @@ QWidget* TaskChatWidget::createMessageRow(const TaskChatMessage &m)
                     "QPushButton{border:1px solid #BFDBFE;border-radius:10px;background:#EFF6FF;color:#1D4ED8;font-weight:800;padding:8px;text-align:left;}"
                     "QPushButton:hover{background:#DBEAFE;border:1px solid #60A5FA;}"
                 );
-                connect(thumb, &QPushButton::clicked, this, [this, msgToDecode, fileName, fileMime]() {
+                connect(thumb, &QPushButton::clicked, this, [this, payload, fileName, fileMime]() {
+                    const QString msgToDecode = payload;
                     QString decodedName;
                     QString decodedMime;
                     QByteArray data;
@@ -1241,15 +1334,10 @@ QWidget* TaskChatWidget::createMessageRow(const TaskChatMessage &m)
                 bubbleL->addWidget(thumb, 0, mine ? Qt::AlignRight : Qt::AlignLeft);
             }
         } else {
-            // Для файлов (не изображений) тоже нужна переменная msgToDecode
-            const QString &msgToDecode = isCombined ? attachmentPayload : m.message;
-            QPushButton *doc = new QPushButton(QString("Файл\n%1").arg(fileName), bubble);
-            doc->setStyleSheet(QString("QPushButton{background:%1;border:none;border-radius:8px;padding:8px 10px;font-size:14px;font-weight:900;color:%2;}"
-                                       "QPushButton:hover{background:%3;}")
-                               .arg(mine ? "#1D4ED8" : "#E2E8F0")
-                               .arg(mine ? "#FFFFFF" : "#334155")
-                               .arg(mine ? "#1E40AF" : "#CBD5E1"));
-            connect(doc, &QPushButton::clicked, this, [this, msgToDecode, fileName, fileMime]() {
+            const qint64 docBytes = attachmentBase64DecodedByteCount(payload);
+            QPushButton *doc = makeDocumentAttachmentBubbleControl(bubble, mine, fileName, docBytes);
+            connect(doc, &QPushButton::clicked, this, [this, payload, fileName, fileMime]() {
+                const QString msgToDecode = payload;
                 QString decodedName;
                 QString decodedMime;
                 QByteArray data;
@@ -1262,6 +1350,7 @@ QWidget* TaskChatWidget::createMessageRow(const TaskChatMessage &m)
                 }
             });
             bubbleL->addWidget(doc, 0, mine ? Qt::AlignRight : Qt::AlignLeft);
+            doc->installEventFilter(this);
         }
     }
     // Текст после вложения
@@ -2675,7 +2764,7 @@ void TaskChatDialog::refreshMessages(bool fullReload)
                 QString decodedName;
                 QString decodedMime;
                 QByteArray imageData;
-                const QString &msgToDecode = isCombined ? attachmentPayload : m.message;
+                const QString &msgToDecode = payload;
                 bool hasImage = decodeAttachmentMessage(msgToDecode, decodedName, decodedMime, imageData);
 
                 if (hasImage && !imageData.isEmpty()) {
@@ -2705,16 +2794,15 @@ void TaskChatDialog::refreshMessages(bool fullReload)
                     QPushButton *thumb = new QPushButton(QStringLiteral("Изображение\n%1").arg(fileName), bubble);
                     thumb->setFlat(false);
                     thumb->setFixedSize(180, 72);
-                    const QString rawMessage = m.message;
                     thumb->setStyleSheet(
                         "QPushButton{border:1px solid #BFDBFE;border-radius:10px;background:#EFF6FF;color:#1D4ED8;font-weight:800;padding:8px;text-align:left;}"
                         "QPushButton:hover{background:#DBEAFE;border:1px solid #60A5FA;}"
                     );
-                    connect(thumb, &QPushButton::clicked, this, [this, rawMessage, isCombined, attachmentPayload]() {
+                    connect(thumb, &QPushButton::clicked, this, [this, payload]() {
+                        const QString msgToDecode = payload;
                         QString fileName;
                         QString fileMime;
                         QByteArray fileData;
-                        const QString &msgToDecode = isCombined ? attachmentPayload : rawMessage;
                         if (!decodeAttachmentMessage(msgToDecode, fileName, fileMime, fileData) || fileData.isEmpty())
                             return;
                         openAttachmentInsideApp(this, fileName, fileMime, fileData);
@@ -2723,21 +2811,19 @@ void TaskChatDialog::refreshMessages(bool fullReload)
                     thumb->installEventFilter(this);
                 }
             } else {
-                QPushButton *doc = new QPushButton(QString("Файл\n%1").arg(fileName), bubble);
-                const QString rawMessage = m.message;
-                doc->setStyleSheet(QString("QPushButton{background:%1;border:none;border-radius:8px;padding:8px 10px;font-size:14px;font-weight:900;color:%2;}"
-                                           "QPushButton:hover{background:%3;}")
-                                   .arg(mine ? "#1D4ED8" : "#E2E8F0")
-                                   .arg(mine ? "#FFFFFF" : "#334155")
-                                   .arg(mine ? "#1E40AF" : "#CBD5E1"));
-                connect(doc, &QPushButton::clicked, this, [this, rawMessage, isCombined, attachmentPayload]() {
-                    QString fileName;
-                    QString fileMime;
+                const qint64 docBytes = attachmentBase64DecodedByteCount(payload);
+                QPushButton *doc = makeDocumentAttachmentBubbleControl(bubble, mine, fileName, docBytes);
+                connect(doc, &QPushButton::clicked, this, [this, payload, fileName, fileMime]() {
+                    const QString msgToDecode = payload;
+                    QString decodedName;
+                    QString decodedMime;
                     QByteArray fileData;
-                    const QString &msgToDecode = isCombined ? attachmentPayload : rawMessage;
-                    if (!decodeAttachmentMessage(msgToDecode, fileName, fileMime, fileData) || fileData.isEmpty())
+                    if (!decodeAttachmentMessage(msgToDecode, decodedName, decodedMime, fileData) || fileData.isEmpty())
                         return;
-                    openAttachmentInsideApp(this, fileName, fileMime, fileData);
+                    if (isImageAttachment(fileMime, fileName))
+                        openAttachmentInsideApp(this, fileName, fileMime, fileData);
+                    else
+                        openAttachmentData(this, fileName, fileData);
                 });
                 bubbleL->addWidget(doc, 0, mine ? Qt::AlignRight : Qt::AlignLeft);
                 doc->installEventFilter(this);
@@ -2924,7 +3010,7 @@ void TaskChatDialog::loadOlderMessages()
                 QString decodedName;
                 QString decodedMime;
                 QByteArray imageData;
-                const QString &msgToDecode = isCombined ? attachmentPayload : m.message;
+                const QString &msgToDecode = payload;
                 bool hasImage = decodeAttachmentMessage(msgToDecode, decodedName, decodedMime, imageData);
 
                 if (hasImage && !imageData.isEmpty()) {
@@ -2954,16 +3040,15 @@ void TaskChatDialog::loadOlderMessages()
                     QPushButton *thumb = new QPushButton(QStringLiteral("Изображение\n%1").arg(fileName), bubble);
                     thumb->setFlat(false);
                     thumb->setFixedSize(180, 72);
-                    const QString rawMessage = m.message;
                     thumb->setStyleSheet(
                         "QPushButton{border:1px solid #BFDBFE;border-radius:10px;background:#EFF6FF;color:#1D4ED8;font-weight:800;padding:8px;text-align:left;}"
                         "QPushButton:hover{background:#DBEAFE;border:1px solid #60A5FA;}"
                     );
-                    connect(thumb, &QPushButton::clicked, this, [this, rawMessage, isCombined, attachmentPayload]() {
+                    connect(thumb, &QPushButton::clicked, this, [this, payload]() {
+                        const QString msgToDecode = payload;
                         QString fileName;
                         QString fileMime;
                         QByteArray fileData;
-                        const QString &msgToDecode = isCombined ? attachmentPayload : rawMessage;
                         if (!decodeAttachmentMessage(msgToDecode, fileName, fileMime, fileData) || fileData.isEmpty())
                             return;
                         openAttachmentInsideApp(this, fileName, fileMime, fileData);
@@ -2972,21 +3057,19 @@ void TaskChatDialog::loadOlderMessages()
                     thumb->installEventFilter(this);
                 }
             } else {
-                QPushButton *doc = new QPushButton(QString("Файл\n%1").arg(fileName), bubble);
-                const QString rawMessage = m.message;
-                doc->setStyleSheet(QString("QPushButton{background:%1;border:none;border-radius:8px;padding:8px 10px;font-size:14px;font-weight:900;color:%2;}"
-                                           "QPushButton:hover{background:%3;}")
-                                   .arg(mine ? "#1D4ED8" : "#E2E8F0")
-                                   .arg(mine ? "#FFFFFF" : "#334155")
-                                   .arg(mine ? "#1E40AF" : "#CBD5E1"));
-                connect(doc, &QPushButton::clicked, this, [this, rawMessage, isCombined, attachmentPayload]() {
-                    QString fileName;
-                    QString fileMime;
+                const qint64 docBytes = attachmentBase64DecodedByteCount(payload);
+                QPushButton *doc = makeDocumentAttachmentBubbleControl(bubble, mine, fileName, docBytes);
+                connect(doc, &QPushButton::clicked, this, [this, payload, fileName, fileMime]() {
+                    const QString msgToDecode = payload;
+                    QString decodedName;
+                    QString decodedMime;
                     QByteArray fileData;
-                    const QString &msgToDecode = isCombined ? attachmentPayload : rawMessage;
-                    if (!decodeAttachmentMessage(msgToDecode, fileName, fileMime, fileData) || fileData.isEmpty())
+                    if (!decodeAttachmentMessage(msgToDecode, decodedName, decodedMime, fileData) || fileData.isEmpty())
                         return;
-                    openAttachmentInsideApp(this, fileName, fileMime, fileData);
+                    if (isImageAttachment(fileMime, fileName))
+                        openAttachmentInsideApp(this, fileName, fileMime, fileData);
+                    else
+                        openAttachmentData(this, fileName, fileData);
                 });
                 bubbleL->addWidget(doc, 0, mine ? Qt::AlignRight : Qt::AlignLeft);
                 doc->installEventFilter(this);

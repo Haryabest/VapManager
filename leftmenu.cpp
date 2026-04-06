@@ -7194,16 +7194,6 @@ bool saveUserAvatarToDb(const QString &username, const QPixmap &pm)
         else if (info.role == "tech") roleText = "Техник";
         else roleText = "Пользователь";
 
-        auto addInfoRow = [&](const QString &label, const QString &value) {
-            if (value.trimmed().isEmpty()) return;
-            QLabel *row = new QLabel(QString("<b>%1:</b> %2").arg(label, value), content);
-            row->setStyleSheet(QString(
-                "font-family:Inter;font-size:%1px;color:#1A1A1A;background:transparent;"
-            ).arg(s(15)));
-            row->setWordWrap(true);
-            contentLay->addWidget(row);
-        };
-
         auto addCopyableRow = [&](const QString &label, const QString &value) {
             if (value.trimmed().isEmpty()) return;
             QWidget *row = new QWidget(content);

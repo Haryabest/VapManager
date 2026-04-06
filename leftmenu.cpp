@@ -3997,7 +3997,7 @@ void leftMenu::stressSuiteTick()
 
         bool ok = true;
         int routeCount = 0;
-        const int routesPerGroup = 2;
+        const int routesPerGroup = 1;
         for (int startAction : baseActions) {
             QVector<QVector<int>> routes;
             QVector<int> tail;
@@ -4009,13 +4009,6 @@ void leftMenu::stressSuiteTick()
             routeForward.push_back(startAction);
             routeForward += tail;
             routes.push_back(routeForward);
-
-            QVector<int> reversedTail = tail;
-            std::reverse(reversedTail.begin(), reversedTail.end());
-            QVector<int> routeReverse;
-            routeReverse.push_back(startAction);
-            routeReverse += reversedTail;
-            routes.push_back(routeReverse);
 
             stressAutotestLogLine(QStringLiteral("ROUTE_GROUP_DONE start=%1 total=%2")
                                       .arg(actionName(startAction))

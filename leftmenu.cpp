@@ -614,14 +614,26 @@ public:
 
         layout->addSpacing(10);
 
-        QDialogButtonBox *btns = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
-        QPushButton *okBtn = btns->button(QDialogButtonBox::Ok);
-        QPushButton *cancelBtn = btns->button(QDialogButtonBox::Cancel);
-        if (okBtn) { okBtn->setObjectName("okBtn"); }
-        if (cancelBtn) { cancelBtn->setObjectName("cancelBtn"); }
-        layout->addWidget(btns);
-
-        connect(btns, &QDialogButtonBox::accepted, this, [this]() {
+        QHBoxLayout *btnRow = new QHBoxLayout();
+        btnRow->addStretch();
+        
+        QPushButton *cancelBtn = new QPushButton("Отмена", this);
+        cancelBtn->setObjectName("cancelBtn");
+        cancelBtn->setStyleSheet(
+            "QPushButton{background:#FFFFFF;color:#374151;border:1px solid #CBD5E1;"
+            "font-family:Inter;font-size:13px;font-weight:700;border-radius:8px;padding:8px 16px;}"
+            "QPushButton:hover{background:#F3F4F6;}"
+        );
+        connect(cancelBtn, &QPushButton::clicked, this, &QDialog::reject);
+        
+        QPushButton *okBtn = new QPushButton("ОК", this);
+        okBtn->setObjectName("okBtn");
+        okBtn->setStyleSheet(
+            "QPushButton{background:#1976FF;color:white;border:none;"
+            "font-family:Inter;font-size:13px;font-weight:700;border-radius:8px;padding:8px 16px;}"
+            "QPushButton:hover{background:#0F66EA;}"
+        );
+        connect(okBtn, &QPushButton::clicked, this, [this]() {
             QString host = dbHostEdit->text().trimmed();
             if (host.isEmpty()) host = "localhost";
             bool reconnectOk = reconnectWithHost(host);
@@ -632,6 +644,10 @@ public:
             }
             accept();
         });
+        
+        btnRow->addWidget(cancelBtn);
+        btnRow->addWidget(okBtn);
+        layout->addLayout(btnRow);
         connect(btns, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
         if (qApp->property("autotest_running").toBool()) {

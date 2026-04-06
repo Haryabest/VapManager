@@ -7646,8 +7646,11 @@ bool saveUserAvatarToDb(const QString &username, const QPixmap &pm)
             threads.resize(100);
 
         const QString newSignature = makeChatListSignature(threads);
-        if (!complexTestFast && newSignature == lastChatsListSignature_ && chatsListLayout_->count() > 0)
+        if (!complexTestFast && newSignature == lastChatsListSignature_ && chatsListLayout_->count() > 0) {
+            if (chatsPage) chatsPage->setUpdatesEnabled(true);
+            if (listHost) listHost->setUpdatesEnabled(true);
             return;
+        }
 
         while (QLayoutItem *it = chatsListLayout_->takeAt(0)) {
             if (it->widget()) it->widget()->deleteLater();
@@ -7664,6 +7667,8 @@ bool saveUserAvatarToDb(const QString &username, const QPixmap &pm)
             chatsListLayout_->addStretch();
             chatsListLayout_->addWidget(empty);
             chatsListLayout_->addStretch();
+            if (chatsPage) chatsPage->setUpdatesEnabled(true);
+            if (listHost) listHost->setUpdatesEnabled(true);
             return;
         }
 

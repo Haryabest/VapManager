@@ -5190,11 +5190,11 @@ void leftMenu::reloadLogs(int maxRows)
     QString filterTime = logFilterTime_ ? logFilterTime_->currentData().toString() : "";
 
     const bool autotestLight = qApp && qApp->property("autotest_running").toBool();
-    int maxRowsEff = (maxRows <= 0) ? 999999 : maxRows;
+    int maxRowsEff = (maxRows <= 0) ? 2000 : maxRows;
     if (autotestLight)
         maxRowsEff = qMin(maxRowsEff, 400);
     const int MAX_ROWS = maxRowsEff;
-    const qint64 tailCapBytes = autotestLight ? (512LL * 1024) : (8LL * 1024 * 1024);
+    const qint64 tailCapBytes = autotestLight ? (512LL * 1024) : (2LL * 1024 * 1024);
 
     QString logPath = localLogFilePath();
     if (!QFile::exists(logPath)) {
@@ -5254,15 +5254,15 @@ void leftMenu::reloadLogs(int maxRows)
     }
 
     // Страховка от гигантского split (редкие длинные строки / мусор)
-    int lineCap = qMax(MAX_ROWS * 4, 10000);
+    int lineCap = qMax(MAX_ROWS * 3, 3000);
     if (autotestLight)
-        lineCap = qMin(lineCap, 8000);
+        lineCap = qMin(lineCap, 6000);
     if (lines.size() > lineCap)
         lines = lines.mid(lines.size() - lineCap);
 
     {
             int start = (MAX_ROWS > 0) ? 0 : qMax(0, lines.size() - MAX_ROWS);
-            const int maxLinesToProcess = qMin(lines.size(), MAX_ROWS * 3);
+            const int maxLinesToProcess = qMin(lines.size(), MAX_ROWS * 2);
             int processedCount = 0;
             for (int i = lines.size() - 1; i >= start && rows.size() < MAX_ROWS && processedCount < maxLinesToProcess; --i) {
                 ++processedCount;
@@ -5354,8 +5354,10 @@ void leftMenu::reloadLogs(int maxRows)
     });
 
     logsTable->setUpdatesEnabled(false);
-    logsTable->setRowCount(rows.size());
-    for (int i = 0; i < rows.size(); ++i) {
+    logsTable->setSortingEnabled(false);
+    const int rowCount = qMin(rows.size(), 2000);
+    logsTable->setRowCount(rowCount);
+    for (int i = 0; i < rowCount; ++i) {
         const QString values[5] = {
             rows[i].time,
             rows[i].source,

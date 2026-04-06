@@ -233,12 +233,58 @@ QString localLogFilePath()
     return localLogsDirPath() + "/app.log";
 }
 
+static const int MAX_LOG_LINES = 100000;
+
+static void trimLogFileIfNeeded()
+{
+    const QString path = localLogFilePath();
+    QFile f(path);
+    if (!f.exists())
+        return;
+    
+    qint64 lineCount = 0;
+    if (f.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QTextStream in(&f);
+        in.setCodec("UTF-8");
+        while (!in.atEnd()) {
+            in.readLine();
+            ++lineCount;
+        }
+        f.close();
+    }
+    
+    if (lineCount <= MAX_LOG_LINES)
+        return;
+    
+    if (!f.open(QIODevice::ReadOnly | QIODevice::Text))
+        return;
+    
+    QTextStream in(&f);
+    in.setCodec("UTF-8");
+    QStringList allLines;
+    while (!in.atEnd())
+        allLines.append(in.readLine());
+    f.close();
+    
+    const int linesToKeep = MAX_LOG_LINES / 2;
+    QStringList trimmed = allLines.mid(allLines.size() - linesToKeep);
+    
+    if (f.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
+        QTextStream out(&f);
+        out.setCodec("UTF-8");
+        for (const QString &line : trimmed)
+            out << line << "\n";
+        f.close();
+    }
+}
+
 void logAction(const QString &username,
                const QString &action,
                const QString &details)
 {
     const QString logsDir = localLogsDirPath();
     QDir().mkpath(logsDir);
+    trimLogFileIfNeeded();
     QFile f(localLogFilePath());
     if (f.open(QIODevice::Append | QIODevice::Text)) {
         QTextStream out(&f);

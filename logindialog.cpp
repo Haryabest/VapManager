@@ -170,7 +170,7 @@ LoginDialog::LoginDialog(QWidget *parent)
     btnLogin->setMinimumHeight(42);
     v->addWidget(btnLogin);
 
-    QPushButton *btnReg = new QPushButton("REg", loginPage);
+    QPushButton *btnReg = new QPushButton("Регистрация", loginPage);
     btnReg->setObjectName("secondaryBtn");
     btnReg->setMinimumHeight(40);
     v->addWidget(btnReg);

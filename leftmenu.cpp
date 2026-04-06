@@ -790,6 +790,9 @@ void leftMenu::initUI()
             if (username.trimmed().isEmpty())
                 return;
 
+            if (qApp->property("manual_switch_account").toBool())
+                return;
+
             if (!isCurrentSessionValid(username)) {
                 presenceTimer->stop();
                 logAction(username, "session_invalidated", "Сессия завершена: вход выполнен на другом устройстве");
@@ -1227,22 +1230,46 @@ void leftMenu::initUI()
     });
     connect(switchAccountAction, &QAction::triggered, this, [this](){
         logAction(AppSession::currentUsername(), "user_menu_switch_account", "Нажат пункт Сменить аккаунт");
-        
+
+        QTimer *presenceTimer = findChild<QTimer*>("presenceHeartbeatTimer");
+        if (presenceTimer)
+            presenceTimer->stop();
+
+        qApp->setProperty("manual_switch_account", true);
+
+        QWidget *mainWindow = window();
         logoutUser();
-        
-        LoginDialog dlg(this);
+
+        if (mainWindow)
+            mainWindow->hide();
+
+        LoginDialog dlg(nullptr);
         if (dlg.exec() == QDialog::Accepted) {
             UserInfo newUser = dlg.user();
             AppSession::setCurrentUsername(newUser.username);
             enableRememberMe(newUser.username);
+            touchUserPresence(newUser.username);
             logAction(AppSession::currentUsername(), "account_switched", QString("Вход под аккаунтом %1").arg(newUser.username));
+
+            if (mainWindow) {
+                mainWindow->show();
+                mainWindow->raise();
+                mainWindow->activateWindow();
+            }
+            if (presenceTimer)
+                presenceTimer->start();
+            qApp->setProperty("manual_switch_account", false);
             
             QTimer::singleShot(0, this, [this]() {
                 qreal oldFactor = scaleFactor_;
                 scaleFactor_ = 0;
                 setScaleFactor(oldFactor);
             });
+            return;
         }
+
+        qApp->setProperty("manual_switch_account", false);
+        qApp->quit();
     });
     connect(aboutAction, &QAction::triggered, this, [openAboutDialog](){
         openAboutDialog();

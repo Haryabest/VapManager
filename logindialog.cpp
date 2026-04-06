@@ -15,6 +15,8 @@
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QAction>
+#include <QPainter>
+#include <QPen>
 
 static QIcon loadIconScaled(const QString &path, int size = 20)
 {
@@ -26,59 +28,91 @@ static QIcon loadIconScaled(const QString &path, int size = 20)
     return QIcon(pm);
 }
 
+static QIcon makePasswordEyeIcon(bool crossed, int size = 18)
+{
+    QPixmap pm(size, size);
+    pm.fill(Qt::transparent);
+
+    QPainter p(&pm);
+    p.setRenderHint(QPainter::Antialiasing, true);
+
+    const QColor stroke(79, 95, 129);
+    QPen pen(stroke, qMax(1.6, size * 0.10), Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+    p.setPen(pen);
+    p.setBrush(Qt::NoBrush);
+
+    const QRectF eyeRect(size * 0.10, size * 0.26, size * 0.80, size * 0.48);
+    p.drawEllipse(eyeRect);
+
+    p.setBrush(stroke);
+    p.setPen(Qt::NoPen);
+    p.drawEllipse(QRectF(size * 0.40, size * 0.40, size * 0.20, size * 0.20));
+
+    if (crossed) {
+        QPen slash(QColor(220, 38, 38), qMax(1.8, size * 0.12), Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+        p.setPen(slash);
+        p.setBrush(Qt::NoBrush);
+        p.drawLine(QPointF(size * 0.18, size * 0.84), QPointF(size * 0.84, size * 0.18));
+    }
+
+    p.end();
+    return QIcon(pm);
+}
+
 
 LoginDialog::LoginDialog(QWidget *parent)
     : QDialog(parent)
 {
     setWindowTitle("Вход в систему");
     setModal(true);
-    setMinimumSize(420, 680);
-    resize(470, 780);
+    setMinimumSize(460, 700);
+    resize(520, 800);
     setSizeGripEnabled(true);
 
     setStyleSheet(
-        "QDialog { background: #F5F7FB; }"
-        "QFrame#authCard { background: white; border: 1px solid #E4E8F0; border-radius: 14px; }"
-        "QLabel#titleLabel { font-family: Inter; font-size: 24px; font-weight: 900; color: #0F172A; }"
-        "QLabel#subTitleLabel { font-family: Inter; font-size: 13px; font-weight: 500; color: #5B6475; }"
-        "QLabel#fieldLabel { font-family: Inter; font-size: 13px; font-weight: 700; color: #1E293B; }"
+        "QDialog { background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #F4F7FF, stop:1 #EEF3FB); }"
+        "QFrame#authCard { background: white; border: 1px solid #DCE5F4; border-radius: 16px; }"
+        "QLabel#titleLabel { font-family: Inter; font-size: 26px; font-weight: 900; color: #0B1736; }"
+        "QLabel#subTitleLabel { font-family: Inter; font-size: 13px; font-weight: 500; color: #5F6C86; }"
+        "QLabel#fieldLabel { font-family: Inter; font-size: 13px; font-weight: 800; color: #1E2A44; }"
         "QLabel#errorLabel { font-family: Inter; font-size: 12px; font-weight: 600; color: #E11D48; }"
         "QLineEdit {"
-        "  background: #F8FAFD;"
-        "  border: 1px solid #D7DFEC;"
-        "  border-radius: 10px;"
-        "  padding: 10px 12px;"
+        "  background: #F8FAFF;"
+        "  border: 1px solid #D6E0F0;"
+        "  border-radius: 11px;"
+        "  padding: 11px 12px;"
         "  font-family: Inter;"
         "  font-size: 14px;"
         "  color: #0F172A;"
         "}"
-        "QLineEdit:focus { border: 1px solid #4F46E5; background: white; }"
+        "QLineEdit[passwordField=\"true\"] { padding-right: 42px; }"
+        "QLineEdit:focus { border: 1px solid #335CFF; background: white; }"
         "QComboBox {"
-        "  background: #F8FAFD;"
-        "  border: 1px solid #D7DFEC;"
-        "  border-radius: 10px;"
-        "  padding: 10px 12px;"
+        "  background: #F8FAFF;"
+        "  border: 1px solid #D6E0F0;"
+        "  border-radius: 11px;"
+        "  padding: 11px 12px;"
         "  font-family: Inter;"
         "  font-size: 14px;"
         "  color: #0F172A;"
         "}"
-        "QComboBox:focus { border: 1px solid #4F46E5; background: white; }"
+        "QComboBox:focus { border: 1px solid #335CFF; background: white; }"
         "QComboBox::drop-down { border: none; width: 30px; }"
         "QComboBox::down-arrow { image: none; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 6px solid #64748B; }"
         "QPushButton {"
         "  font-family: Inter;"
         "  font-size: 14px;"
         "  font-weight: 800;"
-        "  border-radius: 10px;"
-        "  padding: 10px 14px;"
+        "  border-radius: 11px;"
+        "  padding: 11px 14px;"
         "  border: 1px solid transparent;"
         "}"
-        "QPushButton#primaryBtn { background: #0F00DB; color: white; }"
-        "QPushButton#primaryBtn:hover { background: #1A4ACD; }"
-        "QPushButton#secondaryBtn { background: #EDF1FF; color: #182B7A; border-color: #CFD8F4; }"
-        "QPushButton#secondaryBtn:hover { background: #E3E9FB; }"
-        "QPushButton#ghostBtn { background: transparent; color: #4B5563; border-color: #D7DFEC; }"
-        "QPushButton#ghostBtn:hover { background: #F2F5FA; }"
+        "QPushButton#primaryBtn { background: #1F46FF; color: white; }"
+        "QPushButton#primaryBtn:hover { background: #143AF3; }"
+        "QPushButton#secondaryBtn { background: #EBF1FF; color: #1B3A9A; border-color: #C9D7FB; }"
+        "QPushButton#secondaryBtn:hover { background: #DFE8FF; }"
+        "QPushButton#ghostBtn { background: transparent; color: #52607A; border-color: #D6E0F0; }"
+        "QPushButton#ghostBtn:hover { background: #F3F7FF; }"
         "QProgressBar {"
         "  border: none;"
         "  border-radius: 3px;"
@@ -96,22 +130,43 @@ LoginDialog::LoginDialog(QWidget *parent)
     auto *loginValidator = new QRegExpValidator(loginRx, this);
     auto *passValidator  = new QRegExpValidator(passRx, this);
 
+    const QIcon iconShow = makePasswordEyeIcon(false, 18);
+    const QIcon iconHide = makePasswordEyeIcon(true, 18);
+    auto setupPasswordField = [iconShow, iconHide](QLineEdit *edit) {
+        if (!edit)
+            return;
+        edit->setEchoMode(QLineEdit::Password);
+        edit->setProperty("passwordField", true);
+
+        QAction *toggleAction = new QAction(iconShow, QString(), edit);
+        toggleAction->setCheckable(true);
+        toggleAction->setToolTip(QObject::tr("Показать пароль"));
+        edit->addAction(toggleAction, QLineEdit::TrailingPosition);
+
+        QObject::connect(toggleAction, &QAction::toggled, edit, [edit, toggleAction, iconShow, iconHide](bool shown) {
+            edit->setEchoMode(shown ? QLineEdit::Normal : QLineEdit::Password);
+            toggleAction->setIcon(shown ? iconHide : iconShow);
+            toggleAction->setToolTip(shown ? QObject::tr("Скрыть пароль") : QObject::tr("Показать пароль"));
+        });
+    };
+
     QVBoxLayout *main = new QVBoxLayout(this);
-    main->setContentsMargins(24, 24, 24, 24);  // нормализация отступов окна
+    main->setContentsMargins(24, 24, 24, 24);
 
     QFrame *authCard = new QFrame(this);
     authCard->setObjectName("authCard");
     QVBoxLayout *cardLayout = new QVBoxLayout(authCard);
-    cardLayout->setContentsMargins(22, 20, 22, 20);  // нормализация отступов карточек
-    cardLayout->setSpacing(12);
+    cardLayout->setContentsMargins(24, 22, 24, 22);
+    cardLayout->setSpacing(14);
 
     stack = new QStackedWidget(authCard);
 
     // =========== LOGIN PAGE ===========
     QWidget *loginPage = new QWidget(authCard);
+    loginPage->setObjectName("loginPage");
     QVBoxLayout *v = new QVBoxLayout(loginPage);
     v->setContentsMargins(0, 0, 0, 0);
-    v->setSpacing(10);
+    v->setSpacing(12);
 
     QLabel *lblTitle = new QLabel("Добро пожаловать", loginPage);
     lblTitle->setObjectName("titleLabel");
@@ -120,7 +175,7 @@ LoginDialog::LoginDialog(QWidget *parent)
     lbl->setWordWrap(true);
     v->addWidget(lblTitle);
     v->addWidget(lbl);
-    v->addSpacing(4);
+    v->addSpacing(6);
 
     QLabel *loginFieldLabel = new QLabel("Логин", loginPage);
     loginFieldLabel->setObjectName("fieldLabel");
@@ -129,7 +184,7 @@ LoginDialog::LoginDialog(QWidget *parent)
     loginEdit = new QLineEdit(loginPage);
     loginEdit->setPlaceholderText("Логин");
     loginEdit->setValidator(loginValidator);
-    loginEdit->setMinimumHeight(42);
+    loginEdit->setMinimumHeight(44);
     v->addWidget(loginEdit);
 
     QLabel *passFieldLabel = new QLabel("Пароль", loginPage);
@@ -138,25 +193,9 @@ LoginDialog::LoginDialog(QWidget *parent)
 
     passEdit = new QLineEdit(loginPage);
     passEdit->setPlaceholderText("Пароль");
-    passEdit->setEchoMode(QLineEdit::Password);
     passEdit->setValidator(passValidator);
-    passEdit->setMinimumHeight(42);
-    passEdit->setStyleSheet(
-        "QLineEdit { background:#F8FAFD; border:1px solid #D7DFEC; border-radius:10px; padding-right:36px; }"
-    );
-    QIcon iconShow = loadIconScaled(":/new/mainWindowIcons/noback/show.png", 20);
-    QIcon iconHide = loadIconScaled(":/new/mainWindowIcons/noback/hide.png", 20);
-    QAction *eyeLogin = new QAction(iconShow, "", passEdit);
-    passEdit->addAction(eyeLogin, QLineEdit::TrailingPosition);
-    connect(eyeLogin, &QAction::triggered, this, [this, eyeLogin, iconShow, iconHide]() {
-        bool show = passEdit->echoMode() == QLineEdit::Password;
-        passEdit->setEchoMode(show ? QLineEdit::Normal : QLineEdit::Password);
-        eyeLogin->setIcon(show ? iconHide : iconShow);
-    });
-    connect(passEdit, &QLineEdit::editingFinished, this, [this, eyeLogin, iconShow]() {
-        passEdit->setEchoMode(QLineEdit::Password);
-        eyeLogin->setIcon(iconShow);
-    });
+    passEdit->setMinimumHeight(44);
+    setupPasswordField(passEdit);
     v->addWidget(passEdit);
     v->addSpacing(6);
 
@@ -167,26 +206,28 @@ LoginDialog::LoginDialog(QWidget *parent)
 
     QPushButton *btnLogin = new QPushButton("Войти", loginPage);
     btnLogin->setObjectName("primaryBtn");
-    btnLogin->setMinimumHeight(42);
+    btnLogin->setMinimumHeight(44);
     v->addWidget(btnLogin);
 
     QPushButton *btnReg = new QPushButton("Регистрация", loginPage);
     btnReg->setObjectName("secondaryBtn");
-    btnReg->setMinimumHeight(40);
+    btnReg->setMinimumHeight(42);
     v->addWidget(btnReg);
 
     QPushButton *btnRecovery = new QPushButton("Войти по ключу восстановления", loginPage);
     btnRecovery->setObjectName("ghostBtn");
-    btnRecovery->setMinimumHeight(36);
+    btnRecovery->setMinimumHeight(40);
     v->addWidget(btnRecovery);
+    v->addStretch();
 
     stack->addWidget(loginPage);
 
     // =========== REGISTER PAGE ===========
     QWidget *regPage = new QWidget(authCard);
+    regPage->setObjectName("regPage");
     QVBoxLayout *r = new QVBoxLayout(regPage);
     r->setContentsMargins(0, 0, 0, 0);
-    r->setSpacing(8);
+    r->setSpacing(10);
 
     // Заголовки
     QLabel *rlTitle = new QLabel("Создание аккаунта", regPage);
@@ -206,8 +247,7 @@ LoginDialog::LoginDialog(QWidget *parent)
     regLoginEdit = new QLineEdit(regPage);
     regLoginEdit->setPlaceholderText("Логин");
     regLoginEdit->setValidator(loginValidator);
-    regLoginEdit->setMinimumHeight(40);
-    regLoginEdit->setFixedWidth(350);
+    regLoginEdit->setMinimumHeight(42);
     r->addWidget(regLoginEdit);
 
     // Пароль 1
@@ -217,32 +257,10 @@ LoginDialog::LoginDialog(QWidget *parent)
 
     regPass1Edit = new QLineEdit(regPage);
     regPass1Edit->setPlaceholderText("Пароль");
-    regPass1Edit->setEchoMode(QLineEdit::Password);
     regPass1Edit->setValidator(passValidator);
-    regPass1Edit->setMinimumHeight(40);
-    regPass1Edit->setFixedWidth(350);
+    regPass1Edit->setMinimumHeight(42);
+    setupPasswordField(regPass1Edit);
     r->addWidget(regPass1Edit);
-
-    // Глазик в первом поле (iconShow, iconHide уже загружены выше для login)
-    {
-        QAction *eye1 = new QAction(iconShow, "", regPass1Edit);
-        regPass1Edit->addAction(eye1, QLineEdit::TrailingPosition);
-
-        regPass1Edit->setStyleSheet(
-            "QLineEdit { background:#F8FAFD; border:1px solid #D7DFEC; "
-            "border-radius:10px; padding-right:36px; }"
-        );
-
-        connect(eye1, &QAction::triggered, this, [this, eye1, iconShow, iconHide]() {
-            bool show = regPass1Edit->echoMode() == QLineEdit::Password;
-            regPass1Edit->setEchoMode(show ? QLineEdit::Normal : QLineEdit::Password);
-            eye1->setIcon(show ? iconHide : iconShow);
-        });
-        connect(regPass1Edit, &QLineEdit::editingFinished, this, [this, eye1, iconShow]() {
-            regPass1Edit->setEchoMode(QLineEdit::Password);
-            eye1->setIcon(iconShow);
-        });
-    }
 
     // Пароль 2
     QLabel *regPass2Label = new QLabel("Повторите пароль", regPage);
@@ -251,32 +269,10 @@ LoginDialog::LoginDialog(QWidget *parent)
 
     regPass2Edit = new QLineEdit(regPage);
     regPass2Edit->setPlaceholderText("Повторите пароль");
-    regPass2Edit->setEchoMode(QLineEdit::Password);
     regPass2Edit->setValidator(passValidator);
-    regPass2Edit->setMinimumHeight(40);
-    regPass2Edit->setFixedWidth(350);
+    regPass2Edit->setMinimumHeight(42);
+    setupPasswordField(regPass2Edit);
     r->addWidget(regPass2Edit);
-
-    // Глазик во втором поле
-    {
-        QAction *eye2 = new QAction(iconShow, "", regPass2Edit);
-        regPass2Edit->addAction(eye2, QLineEdit::TrailingPosition);
-
-        regPass2Edit->setStyleSheet(
-            "QLineEdit { background:#F8FAFD; border:1px solid #D7DFEC; "
-            "border-radius:10px; padding-right:36px; }"
-        );
-
-        connect(eye2, &QAction::triggered, this, [this, eye2, iconShow, iconHide]() {
-            bool show = regPass2Edit->echoMode() == QLineEdit::Password;
-            regPass2Edit->setEchoMode(show ? QLineEdit::Normal : QLineEdit::Password);
-            eye2->setIcon(show ? iconHide : iconShow);
-        });
-        connect(regPass2Edit, &QLineEdit::editingFinished, this, [this, eye2, iconShow]() {
-            regPass2Edit->setEchoMode(QLineEdit::Password);
-            eye2->setIcon(iconShow);
-        });
-    }
 
     // Индикатор надёжности — ПОД ВТОРЫМ ПОЛЕМ
     passStrength = new QProgressBar(regPage);
@@ -308,8 +304,7 @@ LoginDialog::LoginDialog(QWidget *parent)
     regRoleCombo->addItem("Пользователь", "viewer");
     regRoleCombo->addItem("Администратор", "admin");
     regRoleCombo->addItem("Техник", "tech");
-    regRoleCombo->setMinimumHeight(40);
-    regRoleCombo->setFixedWidth(350);
+    regRoleCombo->setMinimumHeight(42);
     r->addWidget(regRoleCombo);
 
     // Ключ администратора
@@ -326,8 +321,7 @@ LoginDialog::LoginDialog(QWidget *parent)
 
     regAdminKeyEdit = new QLineEdit(adminKeyRow);
     regAdminKeyEdit->setPlaceholderText("Запросите ключ у действующего админа");
-    regAdminKeyEdit->setMinimumHeight(40);
-    regAdminKeyEdit->setFixedWidth(350);
+    regAdminKeyEdit->setMinimumHeight(42);
     adminKeyLayout->addWidget(regAdminKeyEdit);
 
     r->addWidget(adminKeyRow);
@@ -346,8 +340,7 @@ LoginDialog::LoginDialog(QWidget *parent)
 
     regTechKeyEdit = new QLineEdit(techKeyRow);
     regTechKeyEdit->setPlaceholderText("Запросите ключ у действующего техника");
-    regTechKeyEdit->setMinimumHeight(40);
-    regTechKeyEdit->setFixedWidth(350);
+    regTechKeyEdit->setMinimumHeight(42);
     techKeyLayout->addWidget(regTechKeyEdit);
 
     r->addWidget(techKeyRow);
@@ -363,13 +356,14 @@ LoginDialog::LoginDialog(QWidget *parent)
     // Кнопки
     QPushButton *btnRegOk = new QPushButton("Создать аккаунт", regPage);
     btnRegOk->setObjectName("primaryBtn");
-    btnRegOk->setMinimumHeight(42);
+    btnRegOk->setMinimumHeight(44);
     r->addWidget(btnRegOk);
 
     QPushButton *btnBack = new QPushButton("Назад", regPage);
     btnBack->setObjectName("secondaryBtn");
-    btnBack->setMinimumHeight(40);
+    btnBack->setMinimumHeight(42);
     r->addWidget(btnBack);
+    r->addStretch();
 
     stack->addWidget(regPage);
 
@@ -442,25 +436,9 @@ LoginDialog::LoginDialog(QWidget *parent)
 
     newPass1Edit = new QLineEdit(passChangePage);
     newPass1Edit->setPlaceholderText("Новый пароль");
-    newPass1Edit->setEchoMode(QLineEdit::Password);
     newPass1Edit->setValidator(passValidator);
     newPass1Edit->setMinimumHeight(42);
-    newPass1Edit->setStyleSheet(
-        "QLineEdit { background:#F8FAFD; border:1px solid #D7DFEC; border-radius:10px; padding-right:36px; }"
-    );
-    QIcon pcIconShow = loadIconScaled(":/new/mainWindowIcons/noback/show.png", 20);
-    QIcon pcIconHide = loadIconScaled(":/new/mainWindowIcons/noback/hide.png", 20);
-    QAction *pcEye1 = new QAction(pcIconShow, "", newPass1Edit);
-    newPass1Edit->addAction(pcEye1, QLineEdit::TrailingPosition);
-    connect(pcEye1, &QAction::triggered, this, [this, pcEye1, pcIconShow, pcIconHide]() {
-        bool show = newPass1Edit->echoMode() == QLineEdit::Password;
-        newPass1Edit->setEchoMode(show ? QLineEdit::Normal : QLineEdit::Password);
-        pcEye1->setIcon(show ? pcIconHide : pcIconShow);
-    });
-    connect(newPass1Edit, &QLineEdit::editingFinished, this, [this, pcEye1, pcIconShow]() {
-        newPass1Edit->setEchoMode(QLineEdit::Password);
-        pcEye1->setIcon(pcIconShow);
-    });
+    setupPasswordField(newPass1Edit);
     pcLayout->addWidget(newPass1Edit);
 
     newPassStrength = new QProgressBar(passChangePage);
@@ -486,23 +464,9 @@ LoginDialog::LoginDialog(QWidget *parent)
 
     newPass2Edit = new QLineEdit(passChangePage);
     newPass2Edit->setPlaceholderText("Повторите новый пароль");
-    newPass2Edit->setEchoMode(QLineEdit::Password);
     newPass2Edit->setValidator(passValidator);
     newPass2Edit->setMinimumHeight(42);
-    newPass2Edit->setStyleSheet(
-        "QLineEdit { background:#F8FAFD; border:1px solid #D7DFEC; border-radius:10px; padding-right:36px; }"
-    );
-    QAction *pcEye2 = new QAction(pcIconShow, "", newPass2Edit);
-    newPass2Edit->addAction(pcEye2, QLineEdit::TrailingPosition);
-    connect(pcEye2, &QAction::triggered, this, [this, pcEye2, pcIconShow, pcIconHide]() {
-        bool show = newPass2Edit->echoMode() == QLineEdit::Password;
-        newPass2Edit->setEchoMode(show ? QLineEdit::Normal : QLineEdit::Password);
-        pcEye2->setIcon(show ? pcIconHide : pcIconShow);
-    });
-    connect(newPass2Edit, &QLineEdit::editingFinished, this, [this, pcEye2, pcIconShow]() {
-        newPass2Edit->setEchoMode(QLineEdit::Password);
-        pcEye2->setIcon(pcIconShow);
-    });
+    setupPasswordField(newPass2Edit);
     pcLayout->addWidget(newPass2Edit);
 
     newPassError = new QLabel(passChangePage);

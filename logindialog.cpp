@@ -71,14 +71,20 @@ LoginDialog::LoginDialog(QWidget *parent)
 
     setStyleSheet(
         "QDialog { background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #F4F7FF, stop:1 #EEF3FB); }"
-        "QFrame#authCard { background: white; border: 1px solid #DCE5F4; border-radius: 16px; }"
-        "QLabel#titleLabel { font-family: Inter; font-size: 26px; font-weight: 900; color: #0B1736; }"
-        "QLabel#subTitleLabel { font-family: Inter; font-size: 13px; font-weight: 500; color: #5F6C86; }"
-        "QLabel#fieldLabel { font-family: Inter; font-size: 13px; font-weight: 800; color: #1E2A44; }"
-        "QLabel#errorLabel { font-family: Inter; font-size: 12px; font-weight: 600; color: #E11D48; }"
+        "QFrame#authCard { background: #FFFFFF; border: 1px solid #DCE5F4; border-radius: 18px; }"
+        "QFrame#heroPanel { background: #F1F6FF; border: 1px solid #D6E2FF; border-radius: 12px; }"
+        "QFrame#formPanel { background: #F8FAFF; border: 1px solid #DEE6F6; border-radius: 12px; }"
+        "QLabel#heroTitle { font-family: Inter; font-size: 15px; font-weight: 800; color: #15327A; }"
+        "QLabel#heroSubTitle { font-family: Inter; font-size: 12px; font-weight: 600; color: #4B5F93; }"
+        "QLabel#titleLabel { font-family: Inter; font-size: 25px; font-weight: 900; color: #0F2438; }"
+        "QLabel#subTitleLabel { font-family: Inter; font-size: 13px; font-weight: 500; color: #5D6E82; }"
+        "QLabel#fieldLabel { font-family: Inter; font-size: 13px; font-weight: 800; color: #1F334A; }"
+        "QLabel#hintLabel { font-family: Inter; font-size: 12px; font-weight: 600; color: #63789C; }"
+        "QLabel#dividerLabel { font-family: Inter; font-size: 11px; font-weight: 700; color: #8FA2C8; }"
+        "QLabel#errorLabel { font-family: Inter; font-size: 12px; font-weight: 600; color: #D6284B; }"
         "QLineEdit {"
-        "  background: #F8FAFF;"
-        "  border: 1px solid #D6E0F0;"
+        "  background: #FFFFFF;"
+        "  border: 1px solid #D3DDF0;"
         "  border-radius: 11px;"
         "  padding: 11px 12px;"
         "  font-family: Inter;"
@@ -86,17 +92,17 @@ LoginDialog::LoginDialog(QWidget *parent)
         "  color: #0F172A;"
         "}"
         "QLineEdit[passwordField=\"true\"] { padding-right: 42px; }"
-        "QLineEdit:focus { border: 1px solid #335CFF; background: white; }"
+        "QLineEdit:focus { border: 1px solid #335CFF; background: #FFFFFF; }"
         "QComboBox {"
-        "  background: #F8FAFF;"
-        "  border: 1px solid #D6E0F0;"
+        "  background: #FFFFFF;"
+        "  border: 1px solid #D3DDF0;"
         "  border-radius: 11px;"
         "  padding: 11px 12px;"
         "  font-family: Inter;"
         "  font-size: 14px;"
         "  color: #0F172A;"
         "}"
-        "QComboBox:focus { border: 1px solid #335CFF; background: white; }"
+        "QComboBox:focus { border: 1px solid #335CFF; background: #FFFFFF; }"
         "QComboBox::drop-down { border: none; width: 30px; }"
         "QComboBox::down-arrow { image: none; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 6px solid #64748B; }"
         "QPushButton {"
@@ -111,7 +117,7 @@ LoginDialog::LoginDialog(QWidget *parent)
         "QPushButton#primaryBtn:hover { background: #143AF3; }"
         "QPushButton#secondaryBtn { background: #EBF1FF; color: #1B3A9A; border-color: #C9D7FB; }"
         "QPushButton#secondaryBtn:hover { background: #DFE8FF; }"
-        "QPushButton#ghostBtn { background: transparent; color: #52607A; border-color: #D6E0F0; }"
+        "QPushButton#ghostBtn { background: #FFFFFF; color: #52607A; border-color: #D6E0F0; }"
         "QPushButton#ghostBtn:hover { background: #F3F7FF; }"
         "QProgressBar {"
         "  border: none;"
@@ -151,12 +157,14 @@ LoginDialog::LoginDialog(QWidget *parent)
     };
 
     QVBoxLayout *main = new QVBoxLayout(this);
-    main->setContentsMargins(24, 24, 24, 24);
+    main->setContentsMargins(24, 20, 24, 20);
 
     QFrame *authCard = new QFrame(this);
     authCard->setObjectName("authCard");
+    authCard->setMaximumWidth(560);
+    authCard->setMinimumWidth(430);
     QVBoxLayout *cardLayout = new QVBoxLayout(authCard);
-    cardLayout->setContentsMargins(24, 22, 24, 22);
+    cardLayout->setContentsMargins(28, 24, 28, 24);
     cardLayout->setSpacing(14);
 
     stack = new QStackedWidget(authCard);
@@ -166,58 +174,94 @@ LoginDialog::LoginDialog(QWidget *parent)
     loginPage->setObjectName("loginPage");
     QVBoxLayout *v = new QVBoxLayout(loginPage);
     v->setContentsMargins(0, 0, 0, 0);
-    v->setSpacing(12);
+    v->setSpacing(14);
 
-    QLabel *lblTitle = new QLabel("Добро пожаловать", loginPage);
+    QFrame *loginHero = new QFrame(loginPage);
+    loginHero->setObjectName("heroPanel");
+    QVBoxLayout *loginHeroLayout = new QVBoxLayout(loginHero);
+    loginHeroLayout->setContentsMargins(14, 12, 14, 12);
+    loginHeroLayout->setSpacing(2);
+    QLabel *loginHeroTitle = new QLabel("AGV Manager · Авторизация", loginHero);
+    loginHeroTitle->setObjectName("heroTitle");
+    QLabel *loginHeroSubTitle = new QLabel("Безопасный вход в рабочий аккаунт", loginHero);
+    loginHeroSubTitle->setObjectName("heroSubTitle");
+    loginHeroLayout->addWidget(loginHeroTitle);
+    loginHeroLayout->addWidget(loginHeroSubTitle);
+    v->addWidget(loginHero);
+
+    QLabel *lblTitle = new QLabel("Вход в аккаунт", loginPage);
     lblTitle->setObjectName("titleLabel");
-    QLabel *lbl = new QLabel("Введите логин и пароль для входа в систему", loginPage);
+    QLabel *lbl = new QLabel("Введите логин и пароль, чтобы продолжить работу", loginPage);
     lbl->setObjectName("subTitleLabel");
     lbl->setWordWrap(true);
     v->addWidget(lblTitle);
     v->addWidget(lbl);
-    v->addSpacing(6);
+    v->addSpacing(2);
+
+    QFrame *loginFormPanel = new QFrame(loginPage);
+    loginFormPanel->setObjectName("formPanel");
+    QVBoxLayout *loginForm = new QVBoxLayout(loginFormPanel);
+    loginForm->setContentsMargins(14, 14, 14, 14);
+    loginForm->setSpacing(10);
 
     QLabel *loginFieldLabel = new QLabel("Логин", loginPage);
     loginFieldLabel->setObjectName("fieldLabel");
-    v->addWidget(loginFieldLabel);
+    loginForm->addWidget(loginFieldLabel);
 
     loginEdit = new QLineEdit(loginPage);
     loginEdit->setPlaceholderText("Логин");
     loginEdit->setValidator(loginValidator);
     loginEdit->setMinimumHeight(44);
-    v->addWidget(loginEdit);
+    loginForm->addWidget(loginEdit);
 
     QLabel *passFieldLabel = new QLabel("Пароль", loginPage);
     passFieldLabel->setObjectName("fieldLabel");
-    v->addWidget(passFieldLabel);
+    loginForm->addWidget(passFieldLabel);
 
     passEdit = new QLineEdit(loginPage);
     passEdit->setPlaceholderText("Пароль");
     passEdit->setValidator(passValidator);
     passEdit->setMinimumHeight(44);
     setupPasswordField(passEdit);
-    v->addWidget(passEdit);
-    v->addSpacing(6);
+    loginForm->addWidget(passEdit);
+
+    QLabel *loginHint = new QLabel("Логин: латиница и цифры. Пароль: не менее 8 символов.", loginPage);
+    loginHint->setObjectName("hintLabel");
+    loginHint->setWordWrap(true);
+    loginForm->addWidget(loginHint);
 
     loginError = new QLabel(loginPage);
     loginError->setObjectName("errorLabel");
     loginError->setWordWrap(true);
-    v->addWidget(loginError);
+    loginForm->addWidget(loginError);
 
     QPushButton *btnLogin = new QPushButton("Войти", loginPage);
     btnLogin->setObjectName("primaryBtn");
     btnLogin->setMinimumHeight(44);
-    v->addWidget(btnLogin);
+    loginForm->addWidget(btnLogin);
+
+    v->addWidget(loginFormPanel);
+
+    QLabel *loginDivider = new QLabel("ДРУГИЕ ДЕЙСТВИЯ", loginPage);
+    loginDivider->setObjectName("dividerLabel");
+    loginDivider->setAlignment(Qt::AlignCenter);
+    v->addWidget(loginDivider);
+
+    QHBoxLayout *loginActionsRow = new QHBoxLayout();
+    loginActionsRow->setContentsMargins(0, 0, 0, 0);
+    loginActionsRow->setSpacing(10);
 
     QPushButton *btnReg = new QPushButton("Регистрация", loginPage);
     btnReg->setObjectName("secondaryBtn");
     btnReg->setMinimumHeight(42);
-    v->addWidget(btnReg);
+    loginActionsRow->addWidget(btnReg, 1);
 
-    QPushButton *btnRecovery = new QPushButton("Войти по ключу восстановления", loginPage);
+    QPushButton *btnRecovery = new QPushButton("Вход по ключу", loginPage);
     btnRecovery->setObjectName("ghostBtn");
-    btnRecovery->setMinimumHeight(40);
-    v->addWidget(btnRecovery);
+    btnRecovery->setMinimumHeight(42);
+    loginActionsRow->addWidget(btnRecovery, 1);
+
+    v->addLayout(loginActionsRow);
     v->addStretch();
 
     stack->addWidget(loginPage);
@@ -227,52 +271,71 @@ LoginDialog::LoginDialog(QWidget *parent)
     regPage->setObjectName("regPage");
     QVBoxLayout *r = new QVBoxLayout(regPage);
     r->setContentsMargins(0, 0, 0, 0);
-    r->setSpacing(10);
+    r->setSpacing(14);
+
+    QFrame *regHero = new QFrame(regPage);
+    regHero->setObjectName("heroPanel");
+    QVBoxLayout *regHeroLayout = new QVBoxLayout(regHero);
+    regHeroLayout->setContentsMargins(14, 12, 14, 12);
+    regHeroLayout->setSpacing(2);
+    QLabel *regHeroTitle = new QLabel("Создание аккаунта", regHero);
+    regHeroTitle->setObjectName("heroTitle");
+    QLabel *regHeroSubTitle = new QLabel("Заполните данные и сохраните ключ восстановления", regHero);
+    regHeroSubTitle->setObjectName("heroSubTitle");
+    regHeroLayout->addWidget(regHeroTitle);
+    regHeroLayout->addWidget(regHeroSubTitle);
+    r->addWidget(regHero);
 
     // Заголовки
-    QLabel *rlTitle = new QLabel("Создание аккаунта", regPage);
+    QLabel *rlTitle = new QLabel("Регистрация", regPage);
     rlTitle->setObjectName("titleLabel");
-    QLabel *rl = new QLabel("Заполните поля ниже для регистрации", regPage);
+    QLabel *rl = new QLabel("Укажите логин, пароль и роль пользователя", regPage);
     rl->setObjectName("subTitleLabel");
     rl->setWordWrap(true);
     r->addWidget(rlTitle);
     r->addWidget(rl);
     r->addSpacing(2);
 
+    QFrame *regFormPanel = new QFrame(regPage);
+    regFormPanel->setObjectName("formPanel");
+    QVBoxLayout *regForm = new QVBoxLayout(regFormPanel);
+    regForm->setContentsMargins(14, 14, 14, 14);
+    regForm->setSpacing(10);
+
     // Логин
     QLabel *regLoginLabel = new QLabel("Логин", regPage);
     regLoginLabel->setObjectName("fieldLabel");
-    r->addWidget(regLoginLabel);
+    regForm->addWidget(regLoginLabel);
 
     regLoginEdit = new QLineEdit(regPage);
     regLoginEdit->setPlaceholderText("Логин");
     regLoginEdit->setValidator(loginValidator);
     regLoginEdit->setMinimumHeight(42);
-    r->addWidget(regLoginEdit);
+    regForm->addWidget(regLoginEdit);
 
     // Пароль 1
     QLabel *regPass1Label = new QLabel("Пароль", regPage);
     regPass1Label->setObjectName("fieldLabel");
-    r->addWidget(regPass1Label);
+    regForm->addWidget(regPass1Label);
 
     regPass1Edit = new QLineEdit(regPage);
     regPass1Edit->setPlaceholderText("Пароль");
     regPass1Edit->setValidator(passValidator);
     regPass1Edit->setMinimumHeight(42);
     setupPasswordField(regPass1Edit);
-    r->addWidget(regPass1Edit);
+    regForm->addWidget(regPass1Edit);
 
     // Пароль 2
     QLabel *regPass2Label = new QLabel("Повторите пароль", regPage);
     regPass2Label->setObjectName("fieldLabel");
-    r->addWidget(regPass2Label);
+    regForm->addWidget(regPass2Label);
 
     regPass2Edit = new QLineEdit(regPage);
     regPass2Edit->setPlaceholderText("Повторите пароль");
     regPass2Edit->setValidator(passValidator);
     regPass2Edit->setMinimumHeight(42);
     setupPasswordField(regPass2Edit);
-    r->addWidget(regPass2Edit);
+    regForm->addWidget(regPass2Edit);
 
     // Индикатор надёжности — ПОД ВТОРЫМ ПОЛЕМ
     passStrength = new QProgressBar(regPage);
@@ -291,21 +354,21 @@ LoginDialog::LoginDialog(QWidget *parent)
     strengthRow->addWidget(passStrength, 1);
     strengthRow->addWidget(passStrengthLabel, 0, Qt::AlignVCenter);
 
-    r->addLayout(strengthRow);
+    regForm->addLayout(strengthRow);
 
     connect(regPass1Edit, &QLineEdit::textChanged, this, &LoginDialog::updatePasswordStrength);
 
     // Роль
     QLabel *regRoleLabel = new QLabel("Роль", regPage);
     regRoleLabel->setObjectName("fieldLabel");
-    r->addWidget(regRoleLabel);
+    regForm->addWidget(regRoleLabel);
 
     regRoleCombo = new QComboBox(regPage);
     regRoleCombo->addItem("Пользователь", "viewer");
     regRoleCombo->addItem("Администратор", "admin");
     regRoleCombo->addItem("Техник", "tech");
     regRoleCombo->setMinimumHeight(42);
-    r->addWidget(regRoleCombo);
+    regForm->addWidget(regRoleCombo);
 
     // Ключ администратора
     adminKeyRow = new QWidget(regPage);
@@ -324,7 +387,7 @@ LoginDialog::LoginDialog(QWidget *parent)
     regAdminKeyEdit->setMinimumHeight(42);
     adminKeyLayout->addWidget(regAdminKeyEdit);
 
-    r->addWidget(adminKeyRow);
+    regForm->addWidget(adminKeyRow);
 
     // Ключ техника
     techKeyRow = new QWidget(regPage);
@@ -343,7 +406,7 @@ LoginDialog::LoginDialog(QWidget *parent)
     regTechKeyEdit->setMinimumHeight(42);
     techKeyLayout->addWidget(regTechKeyEdit);
 
-    r->addWidget(techKeyRow);
+    regForm->addWidget(techKeyRow);
 
     connect(regRoleCombo, SIGNAL(currentIndexChanged(int)), this, SLOT(onRoleChanged(int)));
 
@@ -351,18 +414,25 @@ LoginDialog::LoginDialog(QWidget *parent)
     regError = new QLabel(regPage);
     regError->setObjectName("errorLabel");
     regError->setWordWrap(true);
-    r->addWidget(regError);
+    regForm->addWidget(regError);
 
     // Кнопки
     QPushButton *btnRegOk = new QPushButton("Создать аккаунт", regPage);
     btnRegOk->setObjectName("primaryBtn");
     btnRegOk->setMinimumHeight(44);
-    r->addWidget(btnRegOk);
 
     QPushButton *btnBack = new QPushButton("Назад", regPage);
     btnBack->setObjectName("secondaryBtn");
     btnBack->setMinimumHeight(42);
-    r->addWidget(btnBack);
+
+    QHBoxLayout *regActionsRow = new QHBoxLayout();
+    regActionsRow->setContentsMargins(0, 0, 0, 0);
+    regActionsRow->setSpacing(10);
+    regActionsRow->addWidget(btnBack, 1);
+    regActionsRow->addWidget(btnRegOk, 2);
+    regForm->addLayout(regActionsRow);
+
+    r->addWidget(regFormPanel);
     r->addStretch();
 
     stack->addWidget(regPage);
@@ -482,7 +552,9 @@ LoginDialog::LoginDialog(QWidget *parent)
     stack->addWidget(passChangePage);
 
     cardLayout->addWidget(stack);
-    main->addWidget(authCard);
+    main->addStretch();
+    main->addWidget(authCard, 0, Qt::AlignHCenter);
+    main->addStretch();
 
     // ========================================================
     // СОБЫТИЯ И ОБРАБОТКИ

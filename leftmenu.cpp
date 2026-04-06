@@ -7632,6 +7632,9 @@ bool saveUserAvatarToDb(const QString &username, const QPixmap &pm)
         QWidget *listHost = qobject_cast<QWidget*>(chatsListLayout_->parent());
         if (!listHost) listHost = chatsPage;
 
+        if (chatsPage) chatsPage->setUpdatesEnabled(false);
+        if (listHost) listHost->setUpdatesEnabled(false);
+
         const QString currentUser = AppSession::currentUsername();
         const QString role = getUserRole(currentUser);
         const bool isAdmin = (role == "admin" || role == "tech");
@@ -7639,8 +7642,8 @@ bool saveUserAvatarToDb(const QString &username, const QPixmap &pm)
 
         // Комплексный тест: не грузим ФИО/аватар по каждому ряду (N запросов к БД → подвисание UI).
         const bool complexTestFast = stressSuiteRunning_;
-        if (complexTestFast && threads.size() > 48)
-            threads.resize(48);
+        if (threads.size() > 100)
+            threads.resize(100);
 
         const QString newSignature = makeChatListSignature(threads);
         if (!complexTestFast && newSignature == lastChatsListSignature_ && chatsListLayout_->count() > 0)
@@ -7794,6 +7797,10 @@ bool saveUserAvatarToDb(const QString &username, const QPixmap &pm)
         }
         chatsListLayout_->addStretch();
         lastChatsListSignature_ = newSignature;
+
+        if (chatsPage) chatsPage->setUpdatesEnabled(true);
+        if (listHost) listHost->setUpdatesEnabled(true);
+        if (chatsPage) chatsPage->update();
     }
 
     void leftMenu::hideAllPages()

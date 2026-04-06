@@ -5160,8 +5160,10 @@ void leftMenu::showLogs()
 
     // После тяжёлых сценариев reloadLogs мог не дойти до конца — снимаем залипание.
     reloadingLogs_ = false;
-    reloadLogs(lastLogsMaxRows_);
-    stressSuiteLogPageEntered(QStringLiteral("logs"));
+    QTimer::singleShot(0, this, [this]() {
+        reloadLogs(lastLogsMaxRows_);
+        stressSuiteLogPageEntered(QStringLiteral("logs"));
+    });
 }
 
 
@@ -5252,15 +5254,18 @@ void leftMenu::reloadLogs(int maxRows)
     }
 
     // Страховка от гигантского split (редкие длинные строки / мусор)
-    int lineCap = qMax(MAX_ROWS * 4, 50000);
+    int lineCap = qMax(MAX_ROWS * 4, 10000);
     if (autotestLight)
-        lineCap = qMin(lineCap, 12000);
+        lineCap = qMin(lineCap, 8000);
     if (lines.size() > lineCap)
         lines = lines.mid(lines.size() - lineCap);
 
     {
             int start = (MAX_ROWS > 0) ? 0 : qMax(0, lines.size() - MAX_ROWS);
-            for (int i = lines.size() - 1; i >= start && rows.size() < MAX_ROWS; --i) {
+            const int maxLinesToProcess = qMin(lines.size(), MAX_ROWS * 3);
+            int processedCount = 0;
+            for (int i = lines.size() - 1; i >= start && rows.size() < MAX_ROWS && processedCount < maxLinesToProcess; --i) {
+                ++processedCount;
                 const QString line = lines[i].trimmed();
                 if (line.isEmpty()) continue;
 

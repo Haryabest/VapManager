@@ -795,18 +795,27 @@ void leftMenu::initUI()
                 logAction(username, "session_invalidated", "Сессия завершена: вход выполнен на другом устройстве");
                 logoutUser();
 
+                QWidget *mainWindow = window();
+                if (mainWindow)
+                    mainWindow->hide();
+
                 QMessageBox::warning(
-                    this,
+                    nullptr,
                     tr("Сессия завершена"),
                     tr("Для этого аккаунта выполнен вход на другом устройстве. Текущая сессия завершена.")
                 );
 
-                LoginDialog dlg(this);
+                LoginDialog dlg(nullptr);
                 if (dlg.exec() == QDialog::Accepted) {
                     const UserInfo newUser = dlg.user();
                     AppSession::setCurrentUsername(newUser.username);
                     enableRememberMe(newUser.username);
                     touchUserPresence(newUser.username);
+                    if (mainWindow) {
+                        mainWindow->show();
+                        mainWindow->raise();
+                        mainWindow->activateWindow();
+                    }
                     presenceTimer->start();
                     return;
                 }

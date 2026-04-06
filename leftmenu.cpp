@@ -5254,9 +5254,9 @@ void leftMenu::reloadLogs(int maxRows)
     }
 
     // Страховка от гигантского split (редкие длинные строки / мусор)
-    int lineCap = qMax(MAX_ROWS * 3, 3000);
+    int lineCap = qMax(MAX_ROWS * 2, 2000);
     if (autotestLight)
-        lineCap = qMin(lineCap, 6000);
+        lineCap = qMin(lineCap, 4000);
     if (lines.size() > lineCap)
         lines = lines.mid(lines.size() - lineCap);
 
@@ -5353,10 +5353,12 @@ void leftMenu::reloadLogs(int maxRows)
         return a.time > b.time;
     });
 
+    const int rowCount = qMin(rows.size(), 300);
+    
     logsTable->setUpdatesEnabled(false);
     logsTable->setSortingEnabled(false);
-    const int rowCount = qMin(rows.size(), 2000);
     logsTable->setRowCount(rowCount);
+    
     for (int i = 0; i < rowCount; ++i) {
         const QString values[5] = {
             rows[i].time,
@@ -5373,7 +5375,11 @@ void leftMenu::reloadLogs(int maxRows)
             }
             item->setText(values[col]);
         }
+        if (i % 100 == 0 && i > 0) {
+            QApplication::processEvents();
+        }
     }
+    
     logsTable->setUpdatesEnabled(true);
     logsTable->viewport()->update();
     lastLogsReloadTimer_.restart();

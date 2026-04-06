@@ -1251,10 +1251,11 @@ QWidget* TaskChatWidget::createMessageRow(const TaskChatMessage &m)
     bubbleL->setSpacing(4);
     QLabel *text = new QLabel(visibleText, bubble);
     text->setWordWrap(true);
-    text->setTextInteractionFlags(Qt::NoTextInteraction);
+    text->setTextInteractionFlags(Qt::TextSelectableByMouse);
     text->setContextMenuPolicy(Qt::NoContextMenu);
     text->setMaximumWidth(qMax(220, int(width() * 0.55)));
-    text->setStyleSheet(QString("font-size:13px; color:%1;").arg(mine ? "#FFFFFF" : "#0F172A"));
+    text->setObjectName("messageText");
+    text->setStyleSheet(QString("font-size:13px;color:%1;background:transparent;").arg(mine ? "#FFFFFF" : "#0F172A"));
     QString metaText = QString("%1 • %2").arg(m.fromUser, m.createdAt.toString("dd.MM.yy hh:mm"));
     if (mine)
         metaText += QStringLiteral(" ✓✓");
@@ -1978,8 +1979,33 @@ bool TaskChatWidget::eventFilter(QObject *obj, QEvent *event)
 
     if (event->type() == QEvent::ContextMenu) {
         QContextMenuEvent *ce = static_cast<QContextMenuEvent*>(event);
+        QLabel *lbl = qobject_cast<QLabel*>(obj);
+        if (lbl && lbl->objectName() == "messageText" && 
+            (lbl->textInteractionFlags() & Qt::TextSelectableByMouse)) {
+            QMenu menu;
+            menu.addAction("Копировать", [lbl]() {
+                QString sel = lbl->selectedText();
+                if (!sel.isEmpty())
+                    QApplication::clipboard()->setText(sel);
+            });
+            menu.exec(ce->globalPos());
+            return true;
+        }
         showMessageContextMenu(ce->globalPos());
         return true;
+    }
+
+    if (event->type() == QEvent::KeyPress) {
+        QKeyEvent *ke = static_cast<QKeyEvent*>(event);
+        if ((ke->modifiers() & Qt::ControlModifier) && ke->key() == Qt::Key_C) {
+            QLabel *lbl = qobject_cast<QLabel*>(obj);
+            if (lbl && lbl->objectName() == "messageText") {
+                QString sel = lbl->selectedText();
+                if (!sel.isEmpty())
+                    QApplication::clipboard()->setText(sel);
+                return true;
+            }
+        }
     }
 
     if (!selectionMode_ && event->type() == QEvent::MouseButtonPress) {

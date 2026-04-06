@@ -5160,10 +5160,8 @@ void leftMenu::showLogs()
 
     // После тяжёлых сценариев reloadLogs мог не дойти до конца — снимаем залипание.
     reloadingLogs_ = false;
-    QTimer::singleShot(0, this, [this]() {
-        reloadLogs(lastLogsMaxRows_);
-        stressSuiteLogPageEntered(QStringLiteral("logs"));
-    });
+    reloadLogs(lastLogsMaxRows_);
+    stressSuiteLogPageEntered(QStringLiteral("logs"));
 }
 
 
@@ -5353,13 +5351,9 @@ void leftMenu::reloadLogs(int maxRows)
         return a.time > b.time;
     });
 
-    const int rowCount = qMin(rows.size(), 300);
-    
     logsTable->setUpdatesEnabled(false);
-    logsTable->setSortingEnabled(false);
-    logsTable->setRowCount(rowCount);
-    
-    for (int i = 0; i < rowCount; ++i) {
+    logsTable->setRowCount(rows.size());
+    for (int i = 0; i < rows.size(); ++i) {
         const QString values[5] = {
             rows[i].time,
             rows[i].source,
@@ -5375,11 +5369,7 @@ void leftMenu::reloadLogs(int maxRows)
             }
             item->setText(values[col]);
         }
-        if (i % 100 == 0 && i > 0) {
-            QApplication::processEvents();
-        }
     }
-    
     logsTable->setUpdatesEnabled(true);
     logsTable->viewport()->update();
     lastLogsReloadTimer_.restart();

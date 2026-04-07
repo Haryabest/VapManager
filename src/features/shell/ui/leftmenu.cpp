@@ -7050,6 +7050,7 @@ bool saveUserAvatarToDb(const QString &username, const QPixmap &pm)
         addCopyableRow("Внутренний номер", info.extPhone);
         addCopyableRow("Email", info.email);
         addCopyableRow("Telegram", info.telegram);
+        addCopyableRow("Recovery key", info.permanentRecoveryKey);
 
         // AGV закреплены за пользователем
         QStringList agvList = getAgvIdsAssignedToUser(username);

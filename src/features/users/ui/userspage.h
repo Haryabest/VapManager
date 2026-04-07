@@ -2,6 +2,7 @@
 
 #include <QWidget>
 #include <QVector>
+#include <QSet>
 #include <functional>
 
 class QVBoxLayout;
@@ -34,4 +35,5 @@ private:
     QPushButton *addBtn  = nullptr;
     QTimer      *statusRefreshTimer = nullptr;
     bool        loadingUsers_ = false;
+    QSet<QString> expandedUsers_;
 };

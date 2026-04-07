@@ -17,6 +17,7 @@
 #include <QAction>
 #include <QPainter>
 #include <QPen>
+#include <QRegularExpression>
 
 static QIcon loadIconScaled(const QString &path, int size = 20)
 {
@@ -473,7 +474,12 @@ LoginDialog::LoginDialog(QWidget *parent)
     recoveryError->setWordWrap(true);
     recLayout->addWidget(recoveryError);
 
-    QPushButton *btnRecoveryOk = new QPushButton("Продолжить", recoveryPage);
+    QPushButton *btnRecoveryFromFile = new QPushButton("Вставить ключ из файла", recoveryPage);
+    btnRecoveryFromFile->setObjectName("secondaryBtn");
+    btnRecoveryFromFile->setMinimumHeight(40);
+    recLayout->addWidget(btnRecoveryFromFile);
+
+    QPushButton *btnRecoveryOk = new QPushButton("Войти", recoveryPage);
     btnRecoveryOk->setObjectName("primaryBtn");
     btnRecoveryOk->setMinimumHeight(42);
     recLayout->addWidget(btnRecoveryOk);
@@ -577,9 +583,9 @@ LoginDialog::LoginDialog(QWidget *parent)
         recoveryError->clear();
     });
 
-    connect(btnRecoveryOk, &QPushButton::clicked, this, [this]() {
+    auto loginByRecoveryKey = [this](const QString &rawKey) {
         recoveryError->clear();
-        QString key = recoveryKeyEdit->text().trimmed().toUpper();
+        const QString key = rawKey.trimmed().toUpper();
 
         if (key.isEmpty()) {
             recoveryError->setText("Введите ключ восстановления");
@@ -593,9 +599,87 @@ LoginDialog::LoginDialog(QWidget *parent)
             return;
         }
 
-        recoveryUsername_ = username;
+        UserInfo u;
+        u.username = username;
+        u.isActive = true;
+
+        QSqlDatabase db = QSqlDatabase::database("main_connection");
+        if (db.isOpen()) {
+            QSqlQuery q(db);
+            q.prepare("SELECT id, role, is_active FROM users WHERE username = :u");
+            q.bindValue(":u", username);
+            if (q.exec() && q.next()) {
+                u.id = q.value(0).toInt();
+                u.role = q.value(1).toString();
+                u.isActive = q.value(2).toInt() == 1;
+            }
+        }
+
+        if (!u.isActive) {
+            recoveryError->setText("Аккаунт заблокирован");
+            return;
+        }
+
+        enableRememberMe(username);
+        user_ = u;
+        logAction(username, "login_by_recovery_key", "Вход выполнен по ключу восстановления");
         recoveryKeyEdit->clear();
-        stack->setCurrentIndex(3);
+        accept();
+    };
+
+    connect(btnRecoveryOk, &QPushButton::clicked, this, [this, loginByRecoveryKey]() {
+        loginByRecoveryKey(recoveryKeyEdit->text());
+    });
+
+    connect(btnRecoveryFromFile, &QPushButton::clicked, this, [this, loginByRecoveryKey]() {
+        const QString path = QFileDialog::getOpenFileName(
+            this,
+            "Выберите файл с ключом",
+            QString(),
+            "Text files (*.txt);;All files (*.*)"
+        );
+        if (path.isEmpty())
+            return;
+
+        QFile f(path);
+        if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            recoveryError->setText("Не удалось открыть файл");
+            return;
+        }
+
+        const QString content = QString::fromUtf8(f.readAll());
+        f.close();
+
+        QString key;
+        const QRegularExpression rkRe("RK-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}");
+        const QRegularExpressionMatch m = rkRe.match(content);
+        if (m.hasMatch())
+            key = m.captured(0);
+
+        if (key.isEmpty()) {
+            const QStringList lines = content.split('\n');
+            for (const QString &lineRaw : lines) {
+                const QString line = lineRaw.trimmed();
+                if (line.isEmpty())
+                    continue;
+                if (line.startsWith("Ключ:", Qt::CaseInsensitive)) {
+                    key = line.section(':', 1).trimmed();
+                    break;
+                }
+                if (line.startsWith("Recovery key:", Qt::CaseInsensitive)) {
+                    key = line.section(':', 1).trimmed();
+                    break;
+                }
+            }
+        }
+
+        if (key.isEmpty()) {
+            recoveryError->setText("В файле не найден корректный ключ");
+            return;
+        }
+
+        recoveryKeyEdit->setText(key.toUpper());
+        loginByRecoveryKey(key);
     });
 
     connect(newPass1Edit, &QLineEdit::textChanged, this, [this](const QString &text) {

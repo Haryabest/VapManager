@@ -43,9 +43,9 @@ public:
 
         QString bg, bgHover, textColor;
         switch (style) {
-        case StyleTech:   bg = "#22C55E"; bgHover = "#16A34A"; textColor = "#FFFFFF"; break;  // Зелёный
-        case StyleAdmin:  bg = "#EF4444"; bgHover = "#DC2626"; textColor = "#FFFFFF"; break;  // Красный
-        case StyleViewer: bg = "#6B7280"; bgHover = "#4B5563"; textColor = "#FFFFFF"; break;  // Серый
+        case StyleTech:   bg = "#BBF7D0"; bgHover = "#86EFAC"; textColor = "#166534"; break;  // AGV StyleDone
+        case StyleAdmin:  bg = "#FECACA"; bgHover = "#FCA5A5"; textColor = "#991B1B"; break;  // AGV StyleOverdue
+        case StyleViewer: bg = "#94A3B8"; bgHover = "#64748B"; textColor = "#0F172A"; break;  // AGV StyleCommon
         default:          bg = "#E8EAED"; bgHover = "#D8DAE0"; textColor = "#1A1A1A"; break;
         }
         headerBtn_ = new QPushButton(this);
@@ -125,6 +125,7 @@ public:
     };
 
     std::function<void(const QString &)> onOpenDetails;
+    std::function<void(const QString &, bool)> onExpandedChanged;
 
     UserItem(const UserData &u, std::function<int(int)> scale, QWidget *parent = nullptr)
         : QFrame(parent), data(u), s(scale)
@@ -140,11 +141,26 @@ public:
     }
 
     QString username() const { return data.username; }
+    bool isExpanded() const { return details && details->isVisible(); }
+
+    void setExpanded(bool expanded)
+    {
+        if (!details || !arrow)
+            return;
+        details->setVisible(expanded);
+        arrow->setPixmap(QPixmap(
+            expanded
+                ? ":/new/mainWindowIcons/noback/arrow_up.png"
+                : ":/new/mainWindowIcons/noback/arrow_down.png"
+        ).scaled(s(18), s(18)));
+    }
 
     void updateData(const UserData &u)
     {
+        const bool wasExpanded = isExpanded();
         data = u;
         rebuildUI();
+        setExpanded(wasExpanded);
     }
 
 private:
@@ -164,14 +180,10 @@ private:
             if (clicked && qobject_cast<QPushButton*>(clicked))
                 return QFrame::eventFilter(obj, event);
 
-            bool vis = details->isVisible();
-            details->setVisible(!vis);
-
-            arrow->setPixmap(QPixmap(
-                vis ?
-                ":/new/mainWindowIcons/noback/arrow_down.png" :
-                ":/new/mainWindowIcons/noback/arrow_up.png"
-            ).scaled(s(18), s(18)));
+            const bool nowExpanded = !isExpanded();
+            setExpanded(nowExpanded);
+            if (onExpandedChanged)
+                onExpandedChanged(data.username, nowExpanded);
 
             return true;
         }
@@ -858,6 +870,13 @@ void UsersPage::loadUsers()
             item->onOpenDetails = [this](const QString &username){
                 emit openUserDetailsRequested(username);
             };
+            item->onExpandedChanged = [this](const QString &username, bool expanded) {
+                if (expanded)
+                    expandedUsers_.insert(username);
+                else
+                    expandedUsers_.remove(username);
+            };
+            item->setExpanded(expandedUsers_.contains(u.username));
             sec->contentLayout()->addWidget(item);
         }
         layout->addWidget(sec);

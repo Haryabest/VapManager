@@ -1,28 +1,28 @@
     #include "multisectionwidget.h"
-    #include <QVBoxLayout>
-    #include <QHBoxLayout>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
 
-    MultiSectionWidget::MultiSectionWidget(QWidget *parent, qreal scaleFactor)
-        : QWidget(parent),
-          activeAGVCurrentCount_(0),
-          activeAGVTotalCount_(0),
-          maintenanceCurrentCount_(0),
-          maintenanceTotalCount_(0),
-          errorCurrentCount_(0),
-          errorTotalCount_(0),
-          disabledCurrentCount_(0),
-          disabledTotalCount_(0),
-          scaleFactor_(scaleFactor)
-    {
-        QLabel *statusSystemLabel = new QLabel("Статус системы", this);
-        statusSystemLabel->setStyleSheet(QString(
-            "font-family: Inter;"
-            "font-weight: 600;"
-            "font-size: %1px;"
-            "color: #000000;"
-        ).arg(int(16 * scaleFactor_)));
+MultiSectionWidget::MultiSectionWidget(QWidget *parent, qreal scaleFactor)
+    : QWidget(parent),
+      scaleFactor_(scaleFactor),
+      activeAGVCurrentCount_(0),
+      activeAGVTotalCount_(0),
+      maintenanceCurrentCount_(0),
+      maintenanceTotalCount_(0),
+      errorCurrentCount_(0),
+      errorTotalCount_(0),
+      disabledCurrentCount_(0),
+      disabledTotalCount_(0)
+{
+    QLabel *statusSystemLabel = new QLabel("Статус системы", this);
+    statusSystemLabel->setStyleSheet(QString(
+        "font-family: Inter;"
+        "font-weight: 600;"
+        "font-size: %1px;"
+        "color: #000000;"
+    ).arg(int(16 * scaleFactor_)));
 
-        activeAGVTitleLabel_ = new QLabel("Активные AGV:", this);
+    activeAGVTitleLabel_ = new QLabel("Активные AGV:", this);
         activeAGVCountLabel_ = new QLabel(this);
 
         maintenanceTitleLabel_ = new QLabel("Требует обслуживания:", this);

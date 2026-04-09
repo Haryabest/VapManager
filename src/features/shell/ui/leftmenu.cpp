@@ -375,6 +375,13 @@ leftMenu::leftMenu(QWidget *parent)
 {
     setFocusPolicy(Qt::StrongFocus);
 
+    scaleUpdateTimer_ = new QTimer(this);
+    scaleUpdateTimer_->setSingleShot(true);
+    scaleUpdateTimer_->setInterval(80);
+    connect(scaleUpdateTimer_, &QTimer::timeout, this, [this]() {
+        setScaleFactor(pendingScaleFactor_);
+    });
+
     selectedDay_ = QDate(selectedYear_, selectedMonth_, 1);
     selectedWeek_ = 0;
     highlightWeek_ = false;
@@ -389,6 +396,23 @@ leftMenu::leftMenu(QWidget *parent)
 int leftMenu::s(int v) const
 {
     return int(v * scaleFactor_);
+}
+
+void leftMenu::requestScaleFactorUpdate(qreal factor)
+{
+    if (factor <= 0)
+        factor = 1.0;
+    factor = qMin<qreal>(1.0, factor);
+
+    pendingScaleFactor_ = factor;
+
+    if (qAbs(scaleFactor_ - pendingScaleFactor_) < 0.01)
+        return;
+
+    if (scaleUpdateTimer_)
+        scaleUpdateTimer_->start();
+    else
+        setScaleFactor(pendingScaleFactor_);
 }
 
 void leftMenu::setScaleFactor(qreal factor)
@@ -469,7 +493,7 @@ void leftMenu::resizeEvent(QResizeEvent *event)
     qreal wFactor = width() / 1920.0;
     qreal hFactor = height() / 1080.0;
     qreal factor = qMin<qreal>(1.0, qMin(wFactor, hFactor));
-    setScaleFactor(factor);
+    requestScaleFactorUpdate(factor);
 }
 //
 // ======================= initUI() — НАЧАЛО =======================

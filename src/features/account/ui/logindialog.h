@@ -29,6 +29,12 @@ private slots:
     void onRoleChanged(int index);
 
 private:
+    void setupPasswordField(QLineEdit *edit);
+    QWidget *buildLoginPage();
+    QWidget *buildRegisterPage();
+    QWidget *buildRecoveryPage();
+    QWidget *buildPasswordChangePage();
+    void wireSignals();
     void showRecoveryKeyDialog(const QString &username, const QString &recoveryKey);
 
     UserInfo user_;
@@ -64,6 +70,16 @@ private:
 
     QProgressBar *passStrength;
     QLabel *passStrengthLabel;
+
+    QPushButton *btnLogin_ = nullptr;
+    QPushButton *btnReg_ = nullptr;
+    QPushButton *btnRecovery_ = nullptr;
+    QPushButton *btnRecoveryFromFile_ = nullptr;
+    QPushButton *btnRecoveryOk_ = nullptr;
+    QPushButton *btnRecoveryBack_ = nullptr;
+    QPushButton *btnBack_ = nullptr;
+    QPushButton *btnRegOk_ = nullptr;
+    QPushButton *btnChangePass_ = nullptr;
 
     QStackedWidget *stack;
 

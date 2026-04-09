@@ -339,20 +339,6 @@ int getThreadBetweenUsers(const QString &user1, const QString &user2, const QStr
     return q.value(0).toInt();
 }
 
-static QSet<int> loadHiddenMessageIds(const QString &currentUser)
-{
-    QSet<int> hiddenIds;
-    QSqlDatabase db = openMainDb();
-    if (!db.isOpen() || normalizedUsername(currentUser).isEmpty()) return hiddenIds;
-    QSqlQuery h(db);
-    h.prepare("SELECT message_id FROM task_chat_message_hidden WHERE username = :u");
-    h.bindValue(":u", normalizedUsername(currentUser));
-    if (h.exec()) {
-        while (h.next()) hiddenIds.insert(h.value(0).toInt());
-    }
-    return hiddenIds;
-}
-
 QVector<TaskChatMessage> getMessagesForThread(int threadId)
 {
     return getMessagesForThread(threadId, QString());

@@ -94,6 +94,7 @@ public:
 
     int s(int v) const;
     void setScaleFactor(qreal factor);
+    void requestScaleFactorUpdate(qreal factor);
 
     /// Стресс пересборки календаря (роль tech). showSummaryDialog=false — без окна (внутри полного автотеста).
     /// manageStressButtons=false — не трогать кнопки (когда запускает runFullStressAutotest).
@@ -184,6 +185,8 @@ private:
     void clearCalendarSettingsHighlight();
 
     qreal scaleFactor_ = 1.0;
+    qreal pendingScaleFactor_ = 1.0;
+    QTimer *scaleUpdateTimer_ = nullptr;
 
     int selectedMonth_ = QDate::currentDate().month();
     int selectedYear_  = QDate::currentDate().year();

@@ -27,11 +27,25 @@ SOURCES += \
     src/features/agv/ui/internal/listagvinfo_undo.cpp \
     src/features/agv/ui/internal/listagvinfo_render.cpp \
     src/features/agv/ui/internal/listagvinfo_constructor.cpp \
+    src/features/agv/ui/internal/listagvinfo_constructor_impl.cpp \
+    src/features/agv/ui/internal/addagvdialog_impl.cpp \
+    src/features/agv/ui/internal/agvsettings/agvsettingspage_constructor.cpp \
+    src/features/agv/ui/internal/agvsettings/agvsettingspage_ui.cpp \
+    src/features/agv/ui/internal/agvsettings/agvsettingspage_agv_edit.cpp \
+    src/features/agv/ui/internal/agvsettings/agvsettingspage_forms.cpp \
+    src/features/agv/ui/internal/agvsettings/agvsettingspage_tasks_ops.cpp \
+    src/features/agv/ui/internal/agvsettings/agvsettingspage_history.cpp \
     src/app/internal/app_bootstrap.cpp \
     src/features/shell/ui/internal/mainwindow_impl.cpp \
     src/features/common/ui/internal/maintenanceitemwidget_impl.cpp \
     src/features/models/ui/internal/modellistpage_impl.cpp \
     src/features/users/ui/internal/userspage_impl.cpp \
+    src/features/users/ui/internal/userspage_constructor.cpp \
+    src/features/users/ui/internal/userspage_load_users.cpp \
+    src/features/users/ui/internal/userspage_update_user.cpp \
+    src/features/users/ui/internal/userspage_collapsible_section.cpp \
+    src/features/users/ui/internal/userspage_user_item.cpp \
+    src/features/users/ui/internal/userspage_user_types.cpp \
     src/features/chat/ui/internal/taskchatdialog_impl.cpp \
     src/core/events/databus.cpp \
     src/data/db/db.cpp \
@@ -39,11 +53,24 @@ SOURCES += \
     src/data/repositories/db_models.cpp \
     src/data/repositories/db_task_chat.cpp \
     src/data/repositories/db_users.cpp \
+    src/data/repositories/db_users_schema.cpp \
+    src/data/repositories/db_users_logging.cpp \
+    src/data/repositories/db_users_invites.cpp \
+    src/data/repositories/db_users_auth.cpp \
+    src/data/repositories/db_users_profile.cpp \
+    src/data/repositories/db_users_avatar_presence.cpp \
+    src/data/repositories/internal/db_users_internal_state.cpp \
     src/features/shell/ui/internal/leftmenu_calendar_utils.cpp \
     src/features/shell/ui/internal/leftmenu_settings_dialogs.cpp \
     src/features/shell/ui/leftmenu.cpp \
     src/features/agv/ui/listagvinfo.cpp \
     src/features/account/ui/logindialog.cpp \
+    src/features/account/ui/internal/logindialog_constructor.cpp \
+    src/features/account/ui/internal/logindialog_ui_builders.cpp \
+    src/features/account/ui/internal/logindialog_wiring.cpp \
+    src/features/account/ui/internal/logindialog_slots.cpp \
+    src/features/account/ui/internal/logindialog_recovery_dialog.cpp \
+    src/features/account/ui/internal/logindialog_events.cpp \
     src/app/main.cpp \
     src/features/common/ui/maintenanceitemwidget.cpp \
     src/features/shell/ui/mainwindow.cpp \

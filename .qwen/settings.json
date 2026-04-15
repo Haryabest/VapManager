@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(qmake *)",
+      "Bash(where *)",
+      "Bash(powershell *)",
+      "Bash(c:\\qt\\qt5.14.2\\5.14.2\\mingw73_64\\bin\\qmake.exe *)",
+      "Bash(mingw32-make *)",
+      "Bash(tasklist)",
+      "Bash(findstr *)",
+      "Bash(dir *)",
+      "Bash(git add *)",
+      "Bash(c:\\qt\\qt5.14.2\\5.14.2\\mingw73_64\\bin\\mingw32-make.exe *)",
+      "Bash(nmake *)",
+      "Bash(c:\\qt\\qt5.14.2\\tools\\mingw730_64\\bin\\mingw32-make.exe *)"
+    ]
+  },
+  "$version": 3
+}

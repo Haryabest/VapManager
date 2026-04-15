@@ -1,14 +1,13 @@
-QT       += core gui sql concurrent printsupport widgets
+CONFIG += c++11 no_qmlcache
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
-
-CONFIG += c++11
+QT     += core gui qml quick quickcontrols2 sql concurrent printsupport widgets
 
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
 # depend on your compiler). Please consult the documentation of the
 # deprecated API in order to know how to port your code away from it.
 DEFINES += QT_DEPRECATED_WARNINGS
+DEFINES += APP_SOURCE_DIR=\\\"$$PWD\\\"
 
 # You can also make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
@@ -18,6 +17,8 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     src/core/logging/diag_logger.cpp \
     src/features/account/ui/accountinfodialog.cpp \
+    src/features/account/ui/registerpage_controller.cpp \
+    src/features/account/ui/authdialog_qml.cpp \
     src/core/session/app_session.cpp \
     src/features/agv/ui/addagvdialog.cpp \
     src/features/agv/ui/agvsettingspage.cpp \
@@ -35,6 +36,7 @@ SOURCES += \
     src/features/agv/ui/internal/agvsettings/agvsettingspage_forms.cpp \
     src/features/agv/ui/internal/agvsettings/agvsettingspage_tasks_ops.cpp \
     src/features/agv/ui/internal/agvsettings/agvsettingspage_history.cpp \
+    src/app/internal/db_connection_bridge.cpp \
     src/app/internal/app_bootstrap.cpp \
     src/features/shell/ui/internal/mainwindow_impl.cpp \
     src/features/common/ui/internal/maintenanceitemwidget_impl.cpp \
@@ -82,9 +84,12 @@ SOURCES += \
     src/features/users/ui/userspage.cpp
 
 HEADERS += \
+    src/app/internal/db_connection_bridge.h \
     src/app/internal/app_bootstrap.h \
     src/core/logging/diag_logger.h \
     src/features/account/ui/accountinfodialog.h \
+    src/features/account/ui/registerpage_controller.h \
+    src/features/account/ui/authdialog_qml.h \
     src/core/session/app_session.h \
     src/features/agv/ui/addagvdialog.h \
     src/features/agv/ui/agvsettingspage.h \
@@ -125,7 +130,8 @@ INCLUDEPATH += \
     src/core/events \
     src/core/logging \
     src/data/db \
-    src/data/repositories
+    src/data/repositories \
+    qml
 
 TRANSLATIONS += AgvNewUi_en.ts AgvNewUi_zh.ts
 

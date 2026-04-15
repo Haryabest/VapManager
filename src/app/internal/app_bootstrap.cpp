@@ -7,7 +7,8 @@
 #include "db_agv_tasks.h"
 #include "db_task_chat.h"
 #include "notifications_logs.h"
-#include "logindialog.h"
+#include "authdialog_qml.h"
+#include "db_connection_bridge.h"
 #include "app_session.h"
 #include "ui_action_logger.h"
 
@@ -15,6 +16,8 @@
 #include <QCoreApplication>
 #include <QDebug>
 #include <QDialog>
+#include <QDir>
+#include <QFileInfo>
 #include <QIcon>
 #include <QLabel>
 #include <QLineEdit>
@@ -22,17 +25,25 @@
 #include <QPainter>
 #include <QProxyStyle>
 #include <QPushButton>
+#include <QQmlApplicationEngine>
+#include <QQmlContext>
+#include <QQuickWindow>
 #include <QSettings>
 #include <QThread>
 #include <QTimer>
 #include <QTranslator>
 #include <QVBoxLayout>
+#include <QEventLoop>
 
 #ifdef Q_OS_WIN
 #include <windows.h>
 #endif
 
 namespace {
+
+#ifndef APP_SOURCE_DIR
+#define APP_SOURCE_DIR "."
+#endif
 
 class NoFocusRectStyle : public QProxyStyle
 {
@@ -61,6 +72,64 @@ bool connectToDbWithRetries(int attempts, int delayMs, QString &outError)
             QThread::msleep(delayMs);
     }
     return false;
+}
+
+bool showDbConnectionSettingsQmlDialog(const QString &initialError)
+{
+    const QString sourceDir = QString::fromUtf8(APP_SOURCE_DIR);
+    const QString appDir = QCoreApplication::applicationDirPath();
+    const QStringList qmlPathCandidates = {
+        QDir(sourceDir).filePath("qml/pages/DbConnectionSettingsDialog.qml"),
+        QDir(appDir).filePath("qml/pages/DbConnectionSettingsDialog.qml"),
+        QDir(appDir).filePath("../qml/pages/DbConnectionSettingsDialog.qml"),
+        QDir(appDir).filePath("../../qml/pages/DbConnectionSettingsDialog.qml"),
+        QDir(appDir).filePath("../../../qml/pages/DbConnectionSettingsDialog.qml"),
+        QDir::current().filePath("qml/pages/DbConnectionSettingsDialog.qml")
+    };
+    QString qmlPath;
+    for (const QString &candidate : qmlPathCandidates) {
+        if (QFileInfo::exists(candidate)) {
+            qmlPath = QFileInfo(candidate).absoluteFilePath();
+            break;
+        }
+    }
+    if (qmlPath.isEmpty()) {
+        qWarning() << "DbConnectionSettingsDialog.qml not found. Tried:" << qmlPathCandidates;
+        return false;
+    }
+
+    QString dialogError = initialError;
+    for (;;) {
+        QQmlApplicationEngine engine;
+        DbConnectionBridge bridge;
+        engine.rootContext()->setContextProperty("dbSettingsHost", getDbHost());
+        engine.rootContext()->setContextProperty("dbSettingsError", dialogError);
+        engine.rootContext()->setContextProperty("dbConnBridge", &bridge);
+        engine.load(QUrl::fromLocalFile(qmlPath));
+        if (engine.rootObjects().isEmpty()) {
+            qWarning() << "Failed to load DbConnectionSettingsDialog.qml";
+            return false;
+        }
+
+        QObject *rootObj = engine.rootObjects().first();
+        QQuickWindow *window = qobject_cast<QQuickWindow*>(rootObj);
+        if (!window)
+            return false;
+
+        QEventLoop loop;
+        QObject::connect(window, &QWindow::visibleChanged, &loop, [window, &loop]() {
+            if (!window->isVisible())
+                loop.quit();
+        });
+
+        window->show();
+        loop.exec();
+
+        if (!rootObj->property("applyRequested").toBool())
+            return false;
+
+        return true;
+    }
 }
 
 bool installAppTranslator(QApplication &app, const QString &lang)
@@ -168,49 +237,7 @@ int run(int argc, char *argv[])
         if (connectToDbWithRetries(3, 700, dbError))
             break;
 
-        QDialog dbDlg(nullptr);
-        dbDlg.setWindowTitle("Настройки подключения к базе данных");
-        dbDlg.setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowSystemMenuHint);
-        dbDlg.setMinimumWidth(420);
-        dbDlg.setModal(true);
-
-        QVBoxLayout *layout = new QVBoxLayout(&dbDlg);
-        QLabel *title = new QLabel("Подключение к базе данных", &dbDlg);
-        layout->addWidget(title);
-        QLabel *lab = new QLabel("Введите IP-адрес или хост сервера MySQL", &dbDlg);
-        lab->setWordWrap(true);
-        layout->addWidget(lab);
-
-        QLineEdit *hostEdit = new QLineEdit(&dbDlg);
-        hostEdit->setText(getDbHost());
-        layout->addWidget(hostEdit);
-
-        QLabel *errLabel = new QLabel(&dbDlg);
-        errLabel->setText(dbError);
-        errLabel->setWordWrap(true);
-        layout->addWidget(errLabel);
-
-        QHBoxLayout *btnRow = new QHBoxLayout();
-        btnRow->addStretch();
-        QPushButton *cancelBtn = new QPushButton("Отмена", &dbDlg);
-        QPushButton *connBtn = new QPushButton("OK", &dbDlg);
-        btnRow->addWidget(cancelBtn);
-        btnRow->addWidget(connBtn);
-        layout->addLayout(btnRow);
-
-        QObject::connect(connBtn, &QPushButton::clicked, &dbDlg, [&dbDlg, hostEdit, errLabel]() {
-            QString host = hostEdit->text().trimmed();
-            if (host.isEmpty()) host = "localhost";
-            QString err;
-            if (reconnectWithHost(host, &err)) {
-                dbDlg.accept();
-                return;
-            }
-            errLabel->setText(err);
-        });
-        QObject::connect(cancelBtn, &QPushButton::clicked, &dbDlg, &QDialog::reject);
-
-        if (dbDlg.exec() != QDialog::Accepted)
+        if (!showDbConnectionSettingsQmlDialog(dbError))
             return 0;
     }
 
@@ -226,10 +253,10 @@ int run(int argc, char *argv[])
     bool needLogin = !autoLoginOk || !user.isActive || user.expired;
 
     if (needLogin) {
-        LoginDialog dlg;
-        if (dlg.exec() != QDialog::Accepted)
+        AuthDialogQml authDlg;
+        if (authDlg.exec() != 1)
             return 0;
-        user = dlg.user();
+        user = authDlg.user();
     }
 
     AppSession::setCurrentUsername(user.username);

@@ -3,7 +3,7 @@
 #include "listagvinfo.h"
 #include "agvsettingspage.h"
 #include "addagvdialog.h"
-#include "logindialog.h"
+#include "authdialog_qml.h"
 #include "db_agv_tasks.h"
 #include "db_users.h"
 #include "db_task_chat.h"
@@ -535,7 +535,7 @@ void leftMenu::initUI()
                     tr("Для этого аккаунта выполнен вход на другом устройстве. Текущая сессия завершена.")
                 );
 
-                LoginDialog dlg(nullptr);
+                AuthDialogQml dlg(nullptr);
                 if (dlg.exec() == QDialog::Accepted) {
                     const UserInfo newUser = dlg.user();
                     AppSession::setCurrentUsername(newUser.username);
@@ -970,7 +970,7 @@ void leftMenu::initUI()
         if (mainWindow)
             mainWindow->hide();
 
-        LoginDialog dlg(nullptr);
+        AuthDialogQml dlg(nullptr);
         if (dlg.exec() == QDialog::Accepted) {
             UserInfo newUser = dlg.user();
             AppSession::setCurrentUsername(newUser.username);

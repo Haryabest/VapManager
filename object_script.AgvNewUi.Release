@@ -1,5 +1,7 @@
 release/diag_logger.o
 release/accountinfodialog.o
+release/registerpage_controller.o
+release/authdialog_qml.o
 release/app_session.o
 release/addagvdialog.o
 release/agvsettingspage.o
@@ -11,7 +13,12 @@ release/listagvinfo_render.o
 release/listagvinfo_constructor.o
 release/listagvinfo_constructor_impl.o
 release/addagvdialog_impl.o
-release/agvsettingspage_impl.o
+release/agvsettingspage_constructor.o
+release/agvsettingspage_ui.o
+release/agvsettingspage_agv_edit.o
+release/agvsettingspage_forms.o
+release/agvsettingspage_tasks_ops.o
+release/agvsettingspage_history.o
 release/app_bootstrap.o
 release/mainwindow_impl.o
 release/maintenanceitemwidget_impl.o
@@ -59,6 +66,8 @@ release/ui_action_logger.o
 release/userspage.o
 release/qrc_resources.o
 release/moc_accountinfodialog.o
+release/moc_registerpage_controller.o
+release/moc_authdialog_qml.o
 release/moc_addagvdialog.o
 release/moc_agvsettingspage.o
 release/moc_databus.o

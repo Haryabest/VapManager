@@ -1,0 +1,27 @@
+/*
+ * Пример использования RegisterPageController
+ * 
+ * Чтобы использовать QML страницу регистрации в вашем приложении,
+ * нужно в app_bootstrap.cpp или в main.cpp добавить:
+ * 
+ * #include "registerpage_controller.h"
+ * #include <QQuickView>
+ * 
+ * Затем создать контроллер и показать окно:
+ * 
+ * RegisterPageController *regController = new RegisterPageController();
+ * QQuickView *view = new QQuickView();
+ * 
+ * // Подключение сигналов
+ * QObject::connect(regController, &RegisterPageController::requestGoBack,
+ *                  [&]() { view->close(); });
+ * 
+ * QObject::connect(regController, &RegisterPageController::requestShowRecoveryKey,
+ *                  [](const QString &username, const QString &key) {
+ *     // Показать диалог с ключом восстановления
+ *     qDebug() << "Recovery key for" << username << ":" << key;
+ * });
+ * 
+ * regController->show(view);
+ * view->show();
+ */

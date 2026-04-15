@@ -1,5 +1,7 @@
 debug/diag_logger.o
 debug/accountinfodialog.o
+debug/registerpage_controller.o
+debug/authdialog_qml.o
 debug/app_session.o
 debug/addagvdialog.o
 debug/agvsettingspage.o
@@ -11,7 +13,12 @@ debug/listagvinfo_render.o
 debug/listagvinfo_constructor.o
 debug/listagvinfo_constructor_impl.o
 debug/addagvdialog_impl.o
-debug/agvsettingspage_impl.o
+debug/agvsettingspage_constructor.o
+debug/agvsettingspage_ui.o
+debug/agvsettingspage_agv_edit.o
+debug/agvsettingspage_forms.o
+debug/agvsettingspage_tasks_ops.o
+debug/agvsettingspage_history.o
 debug/app_bootstrap.o
 debug/mainwindow_impl.o
 debug/maintenanceitemwidget_impl.o
@@ -59,6 +66,8 @@ debug/ui_action_logger.o
 debug/userspage.o
 debug/qrc_resources.o
 debug/moc_accountinfodialog.o
+debug/moc_registerpage_controller.o
+debug/moc_authdialog_qml.o
 debug/moc_addagvdialog.o
 debug/moc_agvsettingspage.o
 debug/moc_databus.o

@@ -14,6 +14,10 @@
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QPushButton>
+#include <QEventLoop>
+#include <QQmlApplicationEngine>
+#include <QQmlContext>
+#include <QQuickWindow>
 #include <QSignalBlocker>
 #include <QTimer>
 #include <QVBoxLayout>
@@ -224,89 +228,6 @@ private:
     QComboBox *dayBox_ = nullptr;
 };
 
-class AppSettingsDialog : public QDialog {
-public:
-    explicit AppSettingsDialog(QWidget *parent = nullptr)
-        : QDialog(parent)
-    {
-        setWindowTitle("Настройки");
-        setModal(true);
-        setFixedSize(400, 160);
-        setStyleSheet(
-            "QDialog{background:#F7FAFF;border:1px solid #E2E8F0;border-radius:12px;}"
-            "QLabel{font-family:Inter;font-size:13px;font-weight:700;color:#374151;}"
-            "QLineEdit{background:#FFFFFF;border:1px solid #C7D2FE;border-radius:8px;"
-            "padding:8px 12px;font-family:Inter;font-size:13px;}"
-            "QPushButton{font-family:Inter;font-size:13px;font-weight:700;border-radius:8px;padding:8px 16px;}"
-            "QPushButton#okBtn{background:#1976FF;color:white;border:none;}"
-            "QPushButton#okBtn:hover{background:#0F66EA;}"
-            "QPushButton#cancelBtn{background:#FFFFFF;color:#374151;border:1px solid #CBD5E1;}"
-            "QPushButton#cancelBtn:hover{background:#F3F4F6;}"
-        );
-
-        QVBoxLayout *layout = new QVBoxLayout(this);
-        layout->setContentsMargins(20, 18, 20, 18);
-        layout->setSpacing(14);
-
-        QLabel *dbLbl = new QLabel("IP-адрес базы данных:", this);
-        dbLbl->setStyleSheet("background:transparent;color:#374151;font-family:Inter;font-size:13px;font-weight:700;");
-        dbHostEdit_ = new QLineEdit(this);
-        dbHostEdit_->setPlaceholderText("localhost");
-        dbHostEdit_->setText(getDbHost());
-        layout->addWidget(dbLbl);
-        layout->addWidget(dbHostEdit_);
-
-        layout->addSpacing(10);
-
-        QHBoxLayout *btnRow = new QHBoxLayout();
-        btnRow->addStretch();
-
-        QPushButton *cancelBtn = new QPushButton("Отмена", this);
-        cancelBtn->setObjectName("cancelBtn");
-        cancelBtn->setStyleSheet(
-            "QPushButton{background:#FFFFFF;color:#374151;border:1px solid #CBD5E1;"
-            "font-family:Inter;font-size:13px;font-weight:700;border-radius:8px;padding:8px 16px;}"
-            "QPushButton:hover{background:#F3F4F6;}"
-        );
-        connect(cancelBtn, &QPushButton::clicked, this, &QDialog::reject);
-
-        QPushButton *okBtn = new QPushButton("ОК", this);
-        okBtn->setObjectName("okBtn");
-        okBtn->setStyleSheet(
-            "QPushButton{background:#1976FF;color:white;border:none;"
-            "font-family:Inter;font-size:13px;font-weight:700;border-radius:8px;padding:8px 16px;}"
-            "QPushButton:hover{background:#0F66EA;}"
-        );
-        connect(okBtn, &QPushButton::clicked, this, [this]() {
-            QString host = dbHostEdit_->text().trimmed();
-            if (host.isEmpty()) host = "localhost";
-            const bool reconnectOk = reconnectWithHost(host);
-            if (reconnectOk) {
-                QMessageBox::information(this, "Настройки", "Настройки сохранены.");
-            } else {
-                QMessageBox::warning(this, "Ошибка", "Не удалось подключиться к базе данных.\nПроверьте IP-адрес.");
-            }
-            accept();
-        });
-
-        btnRow->addWidget(cancelBtn);
-        btnRow->addWidget(okBtn);
-        layout->addLayout(btnRow);
-
-        if (qApp->property("autotest_running").toBool()) {
-            for (int attempt = 0; attempt < 6; ++attempt) {
-                QTimer::singleShot(120 + attempt * 120, this, [this]() {
-                    if (isVisible())
-                        reject();
-                });
-            }
-        }
-    }
-
-private:
-    QLineEdit *dbHostEdit_ = nullptr;
-};
-
 } // namespace
 
 namespace LeftMenuDialogs {
@@ -326,8 +247,166 @@ bool showCalendarSettingsDialog(QWidget *parent, CalendarDialogSelection &select
 
 void showAppSettingsDialog(QWidget *parent)
 {
-    AppSettingsDialog dlg(parent);
-    dlg.exec();
+    Q_UNUSED(parent);
+    QQmlApplicationEngine engine;
+    engine.rootContext()->setContextProperty("dbSettingsHost", getDbHost());
+    static const char kDbSettingsQml[] = R"QML(
+import QtQuick 2.12
+import QtQuick.Controls 2.12
+
+ApplicationWindow {
+    id: root
+    visible: true
+    width: 460
+    height: 260
+    minimumWidth: 420
+    maximumWidth: 520
+    minimumHeight: 240
+    maximumHeight: 320
+    title: "Настройки подключения к базе данных"
+    flags: Qt.Dialog | Qt.WindowTitleHint | Qt.WindowSystemMenuHint
+
+    property string dbHost: typeof dbSettingsHost !== "undefined" ? dbSettingsHost : "localhost"
+    property bool applyRequested: false
+    property string selectedHost: dbHost
+
+    Rectangle {
+        anchors.fill: parent
+        color: "#0F0F1A"
+
+        Column {
+            anchors.fill: parent
+            anchors.margins: 16
+            spacing: 12
+
+            Text {
+                text: "Настройки подключения"
+                font.pixelSize: 22
+                font.bold: true
+                color: "#FFFFFF"
+            }
+
+            Text {
+                text: "Укажите IP-адрес или хост базы данных"
+                font.pixelSize: 12
+                color: "#A0A0B0"
+            }
+
+            Rectangle {
+                width: parent.width
+                radius: 12
+                color: "#1a1a2e"
+                border.color: "#333355"
+                border.width: 1
+                height: 92
+
+                Column {
+                    anchors.fill: parent
+                    anchors.margins: 12
+                    spacing: 6
+
+                    Text {
+                        text: "Хост БД"
+                        font.pixelSize: 13
+                        color: "#A0A0B0"
+                    }
+
+                    TextField {
+                        id: hostInput
+                        width: parent.width
+                        height: 42
+                        padding: 12
+                        placeholderText: "localhost"
+                        placeholderTextColor: "#888888"
+                        text: root.dbHost
+                        color: "#FFFFFF"
+                        selectionColor: "#6C63FF"
+                        selectedTextColor: "#FFFFFF"
+                        font.pixelSize: 14
+                        background: Rectangle {
+                            color: hostInput.activeFocus ? "#252540" : "#1a1a2e"
+                            radius: 10
+                            border.color: hostInput.activeFocus ? "#6C63FF" : "#333355"
+                            border.width: 1
+                        }
+                    }
+                }
+            }
+
+            Item { width: 1; height: 2 }
+
+            Row {
+                width: parent.width
+                spacing: 10
+
+                Item { width: 1; height: 1 }
+
+                Button {
+                    width: 120
+                    height: 42
+                    text: "Отмена"
+                    onClicked: root.close()
+                }
+
+                Button {
+                    width: 160
+                    height: 42
+                    text: "Сохранить"
+                    onClicked: {
+                        root.selectedHost = hostInput.text
+                        root.applyRequested = true
+                        root.close()
+                    }
+                }
+            }
+        }
+    }
+
+    Keys.onPressed: {
+        if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+            root.selectedHost = hostInput.text
+            root.applyRequested = true
+            root.close()
+            event.accepted = true
+        } else if (event.key === Qt.Key_Escape) {
+            root.close()
+            event.accepted = true
+        }
+    }
+}
+)QML";
+    engine.loadData(QByteArray(kDbSettingsQml), QUrl(QStringLiteral("inmemory:/DbSettingsDialog.qml")));
+    if (engine.rootObjects().isEmpty())
+        return;
+
+    QObject *rootObj = engine.rootObjects().first();
+    QQuickWindow *window = qobject_cast<QQuickWindow*>(rootObj);
+    if (!window)
+        return;
+
+    QEventLoop loop;
+    QObject::connect(window, &QWindow::visibleChanged, &loop, [window, &loop]() {
+        if (!window->isVisible())
+            loop.quit();
+    });
+
+    window->show();
+    loop.exec();
+
+    const bool applyRequested = rootObj->property("applyRequested").toBool();
+    if (!applyRequested)
+        return;
+
+    QString host = rootObj->property("selectedHost").toString().trimmed();
+    if (host.isEmpty())
+        host = QStringLiteral("localhost");
+
+    const bool reconnectOk = reconnectWithHost(host);
+    if (reconnectOk) {
+        QMessageBox::information(nullptr, "Настройки", "Настройки сохранены.");
+    } else {
+        QMessageBox::warning(nullptr, "Ошибка", "Не удалось подключиться к базе данных.\nПроверьте IP-адрес.");
+    }
 }
 
 } // namespace LeftMenuDialogs

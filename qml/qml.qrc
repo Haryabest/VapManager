@@ -1,0 +1,14 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+    <qresource prefix="/">
+        <file>qml/main.qml</file>
+        <file>qml/js/auth.js</file>
+        <file>qml/style/qmldir</file>
+        <file>qml/style/Theme.qml</file>
+        <file>qml/components/AppInput.qml</file>
+        <file>qml/components/AppButton.qml</file>
+        <file>qml/components/AppComboBox.qml</file>
+        <file>qml/pages/RegisterPage.qml</file>
+        <file>qml/pages/MainShellPage.qml</file>
+    </qresource>
+</RCC>

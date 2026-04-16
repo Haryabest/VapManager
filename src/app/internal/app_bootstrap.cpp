@@ -9,6 +9,7 @@
 #include "notifications_logs.h"
 #include "authdialog_qml.h"
 #include "db_connection_bridge.h"
+#include "main_shell_bridge.h"
 #include "app_session.h"
 #include "ui_action_logger.h"
 
@@ -268,24 +269,23 @@ int run(int argc, char *argv[])
         logAction(AppSession::currentUsername(), "app_exit", "Приложение закрыто");
     });
 
-    MainWindow w;
-    app.setWindowIcon(QIcon(":/new/mainWindowIcons/noback/agvIcon.png"));
-    w.show();
+    // === Загружаем QML главный экран вместо C++ MainWindow ===
+    QQmlApplicationEngine *mainEngine = new QQmlApplicationEngine(&app);
+    MainShellBridge *mainShellBridge = new MainShellBridge(mainEngine);
 
-    const QStringList args = QCoreApplication::arguments();
-    const bool runStressCli = args.contains(QStringLiteral("--stress-autotest"))
-                              || args.contains(QStringLiteral("--stress-test"));
-    if (runStressCli) {
-        const QString role = getUserRole(AppSession::currentUsername());
-        if (role == QStringLiteral("admin") || role == QStringLiteral("tech")) {
-            QTimer::singleShot(1500, &w, [&w]() {
-                if (w.leftMenuWidget())
-                    w.leftMenuWidget()->runFullStressAutotest();
-            });
-        } else {
-            qWarning() << "--stress-autotest: ignored (need admin or tech role; use admin/tech account or auto-login as admin/tech)";
-        }
+    // Передаём данные пользователя в QML
+    mainEngine->rootContext()->setContextProperty("currentUsername", AppSession::currentUsername());
+    mainEngine->rootContext()->setContextProperty("currentUserRole", getUserRole(AppSession::currentUsername()));
+    mainEngine->rootContext()->setContextProperty("mainShellBridge", mainShellBridge);
+
+    mainEngine->load(QUrl(QStringLiteral("qrc:/qml/main.qml")));
+
+    if (mainEngine->rootObjects().isEmpty()) {
+        qWarning() << "Failed to load QML main.qml";
+        return -1;
     }
+
+    app.setWindowIcon(QIcon(":/new/mainWindowIcons/noback/agvIcon.png"));
 
     return app.exec();
 }

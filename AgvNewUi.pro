@@ -37,6 +37,7 @@ SOURCES += \
     src/features/agv/ui/internal/agvsettings/agvsettingspage_tasks_ops.cpp \
     src/features/agv/ui/internal/agvsettings/agvsettingspage_history.cpp \
     src/app/internal/db_connection_bridge.cpp \
+    src/app/internal/main_shell_bridge.cpp \
     src/app/internal/app_bootstrap.cpp \
     src/features/shell/ui/internal/mainwindow_impl.cpp \
     src/features/common/ui/internal/maintenanceitemwidget_impl.cpp \
@@ -85,6 +86,7 @@ SOURCES += \
 
 HEADERS += \
     src/app/internal/db_connection_bridge.h \
+    src/app/internal/main_shell_bridge.h \
     src/app/internal/app_bootstrap.h \
     src/core/logging/diag_logger.h \
     src/features/account/ui/accountinfodialog.h \

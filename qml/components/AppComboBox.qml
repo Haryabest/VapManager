@@ -26,28 +26,34 @@ ComboBox {
 
         Connections {
             target: root
-            function onPressedChanged() { canvas.requestPaint() }
+            function onPressedChanged() {
+                canvas.requestPaint()
+            }
         }
 
         onPaint: {
-            context.reset();
-            context.moveTo(0, 0);
-            context.lineTo(width, 0);
-            context.lineTo(width / 2, height);
-            context.closePath();
-            context.fillStyle = root.themeColor("textSecondary", "#A0A0B0");
-            context.fill();
+            context.reset()
+            context.moveTo(0, 0)
+            context.lineTo(width, 0)
+            context.lineTo(width / 2, height)
+            context.closePath()
+            context.fillStyle = root.themeColor("textSecondary", "#A0A0B0")
+            context.fill()
         }
     }
 
     background: Rectangle {
         color: root.pressed ? "#252540" : "#1a1a2e"
         radius: 10
-        border.color: root.activeFocus || root.pressed ? root.themeColor("primary", "#6C63FF") : "#333355"
+        border.color: root.activeFocus
+                      || root.pressed ? root.themeColor("primary",
+                                                        "#6C63FF") : "#333355"
         border.width: 1
 
         Behavior on color {
-            ColorAnimation { duration: 150 }
+            ColorAnimation {
+                duration: 150
+            }
         }
     }
 
@@ -68,12 +74,19 @@ ComboBox {
         contentItem: Text {
             text: modelData
             font: root.font
-            color: root.highlightedIndex === index ? root.themeColor("primary", "#6C63FF") : root.themeColor("text", "#FFFFFF")
+            color: root.highlightedIndex === index ? root.themeColor(
+                                                         "primary",
+                                                         "#6C63FF") : root.themeColor(
+                                                         "text", "#FFFFFF")
             verticalAlignment: Text.AlignVCenter
         }
 
         background: Rectangle {
-            color: root.highlightedIndex === index ? Qt.lighter(root.themeColor("primary", "#6C63FF"), 1.2) : "transparent"
+            color: root.highlightedIndex === index ? Qt.lighter(
+                                                         root.themeColor(
+                                                             "primary",
+                                                             "#6C63FF"),
+                                                         1.2) : "transparent"
             radius: 6
         }
     }
@@ -90,7 +103,7 @@ ComboBox {
             model: root.popup.visible ? root.delegateModel : null
             currentIndex: root.highlightedIndex
 
-            ScrollIndicator.vertical: ScrollIndicator { }
+            ScrollIndicator.vertical: ScrollIndicator {}
         }
 
         background: Rectangle {

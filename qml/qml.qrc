@@ -8,6 +8,9 @@
         <file>qml/components/AppInput.qml</file>
         <file>qml/components/AppButton.qml</file>
         <file>qml/components/AppComboBox.qml</file>
+        <file>qml/components/SideNavButton.qml</file>
+        <file>qml/components/StatusCard.qml</file>
+        <file>qml/components/CalendarGrid.qml</file>
         <file>qml/pages/RegisterPage.qml</file>
         <file>qml/pages/MainShellPage.qml</file>
     </qresource>

@@ -6,15 +6,16 @@ import "../style"
 
 Rectangle {
     id: root
+
     function themeColor(name, fallback) {
         if (typeof Theme === "undefined" || Theme === null)
             return fallback
         var value = Theme[name]
         return (value === undefined || value === null) ? fallback : value
     }
+
     color: root.themeColor("bg", "#0F0F1A")
 
-    // Сигналы для C++
     signal recoveryClicked(string recoveryKey)
     signal recoveryFromFileClicked()
     signal backClicked()
@@ -27,7 +28,34 @@ Rectangle {
         height: parent.height
         spacing: 0
 
-        // Заголовок
+        Rectangle {
+            width: parent.width
+            height: 80
+            color: root.themeColor("bgSecondary", "#1a1a2e")
+
+            Column {
+                anchors.centerIn: parent
+                width: parent.width
+                padding: 14
+                spacing: 2
+
+                Text {
+                    text: "Восстановление аккаунта"
+                    font.pixelSize: 20
+                    font.bold: true
+                    color: root.themeColor("text", "#FFFFFF")
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+
+                Text {
+                    text: "Используйте ключ восстановления или загрузите его из файла"
+                    font.pixelSize: 12
+                    color: root.themeColor("textSecondary", "#A0A0B0")
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+            }
+        }
+
         Column {
             width: parent.width
             padding: 20
@@ -41,7 +69,7 @@ Rectangle {
             }
 
             Text {
-                text: "Введите ключ восстановления, полученный при регистрации"
+                text: "Введите ключ восстановления, который был сохранён при регистрации аккаунта"
                 font.pixelSize: 13
                 color: root.themeColor("textSecondary", "#A0A0B0")
                 wrapMode: Text.WordWrap
@@ -49,7 +77,6 @@ Rectangle {
             }
         }
 
-        // Форма
         Rectangle {
             width: parent.width - 40
             height: childrenRect.height + 28
@@ -62,7 +89,6 @@ Rectangle {
                 anchors.horizontalCenter: parent.horizontalCenter
                 spacing: 10
 
-                // Ключ восстановления
                 Column {
                     width: parent.width
                     spacing: 4
@@ -81,14 +107,23 @@ Rectangle {
                     }
                 }
 
-                // Анимированный alert ошибки (inline, чтобы избежать проблем qmlcache)
+                Text {
+                    text: "Если ключ сохранён в файле, можно загрузить его автоматически."
+                    font.pixelSize: 11
+                    color: root.themeColor("textSecondary", "#A0A0B0")
+                    wrapMode: Text.WordWrap
+                    width: parent.width
+                }
+
                 Item {
                     width: parent.width
                     height: root.errorMessage.trim().length > 0 ? recAlertRect.implicitHeight : 0
                     clip: true
+
                     Behavior on height {
                         NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
                     }
+
                     Rectangle {
                         id: recAlertRect
                         anchors.left: parent.left
@@ -101,8 +136,15 @@ Rectangle {
                         border.width: 1
                         opacity: root.errorMessage.trim().length > 0 ? 1 : 0
                         y: root.errorMessage.trim().length > 0 ? 0 : -8
-                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+
+                        Behavior on opacity {
+                            NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+                        }
+
+                        Behavior on y {
+                            NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+                        }
+
                         Text {
                             id: recAlertText
                             anchors.left: parent.left
@@ -117,34 +159,30 @@ Rectangle {
                     }
                 }
 
-                // Кнопка восстановления
+                Row {
+                    width: parent.width
+                    spacing: 10
+
+                    AppButton {
+                        width: (parent.width - 10) / 3
+                        text: "Назад"
+                        buttonStyle: "ghost"
+                        onClicked: root.backClicked()
+                    }
+
+                    AppButton {
+                        width: (parent.width - 10) * 2 / 3
+                        text: "Загрузить из файла"
+                        buttonStyle: "secondary"
+                        onClicked: root.recoveryFromFileClicked()
+                    }
+                }
+
                 AppButton {
                     width: parent.width
-                    text: "Войти"
+                    text: "Восстановить доступ"
                     buttonStyle: "primary"
-                    onClicked: {
-                        root.recoveryClicked(recoveryKeyEdit.text)
-                    }
-                }
-
-                // Кнопка из файла
-                AppButton {
-                    width: parent.width
-                    text: "Вставить ключ из файла"
-                    buttonStyle: "secondary"
-                    onClicked: {
-                        root.recoveryFromFileClicked()
-                    }
-                }
-
-                // Кнопка назад
-                AppButton {
-                    width: parent.width
-                    text: "Назад"
-                    buttonStyle: "ghost"
-                    onClicked: {
-                        root.backClicked()
-                    }
+                    onClicked: root.recoveryClicked(recoveryKeyEdit.text)
                 }
             }
         }
@@ -154,7 +192,7 @@ Rectangle {
 
     Keys.onPressed: {
         if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-            recoveryClicked(recoveryKeyEdit.text)
+            root.recoveryClicked(recoveryKeyEdit.text)
             event.accepted = true
         }
     }

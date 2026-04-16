@@ -113,7 +113,22 @@ ApplicationWindow {
                     text: root.connecting ? "Подключение..." : "OK"
                     enabled: !root.connecting
                     onClicked: root.startConnect()
-                    radius: 10
+
+                    background: Rectangle {
+                        implicitWidth: 120
+                        implicitHeight: 40
+                        radius: 10
+                        color: okButton.enabled ? "#6C63FF" : "#4A4A5E"
+                        border.width: 0
+                    }
+
+                    contentItem: Text {
+                        text: okButton.text
+                        color: "#FFFFFF"
+                        font.pixelSize: 14
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
                 }
             }
         }

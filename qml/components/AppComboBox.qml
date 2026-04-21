@@ -1,6 +1,5 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
-
 import "../style"
 
 ComboBox {
@@ -8,12 +7,6 @@ ComboBox {
     width: 300
     height: 42
     padding: 12
-    function themeColor(name, fallback) {
-        if (typeof Theme === "undefined" || Theme === null)
-            return fallback
-        var value = Theme[name]
-        return (value === undefined || value === null) ? fallback : value
-    }
 
     font.pixelSize: 14
     indicator: Canvas {
@@ -37,17 +30,15 @@ ComboBox {
             context.lineTo(width, 0)
             context.lineTo(width / 2, height)
             context.closePath()
-            context.fillStyle = root.themeColor("textSecondary", "#A0A0B0")
+            context.fillStyle = Theme.textSecondary
             context.fill()
         }
     }
 
     background: Rectangle {
-        color: root.pressed ? "#252540" : "#1a1a2e"
+        color: "#FFFFFF"
         radius: 10
-        border.color: root.activeFocus
-                      || root.pressed ? root.themeColor("primary",
-                                                        "#6C63FF") : "#333355"
+        border.color: root.activeFocus || root.pressed ? Theme.primary : Theme.border
         border.width: 1
 
         Behavior on color {
@@ -62,7 +53,7 @@ ComboBox {
         rightPadding: root.indicator.width + 12
         text: root.displayText
         font: root.font
-        color: root.themeColor("text", "#FFFFFF")
+        color: Theme.text
         verticalAlignment: Text.AlignVCenter
         elide: Text.ElideRight
     }
@@ -74,19 +65,12 @@ ComboBox {
         contentItem: Text {
             text: modelData
             font: root.font
-            color: root.highlightedIndex === index ? root.themeColor(
-                                                         "primary",
-                                                         "#6C63FF") : root.themeColor(
-                                                         "text", "#FFFFFF")
+            color: root.highlightedIndex === index ? Theme.primary : Theme.text
             verticalAlignment: Text.AlignVCenter
         }
 
         background: Rectangle {
-            color: root.highlightedIndex === index ? Qt.lighter(
-                                                         root.themeColor(
-                                                             "primary",
-                                                             "#6C63FF"),
-                                                         1.2) : "transparent"
+            color: root.highlightedIndex === index ? Theme.navHover : "transparent"
             radius: 6
         }
     }
@@ -107,9 +91,9 @@ ComboBox {
         }
 
         background: Rectangle {
-            color: root.themeColor("bgSecondary", "#1a1a2e")
+            color: "#FFFFFF"
             radius: 10
-            border.color: root.themeColor("primary", "#6C63FF")
+            border.color: Theme.primary
             border.width: 1
         }
     }

@@ -24,6 +24,9 @@ public:
     Q_INVOKABLE QVariantMap loadCurrentUserProfile() const;
     Q_INVOKABLE bool saveCurrentUserProfile(const QVariantMap &profile);
 
+    Q_INVOKABLE QString loadUserAvatar() const;
+    Q_INVOKABLE bool saveUserAvatar(const QString &avatarData);
+
     Q_INVOKABLE bool switchAccount();
     Q_INVOKABLE void changeAvatar();
     Q_INVOKABLE void changeLanguage();
@@ -33,9 +36,9 @@ public:
 signals:
     void sessionChanged();
     void profileUpdated();
+    void avatarChanged();
 
 private:
     void refreshRole();
     QString m_role;
 };
-

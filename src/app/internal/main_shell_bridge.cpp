@@ -25,6 +25,8 @@
 #include <QSqlQuery>
 #include <QVariant>
 #include <QVBoxLayout>
+#include <QBuffer>
+#include <QPixmap>
 #include <algorithm>
 
 namespace {
@@ -458,6 +460,52 @@ bool MainShellBridge::saveCurrentUserProfile(const QVariantMap &profile)
     if (ok)
         emit profileUpdated();
     return ok;
+}
+
+QString MainShellBridge::loadUserAvatar() const
+{
+    const QString username = AppSession::currentUsername();
+    if (username.isEmpty())
+        return QString();
+
+    QPixmap pm = loadUserAvatarFromDb(username);
+    if (pm.isNull())
+        return QString();
+
+    QByteArray bytes;
+    QBuffer buffer(&bytes);
+    buffer.open(QIODevice::WriteOnly);
+    pm.save(&buffer, "PNG");
+
+    return QStringLiteral("data:image/png;base64,") + bytes.toBase64();
+}
+
+bool MainShellBridge::saveUserAvatar(const QString &avatarData)
+{
+    const QString username = AppSession::currentUsername();
+    if (username.isEmpty())
+        return false;
+
+    if (avatarData.startsWith(QStringLiteral("data:"))) {
+        const QStringList parts = avatarData.split(QStringLiteral(","));
+        if (parts.size() < 2)
+            return false;
+
+        const QByteArray bytes = QByteArray::fromBase64(parts.at(1).toUtf8());
+        QPixmap pm;
+        pm.loadFromData(bytes);
+
+        if (pm.isNull())
+            return false;
+
+        QString err;
+        const bool ok = saveUserAvatarToDb(username, pm, err);
+        if (ok)
+            emit avatarChanged();
+        return ok;
+    }
+
+    return false;
 }
 
 bool MainShellBridge::switchAccount()

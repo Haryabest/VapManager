@@ -1,6 +1,5 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
-
 import "../style"
 
 TextField {
@@ -10,24 +9,18 @@ TextField {
     padding: 12
 
     font.pixelSize: 14
-    function themeColor(name, fallback) {
-        if (typeof Theme === "undefined" || Theme === null)
-            return fallback
-        var value = Theme[name]
-        return (value === undefined || value === null) ? fallback : value
-    }
-    placeholderTextColor: "#888888"
-    color: root.themeColor("text", "#FFFFFF")
-    selectionColor: root.themeColor("primary", "#6C63FF")
-    selectedTextColor: root.themeColor("text", "#FFFFFF")
+    placeholderTextColor: Theme.textMuted
+    color: Theme.text
+    selectionColor: Theme.primary
+    selectedTextColor: Theme.text
 
     background: Rectangle {
-        color: root.activeFocus ? "#252540" : "#1a1a2e"
+        color: "#FFFFFF"
         radius: 10
-        border.color: root.activeFocus ? root.themeColor("primary", "#6C63FF") : "#333355"
+        border.color: root.activeFocus ? Theme.primary : Theme.border
         border.width: 1
 
-        Behavior on color {
+        Behavior on border.color {
             ColorAnimation { duration: 150 }
         }
     }

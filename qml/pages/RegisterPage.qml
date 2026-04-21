@@ -12,9 +12,8 @@ Rectangle {
         var value = Theme[name]
         return (value === undefined || value === null) ? fallback : value
     }
-    color: root.themeColor("bg", "#0F0F1A")
+    color: root.themeColor("bg", "#FFFFFF")
 
-    // Сигналы для C++
     signal registerClicked(string login, string password, string confirmPassword, string role, string adminKey, string techKey)
     signal backClicked()
     signal loginEdited(string text)
@@ -22,7 +21,6 @@ Rectangle {
     signal password2Edited(string text)
     signal roleIndexChanged(int index)
 
-    // Свойства для установки из C++
     property alias loginText: regLoginEdit.text
     property alias password1Text: regPass1Edit.text
     property alias password2Text: regPass2Edit.text
@@ -42,7 +40,7 @@ Rectangle {
         Rectangle {
             width: parent.width
             height: 80
-            color: root.themeColor("bgSecondary", "#1a1a2e")
+            color: root.themeColor("bgSecondary", "#F3F4F6")
 
             Column {
                 anchors.centerIn: parent
@@ -54,14 +52,14 @@ Rectangle {
                     text: "Создание аккаунта"
                     font.pixelSize: 20
                     font.bold: true
-                    color: root.themeColor("text", "#FFFFFF")
+                    color: root.themeColor("text", "#1A1A1A")
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
 
                 Text {
                     text: "Заполните данные и сохраните ключ восстановления"
                     font.pixelSize: 12
-                    color: root.themeColor("textSecondary", "#A0A0B0")
+                    color: root.themeColor("textSecondary", "#6B7280")
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
             }
@@ -77,13 +75,13 @@ Rectangle {
                 text: "Регистрация"
                 font.pixelSize: 24
                 font.bold: true
-                color: root.themeColor("text", "#FFFFFF")
+                color: root.themeColor("text", "#1A1A1A")
             }
 
             Text {
                 text: "Укажите логин, пароль и роль пользователя"
                 font.pixelSize: 13
-                color: root.themeColor("textSecondary", "#A0A0B0")
+                color: root.themeColor("textSecondary", "#6B7280")
                 wrapMode: Text.WordWrap
                 width: parent.width
             }
@@ -94,7 +92,7 @@ Rectangle {
             width: parent.width - 40
             height: childrenRect.height + 28
             anchors.horizontalCenter: parent.horizontalCenter
-            color: root.themeColor("bgSecondary", "#1a1a2e")
+            color: root.themeColor("bgSecondary", "#F3F4F6")
             radius: 12
 
             Column {
@@ -110,7 +108,7 @@ Rectangle {
                     Text {
                         text: "Логин"
                         font.pixelSize: 13
-                        color: root.themeColor("textSecondary", "#A0A0B0")
+                        color: root.themeColor("textSecondary", "#6B7280")
                     }
 
                     AppInput {
@@ -129,7 +127,7 @@ Rectangle {
                     Text {
                         text: "Пароль"
                         font.pixelSize: 13
-                        color: root.themeColor("textSecondary", "#A0A0B0")
+                        color: root.themeColor("textSecondary", "#6B7280")
                     }
 
                     AppInput {
@@ -149,7 +147,7 @@ Rectangle {
                     Text {
                         text: "Повторите пароль"
                         font.pixelSize: 13
-                        color: root.themeColor("textSecondary", "#A0A0B0")
+                        color: root.themeColor("textSecondary", "#6B7280")
                     }
 
                     AppInput {
@@ -204,7 +202,7 @@ Rectangle {
                     Text {
                         text: "Роль"
                         font.pixelSize: 13
-                        color: root.themeColor("textSecondary", "#A0A0B0")
+                        color: root.themeColor("textSecondary", "#6B7280")
                     }
 
                     AppComboBox {
@@ -224,7 +222,7 @@ Rectangle {
                     Text {
                         text: "Ключ от администратора"
                         font.pixelSize: 13
-                        color: root.themeColor("textSecondary", "#A0A0B0")
+                        color: root.themeColor("textSecondary", "#6B7280")
                     }
 
                     AppInput {
@@ -243,7 +241,7 @@ Rectangle {
                     Text {
                         text: "Ключ от техника"
                         font.pixelSize: 13
-                        color: root.themeColor("textSecondary", "#A0A0B0")
+                        color: root.themeColor("textSecondary", "#6B7280")
                     }
 
                     AppInput {
@@ -253,7 +251,7 @@ Rectangle {
                     }
                 }
 
-                // Анимированный alert ошибки (inline, чтобы избежать проблем qmlcache)
+                // Анимированный alert ошибки
                 Item {
                     id: regError
                     width: parent.width
@@ -269,8 +267,8 @@ Rectangle {
                         anchors.top: parent.top
                         implicitHeight: regAlertText.implicitHeight + 18
                         radius: 10
-                        color: "#3B1620"
-                        border.color: root.themeColor("error", "#FF5252")
+                        color: "#FFF0F0"
+                        border.color: root.themeColor("error", "#FF3B30")
                         border.width: 1
                         opacity: root.errorMessage.trim().length > 0 ? 1 : 0
                         y: root.errorMessage.trim().length > 0 ? 0 : -8
@@ -285,7 +283,7 @@ Rectangle {
                             text: root.errorMessage
                             wrapMode: Text.WordWrap
                             font.pixelSize: 13
-                            color: "#FFFFFF"
+                            color: root.themeColor("error", "#FF3B30")
                         }
                     }
                 }
@@ -321,6 +319,6 @@ Rectangle {
             }
         }
 
-        Item { width: 1; height: 1 } // spacer
+        Item { width: 1; height: 1 }
     }
 }

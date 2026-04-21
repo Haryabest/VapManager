@@ -14,7 +14,7 @@ Rectangle {
         return (value === undefined || value === null) ? fallback : value
     }
 
-    color: root.themeColor("bg", "#0F0F1A")
+    color: root.themeColor("bg", "#FFFFFF")
 
     signal loginClicked(string login, string password)
     signal registerClicked()
@@ -32,7 +32,7 @@ Rectangle {
         Rectangle {
             width: parent.width
             height: 80
-            color: root.themeColor("bgSecondary", "#1a1a2e")
+            color: root.themeColor("bgSecondary", "#F3F4F6")
 
             Column {
                 anchors.centerIn: parent
@@ -44,14 +44,14 @@ Rectangle {
                     text: "AGV Manager"
                     font.pixelSize: 20
                     font.bold: true
-                    color: root.themeColor("text", "#FFFFFF")
+                    color: root.themeColor("text", "#1A1A1A")
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
 
                 Text {
                     text: "Войдите в аккаунт, чтобы продолжить работу"
                     font.pixelSize: 12
-                    color: root.themeColor("textSecondary", "#A0A0B0")
+                    color: root.themeColor("textSecondary", "#6B7280")
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
             }
@@ -66,13 +66,13 @@ Rectangle {
                 text: "Авторизация"
                 font.pixelSize: 24
                 font.bold: true
-                color: root.themeColor("text", "#FFFFFF")
+                color: root.themeColor("text", "#1A1A1A")
             }
 
             Text {
                 text: "Введите логин и пароль от вашего аккаунта"
                 font.pixelSize: 13
-                color: root.themeColor("textSecondary", "#A0A0B0")
+                color: root.themeColor("textSecondary", "#6B7280")
                 wrapMode: Text.WordWrap
                 width: parent.width
             }
@@ -82,7 +82,7 @@ Rectangle {
             width: parent.width - 40
             height: childrenRect.height + 28
             anchors.horizontalCenter: parent.horizontalCenter
-            color: root.themeColor("bgSecondary", "#1a1a2e")
+            color: root.themeColor("bgSecondary", "#F3F4F6")
             radius: 12
 
             Column {
@@ -97,7 +97,7 @@ Rectangle {
                     Text {
                         text: "Логин"
                         font.pixelSize: 13
-                        color: root.themeColor("textSecondary", "#A0A0B0")
+                        color: root.themeColor("textSecondary", "#6B7280")
                     }
 
                     AppInput {
@@ -115,7 +115,7 @@ Rectangle {
                     Text {
                         text: "Пароль"
                         font.pixelSize: 13
-                        color: root.themeColor("textSecondary", "#A0A0B0")
+                        color: root.themeColor("textSecondary", "#6B7280")
                     }
 
                     AppInput {
@@ -130,7 +130,7 @@ Rectangle {
                 Text {
                     text: "Используйте данные рабочего аккаунта. При утрате доступа можно восстановить вход по ключу."
                     font.pixelSize: 11
-                    color: root.themeColor("textSecondary", "#A0A0B0")
+                    color: root.themeColor("textSecondary", "#6B7280")
                     wrapMode: Text.WordWrap
                     width: parent.width
                 }
@@ -151,8 +151,8 @@ Rectangle {
                         anchors.top: parent.top
                         implicitHeight: alertText.implicitHeight + 18
                         radius: 10
-                        color: "#3B1620"
-                        border.color: root.themeColor("error", "#FF5252")
+                        color: "#FFF0F0"
+                        border.color: root.themeColor("error", "#FF3B30")
                         border.width: 1
                         opacity: root.errorMessage.trim().length > 0 ? 1 : 0
                         y: root.errorMessage.trim().length > 0 ? 0 : -8
@@ -174,7 +174,7 @@ Rectangle {
                             text: root.errorMessage
                             wrapMode: Text.WordWrap
                             font.pixelSize: 13
-                            color: "#FFFFFF"
+                            color: root.themeColor("error", "#FF3B30")
                         }
                     }
                 }

@@ -1,5 +1,6 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
+import "../style"
 
 AbstractButton {
     id: root
@@ -13,12 +14,13 @@ AbstractButton {
 
     background: Rectangle {
         color: {
-            if (root.pressed) return "#78ADD8E6"
-            if (root.hovered || root.selected) return "#4CADD8E6"
+            if (root.selected) return Theme.primary
+            if (root.pressed) return Theme.navHover
+            if (root.hovered) return Theme.navHover
             return "transparent"
         }
         radius: 8
-        border.color: (root.hovered || root.selected) ? "#ADD8E6" : "transparent"
+        border.color: root.hovered && !root.selected ? Theme.border : "transparent"
         border.width: 1
 
         Behavior on color { ColorAnimation { duration: 120 } }
@@ -42,7 +44,7 @@ AbstractButton {
             font.pixelSize: 14
             font.bold: true
             font.family: "Inter"
-            color: root.selected ? "#0F00DB" : "#1E293B"
+            color: root.selected ? "#FFFFFF" : Theme.text
             anchors.verticalCenter: parent.verticalCenter
 
             Behavior on color { ColorAnimation { duration: 120 } }

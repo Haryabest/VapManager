@@ -3,6 +3,7 @@
 #include "app_session.h"
 #include "databus.h"
 #include "db_users.h"
+#include "db_agv_errors.h"
 #include "notifications_logs.h"
 
 #include <QComboBox>
@@ -23,6 +24,9 @@
 #include <QTableWidget>
 #include <QTimer>
 #include <QVBoxLayout>
+#include <QDateEdit>
+#include <QTimeEdit>
+#include <QFormLayout>
 
 
 AgvSettingsPage::AgvSettingsPage(std::function<int(int)> scale, QWidget *parent)
@@ -145,6 +149,104 @@ AgvSettingsPage::AgvSettingsPage(std::function<int(int)> scale, QWidget *parent)
         }
     });
     top->addWidget(pinAgvBtn, 0, Qt::AlignRight);
+
+    QPushButton *addErrorBtn = new QPushButton(QStringLiteral("Добавить ошибку"), this);
+    addErrorBtn->setStyleSheet(QString(
+        "QPushButton { background:#FDE68A; color:#111; font-family:Inter; font-size:%1px; font-weight:900; "
+        "padding:8px 14px; border:1px solid #F59E0B; border-radius:%2px; } "
+        "QPushButton:hover { background:#FCD34D; }"
+    ).arg(s(14)).arg(s(10)));
+    addErrorBtn->setFixedHeight(s(40));
+    connect(addErrorBtn, &QPushButton::clicked, this, [this]() {
+        if (currentAgvId.trimmed().isEmpty())
+            return;
+
+        QDialog dlg(this);
+        dlg.setWindowTitle(QStringLiteral("Добавить ошибку AGV"));
+        dlg.setModal(true);
+        dlg.setMinimumWidth(s(460));
+        QVBoxLayout *root = new QVBoxLayout(&dlg);
+
+        QFormLayout *form = new QFormLayout();
+        form->setLabelAlignment(Qt::AlignLeft);
+        form->setFormAlignment(Qt::AlignTop);
+
+        QDateEdit *dateEdit = new QDateEdit(QDate::currentDate(), &dlg);
+        dateEdit->setCalendarPopup(true);
+        dateEdit->setDisplayFormat("dd.MM.yyyy");
+
+        QLineEdit *typeEdit = new QLineEdit(&dlg);
+        typeEdit->setPlaceholderText(QStringLiteral("Тип (например: Электрика)"));
+        typeEdit->setMaxLength(64);
+
+        QLineEdit *titleEdit = new QLineEdit(&dlg);
+        titleEdit->setPlaceholderText(QStringLiteral("Название ошибки"));
+        titleEdit->setMaxLength(256);
+
+        QWidget *timeRow = new QWidget(&dlg);
+        QHBoxLayout *timeL = new QHBoxLayout(timeRow);
+        timeL->setContentsMargins(0, 0, 0, 0);
+        timeL->setSpacing(s(8));
+        QTimeEdit *fromEdit = new QTimeEdit(QTime(12, 0), timeRow);
+        fromEdit->setDisplayFormat("HH:mm");
+        QTimeEdit *toEdit = new QTimeEdit(QTime(14, 0), timeRow);
+        toEdit->setDisplayFormat("HH:mm");
+        QLabel *minsLbl = new QLabel(timeRow);
+        minsLbl->setStyleSheet(QString("font-family:Inter;font-size:%1px;font-weight:800;color:#334155;").arg(s(13)));
+
+        auto computeMinutes = [fromEdit, toEdit]() -> int {
+            const QTime a = fromEdit->time();
+            const QTime b = toEdit->time();
+            int m = a.secsTo(b) / 60;
+            if (m < 0) m += 24 * 60; // если через полночь
+            return qMax(0, m);
+        };
+        auto refreshMins = [minsLbl, computeMinutes]() {
+            minsLbl->setText(QStringLiteral("= %1 мин").arg(computeMinutes()));
+        };
+        refreshMins();
+        connect(fromEdit, &QTimeEdit::timeChanged, &dlg, [refreshMins](const QTime &) { refreshMins(); });
+        connect(toEdit, &QTimeEdit::timeChanged, &dlg, [refreshMins](const QTime &) { refreshMins(); });
+
+        timeL->addWidget(new QLabel(QStringLiteral("с"), timeRow));
+        timeL->addWidget(fromEdit);
+        timeL->addWidget(new QLabel(QStringLiteral("до"), timeRow));
+        timeL->addWidget(toEdit);
+        timeL->addStretch();
+        timeL->addWidget(minsLbl);
+
+        form->addRow(QStringLiteral("Дата:"), dateEdit);
+        form->addRow(QStringLiteral("Тип:"), typeEdit);
+        form->addRow(QStringLiteral("Название:"), titleEdit);
+        form->addRow(QStringLiteral("Диапазон времени:"), timeRow);
+        root->addLayout(form);
+
+        QDialogButtonBox *bb = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dlg);
+        bb->button(QDialogButtonBox::Ok)->setText(QStringLiteral("Сохранить"));
+        bb->button(QDialogButtonBox::Cancel)->setText(QStringLiteral("Отмена"));
+        root->addWidget(bb);
+        connect(bb, &QDialogButtonBox::rejected, &dlg, &QDialog::reject);
+        connect(bb, &QDialogButtonBox::accepted, &dlg, [&dlg]() { dlg.accept(); });
+
+        if (dlg.exec() != QDialog::Accepted)
+            return;
+
+        const QString type = typeEdit->text().trimmed();
+        const QString title = titleEdit->text().trimmed();
+        if (type.isEmpty() || title.isEmpty()) {
+            QMessageBox::warning(this, QStringLiteral("Ошибка"), QStringLiteral("Заполните «Тип» и «Название»."));
+            return;
+        }
+        QString err;
+        const int mins = computeMinutes();
+        const QString who = AppSession::currentUsername();
+        if (!addAgvErrorLog(currentAgvId, dateEdit->date(), type, title, fromEdit->time(), toEdit->time(), mins, who, &err)) {
+            QMessageBox::warning(this, QStringLiteral("Ошибка"), err.isEmpty() ? QStringLiteral("Не удалось записать ошибку") : err);
+            return;
+        }
+        QMessageBox::information(this, QStringLiteral("Готово"), QStringLiteral("Ошибка записана."));
+    });
+    top->addWidget(addErrorBtn, 0, Qt::AlignRight);
 
     rootLayout->addLayout(top);
 

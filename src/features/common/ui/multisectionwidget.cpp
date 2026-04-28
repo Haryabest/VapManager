@@ -25,10 +25,10 @@ MultiSectionWidget::MultiSectionWidget(QWidget *parent, qreal scaleFactor)
     activeAGVTitleLabel_ = new QLabel("Активные AGV:", this);
         activeAGVCountLabel_ = new QLabel(this);
 
-        maintenanceTitleLabel_ = new QLabel("Требует обслуживания:", this);
+        maintenanceTitleLabel_ = new QLabel("Обслуживание просрочено:", this);
         maintenanceCountLabel_ = new QLabel(this);
 
-        errorTitleLabel_ = new QLabel("Ошибка:", this);
+        errorTitleLabel_ = new QLabel("Пропущеное ТО:", this);
         errorCountLabel_ = new QLabel(this);
 
         disabledTitleLabel_ = new QLabel("Отключены:", this);

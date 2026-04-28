@@ -25,6 +25,12 @@ void addNotificationForUser(const QString &targetUser,
                             const QString &title,
                             const QString &message);
 
+/// Play notification sound
+void playNotificationSound();
+
+/// Clear chat notifications for thread (mark as read)
+void clearChatNotificationsForThread(const QString &username, int threadId);
+
 /// Убрать служебные метки [chat:N] и [peer:login] для показа пользователю.
 QString notificationMessageForDisplay(const QString &storedMessage);
 /// Логин собеседника из хвоста сообщения [peer:username] (для чата из уведомления).

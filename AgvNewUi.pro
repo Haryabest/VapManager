@@ -50,6 +50,7 @@ SOURCES += \
     src/core/events/databus.cpp \
     src/data/db/db.cpp \
     src/data/repositories/db_agv_tasks.cpp \
+    src/data/repositories/db_agv_errors.cpp \
     src/data/repositories/db_models.cpp \
     src/data/repositories/db_task_chat.cpp \
     src/data/repositories/db_users.cpp \
@@ -92,6 +93,7 @@ HEADERS += \
     src/core/events/databus.h \
     src/data/db/db.h \
     src/data/repositories/db_agv_tasks.h \
+    src/data/repositories/db_agv_errors.h \
     src/data/repositories/db_models.h \
     src/data/repositories/db_task_chat.h \
     src/data/repositories/db_users.h \
@@ -139,6 +141,7 @@ RESOURCES += \
 
 # Иконка приложения для Windows (exe, панель задач, рабочий стол)
 win32: RC_ICONS = noback/agvIcon.ico
+win32: LIBS += -lwinmm
 
 DISTFILES += \
     agv_pic/AGV_Background.png \

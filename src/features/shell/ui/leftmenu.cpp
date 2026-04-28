@@ -13,6 +13,7 @@
 #include "notifications_logs.h"
 #include "taskchatdialog.h"
 #include "diag_logger.h"
+#include "db_agv_errors.h"
 #include "internal/leftmenu_calendar_utils.h"
 #include "internal/leftmenu_settings_dialogs.h"
 
@@ -64,6 +65,9 @@ void checkAndSendMaintenanceNotifications(const QVector<MaintenanceItemData> &up
 #include <QRandomGenerator>
 #include <QSignalBlocker>
 #include <QUrl>
+#ifdef Q_OS_WIN
+#include <windows.h>
+#endif
 
 // Явное объявление для TU, чтобы избежать конфликтов видимости при инкрементальной сборке.
 void touchUserPresence(const QString &username);
@@ -71,6 +75,67 @@ void touchUserPresence(const QString &username);
 namespace {
 // Единый лимит стен-времени для комплексного теста (лог SUITE_START и обрезка фаз).
 constexpr qint64 kComplexTestWallCapMs = 600000;
+
+void flashTaskbarOnNewNotification(QWidget *owner)
+{
+#ifdef Q_OS_WIN
+    QWidget *top = owner ? owner->window() : nullptr;
+    if (!top || !top->isWindow()) {
+        const auto tops = QApplication::topLevelWidgets();
+        for (QWidget *w : tops) {
+            if (w && w->isVisible() && w->isWindow()) {
+                top = w;
+                break;
+            }
+        }
+    }
+    if (!top)
+        return;
+    HWND hwnd = reinterpret_cast<HWND>(top->winId());
+    if (!hwnd)
+        return;
+    FLASHWINFO fi{};
+    fi.cbSize = sizeof(FLASHWINFO);
+    fi.hwnd = hwnd;
+    // Persistent taskbar highlight until user activates app window.
+    fi.dwFlags = FLASHW_TRAY | FLASHW_TIMERNOFG;
+    fi.uCount = 0;
+    fi.dwTimeout = 0;
+    FlashWindowEx(&fi);
+#else
+    Q_UNUSED(owner);
+#endif
+}
+
+void stopTaskbarFlash(QWidget *owner)
+{
+#ifdef Q_OS_WIN
+    QWidget *top = owner ? owner->window() : nullptr;
+    if (!top || !top->isWindow()) {
+        const auto tops = QApplication::topLevelWidgets();
+        for (QWidget *w : tops) {
+            if (w && w->isVisible() && w->isWindow()) {
+                top = w;
+                break;
+            }
+        }
+    }
+    if (!top)
+        return;
+    HWND hwnd = reinterpret_cast<HWND>(top->winId());
+    if (!hwnd)
+        return;
+    FLASHWINFO fi{};
+    fi.cbSize = sizeof(FLASHWINFO);
+    fi.hwnd = hwnd;
+    fi.dwFlags = FLASHW_STOP;
+    fi.uCount = 0;
+    fi.dwTimeout = 0;
+    FlashWindowEx(&fi);
+#else
+    Q_UNUSED(owner);
+#endif
+}
 
 int minCalendarYear()
 {
@@ -1072,7 +1137,7 @@ void leftMenu::initUI()
     QPushButton *btnUsers = makeNavButton("Пользователи", ":/new/mainWindowIcons/noback/user.png");
     QPushButton *btnAgv   = makeNavButton("AGV", ":/new/mainWindowIcons/noback/agvIcon.png");
     QPushButton *btnEdit  = makeNavButton("Модель AGV", ":/new/mainWindowIcons/noback/edit.png");
-    QPushButton *btnYear  = makeNavButton("Сформировать годовой отчет", ":/new/mainWindowIcons/noback/YearListPrint.png");
+    QPushButton *btnYear  = makeNavButton("Годовой отчёт", ":/new/mainWindowIcons/noback/YearListPrint.png");
     QPushButton *btnSet   = makeNavButton("Настройки", ":/new/mainWindowIcons/noback/agvSetting.png");
     connect(btnUsers, &QPushButton::clicked, this, [this](){
         showUsersPage();
@@ -2657,7 +2722,7 @@ void leftMenu::initUI()
     QTimer::singleShot(100, this, &leftMenu::updateNotifBadge);
 
     notifPollTimer = new QTimer(this);
-    notifPollTimer->setInterval(25000);
+    notifPollTimer->setInterval(3000);
     connect(notifPollTimer, &QTimer::timeout, this, &leftMenu::updateNotifBadge);
     notifPollTimer->start();
 
@@ -6072,6 +6137,15 @@ bool saveUserAvatarToDb(const QString &username, const QPixmap &pm)
         ).arg(s(13)));
         root->addWidget(subtitle);
 
+        QLabel *reportTypeLabel = new QLabel(QStringLiteral("Тип отчёта:"), &dlg);
+        reportTypeLabel->setStyleSheet(QString("font-size:%1px;font-weight:700;").arg(s(14)));
+        root->addWidget(reportTypeLabel);
+
+        QComboBox *reportTypeCombo = new QComboBox(&dlg);
+        reportTypeCombo->addItem(QStringLiteral("Отчёт ТО"), QStringLiteral("maintenance"));
+        reportTypeCombo->addItem(QStringLiteral("Отчёт об ошибках"), QStringLiteral("errors"));
+        root->addWidget(reportTypeCombo);
+
         QLabel *agvLabel = new QLabel("AGV:", &dlg);
         agvLabel->setStyleSheet(QString("font-size:%1px;font-weight:700;").arg(s(14)));
         root->addWidget(agvLabel);
@@ -6171,6 +6245,7 @@ bool saveUserAvatarToDb(const QString &username, const QPixmap &pm)
 
         auto generateReportHtml = [&]() -> QString {
             const QString agvId = agvCombo->currentData().toString();
+            const QString reportType = reportTypeCombo->currentData().toString();
             const QDate from = dateFrom->date();
             const QDate to = dateTo->date();
 
@@ -6204,6 +6279,11 @@ bool saveUserAvatarToDb(const QString &username, const QPixmap &pm)
                         .arg(from.toString("dd.MM.yyyy"))
                         .arg(to.toString("dd.MM.yyyy"));
 
+            if (reportType == QStringLiteral("errors"))
+                html += QStringLiteral("<p><b>Тип отчёта:</b> Ошибки</p>");
+            else
+                html += QStringLiteral("<p><b>Тип отчёта:</b> ТО</p>");
+
             if (!agvId.isEmpty())
                 html += QString("<p><b>AGV:</b> %1</p>").arg(agvId);
             else
@@ -6235,106 +6315,142 @@ bool saveUserAvatarToDb(const QString &username, const QPixmap &pm)
                 html += "</table>";
             }
 
-            QSqlQuery histQ(db);
-            if (agvId.isEmpty()) {
-                histQ.prepare(R"(
-                    SELECT h.agv_id, h.task_name, h.interval_days, h.completed_at, h.next_date_after, h.performed_by
-                    FROM agv_task_history h
-                    INNER JOIN agv_list a ON a.agv_id = h.agv_id
-                    WHERE h.completed_at >= :from AND h.completed_at <= :to
-                    ORDER BY h.completed_at DESC
-                )");
-            } else {
-                histQ.prepare(R"(
-                    SELECT h.agv_id, h.task_name, h.interval_days, h.completed_at, h.next_date_after, h.performed_by
-                    FROM agv_task_history h
-                    INNER JOIN agv_list a ON a.agv_id = h.agv_id
-                    WHERE h.agv_id = :id AND h.completed_at >= :from AND h.completed_at <= :to
-                    ORDER BY h.completed_at DESC
-                )");
-                histQ.bindValue(":id", agvId);
-            }
-            histQ.bindValue(":from", from);
-            histQ.bindValue(":to", to);
+            if (reportType == QStringLiteral("errors")) {
+                QString err;
+                const QVector<AgvErrorLog> errors = loadAgvErrorLogs(agvId, from, to, &err);
+                if (!err.trimmed().isEmpty()) {
+                    errorLbl->setText(err);
+                    return QString();
+                }
 
-            int totalTasks = 0;
-
-            if (histQ.exec()) {
-                html += "<h2>История обслуживания</h2>";
-                html += "<table><tr><th>AGV</th><th>Задача</th><th>Интервал (дн.)</th>"
-                         "<th>Выполнено</th><th>Следующая дата</th><th>Исполнитель</th></tr>";
-
-                while (histQ.next()) {
-                    totalTasks++;
-                    html += QString("<tr><td>%1</td><td>%2</td><td>%3</td><td>%4</td><td>%5</td><td>%6</td></tr>")
-                                .arg(histQ.value(0).toString())
-                                .arg(histQ.value(1).toString())
-                                .arg(histQ.value(2).toInt())
-                                .arg(histQ.value(3).toDate().toString("dd.MM.yyyy"))
-                                .arg(histQ.value(4).toDate().toString("dd.MM.yyyy"))
-                                .arg(histQ.value(5).toString());
+                html += "<h2>Ошибки</h2>";
+                html += "<table><tr><th>AGV</th><th>Дата</th><th>Тип</th><th>Название</th><th>Время</th><th>Минуты</th><th>Кто</th></tr>";
+                int total = 0;
+                int totalMinutes = 0;
+                for (const AgvErrorLog &e : errors) {
+                    total++;
+                    totalMinutes += qMax(0, e.durationMinutes);
+                    const QString timeRange =
+                        (e.timeFrom.isValid() && e.timeTo.isValid())
+                            ? QString("%1 — %2").arg(e.timeFrom.toString("HH:mm"), e.timeTo.toString("HH:mm"))
+                            : QStringLiteral("—");
+                    html += QString("<tr><td>%1</td><td>%2</td><td>%3</td><td>%4</td><td>%5</td><td>%6</td><td>%7</td></tr>")
+                                .arg(e.agvId.toHtmlEscaped())
+                                .arg(e.errorDate.toString("dd.MM.yyyy"))
+                                .arg(e.type.toHtmlEscaped())
+                                .arg(e.title.toHtmlEscaped())
+                                .arg(timeRange.toHtmlEscaped())
+                                .arg(e.durationMinutes)
+                                .arg(e.createdBy.toHtmlEscaped());
                 }
                 html += "</table>";
-            }
 
-            QSqlQuery pendingQ(db);
-            if (agvId.isEmpty()) {
-                pendingQ.prepare(R"(
-                    SELECT t.agv_id, t.task_name, t.interval_days, t.next_date
-                    FROM agv_tasks t
-                    INNER JOIN agv_list a ON a.agv_id = t.agv_id
-                    WHERE t.next_date >= :from AND t.next_date <= :to
-                    ORDER BY t.next_date ASC
-                )");
+                html += "<div class='summary'>";
+                html += QString("<p><b>Всего ошибок:</b> %1</p>").arg(total);
+                html += QString("<p><b>Суммарно минут:</b> %1</p>").arg(totalMinutes);
+                html += "</div>";
             } else {
-                pendingQ.prepare(R"(
-                    SELECT t.agv_id, t.task_name, t.interval_days, t.next_date
-                    FROM agv_tasks t
-                    INNER JOIN agv_list a ON a.agv_id = t.agv_id
-                    WHERE t.agv_id = :id AND t.next_date >= :from AND t.next_date <= :to
-                    ORDER BY t.next_date ASC
-                )");
-                pendingQ.bindValue(":id", agvId);
-            }
-            pendingQ.bindValue(":from", from);
-            pendingQ.bindValue(":to", to);
+                QSqlQuery histQ(db);
+                if (agvId.isEmpty()) {
+                    histQ.prepare(R"(
+                        SELECT h.agv_id, h.task_name, h.interval_days, h.completed_at, h.next_date_after, h.performed_by
+                        FROM agv_task_history h
+                        INNER JOIN agv_list a ON a.agv_id = h.agv_id
+                        WHERE h.completed_at >= :from AND h.completed_at <= :to
+                        ORDER BY h.completed_at DESC
+                    )");
+                } else {
+                    histQ.prepare(R"(
+                        SELECT h.agv_id, h.task_name, h.interval_days, h.completed_at, h.next_date_after, h.performed_by
+                        FROM agv_task_history h
+                        INNER JOIN agv_list a ON a.agv_id = h.agv_id
+                        WHERE h.agv_id = :id AND h.completed_at >= :from AND h.completed_at <= :to
+                        ORDER BY h.completed_at DESC
+                    )");
+                    histQ.bindValue(":id", agvId);
+                }
+                histQ.bindValue(":from", from);
+                histQ.bindValue(":to", to);
 
-            int overdueCount = 0;
-            int upcomingCount = 0;
+                int totalTasks = 0;
 
-            if (pendingQ.exec()) {
-                html += "<h2>Запланированные задачи</h2>";
-                html += "<table><tr><th>AGV</th><th>Задача</th><th>Интервал (дн.)</th><th>Дата</th><th>Статус</th></tr>";
+                if (histQ.exec()) {
+                    html += "<h2>История обслуживания</h2>";
+                    html += "<table><tr><th>AGV</th><th>Задача</th><th>Интервал (дн.)</th>"
+                             "<th>Выполнено</th><th>Следующая дата</th><th>Исполнитель</th></tr>";
 
-                QDate today = QDate::currentDate();
-                while (pendingQ.next()) {
-                    QDate nextDate = pendingQ.value(3).toDate();
-                    QString status;
-                    if (nextDate < today) {
-                        status = "<span style='color:#FF0000;font-weight:bold;'>Просрочено</span>";
-                        overdueCount++;
-                    } else if (nextDate <= today.addDays(7)) {
-                        status = "<span style='color:#FF8800;font-weight:bold;'>Скоро</span>";
-                        upcomingCount++;
-                    } else {
-                        status = "<span style='color:#18CF00;'>Запланировано</span>";
+                    while (histQ.next()) {
+                        totalTasks++;
+                        html += QString("<tr><td>%1</td><td>%2</td><td>%3</td><td>%4</td><td>%5</td><td>%6</td></tr>")
+                                    .arg(histQ.value(0).toString())
+                                    .arg(histQ.value(1).toString())
+                                    .arg(histQ.value(2).toInt())
+                                    .arg(histQ.value(3).toDate().toString("dd.MM.yyyy"))
+                                    .arg(histQ.value(4).toDate().toString("dd.MM.yyyy"))
+                                    .arg(histQ.value(5).toString());
                     }
-
-                    html += QString("<tr><td>%1</td><td>%2</td><td>%3</td><td>%4</td><td>%5</td></tr>")
-                                .arg(pendingQ.value(0).toString())
-                                .arg(pendingQ.value(1).toString())
-                                .arg(pendingQ.value(2).toInt())
-                                .arg(nextDate.toString("dd.MM.yyyy"))
-                                .arg(status);
+                    html += "</table>";
                 }
-                html += "</table>";
-            }
 
-            html += "<div class='summary'>";
-            html += QString("<p><b>Выполнено задач за период:</b> %1</p>").arg(totalTasks);
-            html += QString("<p><b>Просроченных задач:</b> %1</p>").arg(overdueCount);
-            html += QString("<p><b>Ближайших задач (7 дней):</b> %1</p>").arg(upcomingCount);
-            html += "</div>";
+                QSqlQuery pendingQ(db);
+                if (agvId.isEmpty()) {
+                    pendingQ.prepare(R"(
+                        SELECT t.agv_id, t.task_name, t.interval_days, t.next_date
+                        FROM agv_tasks t
+                        INNER JOIN agv_list a ON a.agv_id = t.agv_id
+                        WHERE t.next_date >= :from AND t.next_date <= :to
+                        ORDER BY t.next_date ASC
+                    )");
+                } else {
+                    pendingQ.prepare(R"(
+                        SELECT t.agv_id, t.task_name, t.interval_days, t.next_date
+                        FROM agv_tasks t
+                        INNER JOIN agv_list a ON a.agv_id = t.agv_id
+                        WHERE t.agv_id = :id AND t.next_date >= :from AND t.next_date <= :to
+                        ORDER BY t.next_date ASC
+                    )");
+                    pendingQ.bindValue(":id", agvId);
+                }
+                pendingQ.bindValue(":from", from);
+                pendingQ.bindValue(":to", to);
+
+                int overdueCount = 0;
+                int upcomingCount = 0;
+
+                if (pendingQ.exec()) {
+                    html += "<h2>Запланированные задачи</h2>";
+                    html += "<table><tr><th>AGV</th><th>Задача</th><th>Интервал (дн.)</th><th>Дата</th><th>Статус</th></tr>";
+
+                    QDate today = QDate::currentDate();
+                    while (pendingQ.next()) {
+                        QDate nextDate = pendingQ.value(3).toDate();
+                        QString status;
+                        if (nextDate < today) {
+                            status = "<span style='color:#FF0000;font-weight:bold;'>Просрочено</span>";
+                            overdueCount++;
+                        } else if (nextDate <= today.addDays(7)) {
+                            status = "<span style='color:#FF8800;font-weight:bold;'>Скоро</span>";
+                            upcomingCount++;
+                        } else {
+                            status = "<span style='color:#18CF00;'>Запланировано</span>";
+                        }
+
+                        html += QString("<tr><td>%1</td><td>%2</td><td>%3</td><td>%4</td><td>%5</td></tr>")
+                                    .arg(pendingQ.value(0).toString())
+                                    .arg(pendingQ.value(1).toString())
+                                    .arg(pendingQ.value(2).toInt())
+                                    .arg(nextDate.toString("dd.MM.yyyy"))
+                                    .arg(status);
+                    }
+                    html += "</table>";
+                }
+
+                html += "<div class='summary'>";
+                html += QString("<p><b>Выполнено задач за период:</b> %1</p>").arg(totalTasks);
+                html += QString("<p><b>Просроченных задач:</b> %1</p>").arg(overdueCount);
+                html += QString("<p><b>Ближайших задач (7 дней):</b> %1</p>").arg(upcomingCount);
+                html += "</div>";
+            }
 
             html += "</body></html>";
 
@@ -6908,14 +7024,17 @@ bool saveUserAvatarToDb(const QString &username, const QPixmap &pm)
         };
         QVector<int> chatIds;
         chatIds.reserve(notifs.size());
+        int unreadAnyCount = 0;
         for (const Notification &n : notifs) {
             if (n.isRead) continue;
+            unreadAnyCount++;
             const int chatId = parseChatId(n.message);
             if (chatId > 0)
                 chatIds.push_back(chatId);
         }
         const QHash<int, TaskChatThread> threadMap = getThreadsByIds(chatIds);
         int count = 0;
+        int unreadChatCount = 0;
         for (const Notification &n : notifs) {
             if (n.isRead) continue;
             const int chatId = parseChatId(n.message);
@@ -6924,9 +7043,18 @@ bool saveUserAvatarToDb(const QString &username, const QPixmap &pm)
                 QString other = (t.createdBy == currentUser) ? t.recipientUser : t.createdBy;
                 if (!other.trimmed().isEmpty() && isMutedPeer(other))
                     continue;
+                unreadChatCount++;
             }
             count++;
         }
+        if (lastUnreadAnyNotifCount_ >= 0 && unreadAnyCount > lastUnreadAnyNotifCount_) {
+            playNotificationSound();
+            flashTaskbarOnNewNotification(this);
+        }
+        lastUnreadChatNotifCount_ = unreadChatCount;
+        lastUnreadAnyNotifCount_ = unreadAnyCount;
+        if (unreadAnyCount == 0)
+            stopTaskbarFlash(this);
         if (count > 0) {
             notifBadge_->setText(count > 99 ? "99+" : QString::number(count));
             notifBadge_->show();

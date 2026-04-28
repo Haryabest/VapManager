@@ -38,4 +38,7 @@
         <file>qml/style/qmldir</file>
         <file>qml/style/Theme.qml</file>
     </qresource>
+    <qresource prefix="/sounds">
+        <file>assets/sounds/sound-messages-odnoklassniki.mp3</file>
+    </qresource>
 </RCC>

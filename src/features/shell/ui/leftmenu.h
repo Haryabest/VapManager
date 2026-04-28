@@ -246,6 +246,8 @@ private:
     QLineEdit *searchEdit_ = nullptr;
     QLabel *notifBadge_ = nullptr;
     QHash<QString, QPixmap> avatarCache_;
+    int lastUnreadChatNotifCount_ = -1;
+    int lastUnreadAnyNotifCount_ = -1;
 
     QComboBox *logFilterUser_ = nullptr;
     QComboBox *logFilterSource_ = nullptr;

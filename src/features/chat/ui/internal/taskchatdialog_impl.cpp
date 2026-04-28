@@ -829,6 +829,10 @@ void TaskChatWidget::setThreadId(int id, const QString &peerHint)
     if (!peerHint.trimmed().isEmpty())
         peerHint_ = peerHint.trimmed();
     forceScrollToBottom_ = true;
+    if (id > 0) {
+        clearChatNotificationsForThread(currentUser_, id);
+        DataBus::instance().triggerNotificationsChanged();
+    }
     if (threadId_ == id) {
         refreshMessages(false);
         return;

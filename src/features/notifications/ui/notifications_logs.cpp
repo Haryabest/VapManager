@@ -1,9 +1,87 @@
 #include "notifications_logs.h"
+#include <QApplication>
+#include <QDir>
+#include <QFile>
+#include <QStandardPaths>
+#include <QStringList>
 #include <QRegularExpression>
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QDebug>
+#ifdef Q_OS_WIN
+#include <windows.h>
+#include <mmsystem.h>
+#pragma comment(lib, "Winmm.lib")
+#endif
+namespace {
+QString firstExistingSoundPath()
+{
+    const QStringList candidates = {
+        QStringLiteral("C:/Users/Dima/Desktop/sound-messages-odnoklassniki.mp3"),
+        QStringLiteral("C:/VapManager/assets/sounds/sound-messages-odnoklassniki.mp3")
+    };
+    for (const QString &p : candidates) {
+        if (QFile::exists(p))
+            return QDir::toNativeSeparators(p);
+    }
+    return QString();
+}
+
+QString ensureNotificationSoundPath()
+{
+    const QString src = QStringLiteral(":/sounds/sound-messages-odnoklassniki.mp3");
+    const QString base = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    if (base.trimmed().isEmpty())
+        return QString();
+
+    QDir dir(base);
+    if (!dir.mkpath(QStringLiteral("sounds")))
+        return QString();
+    const QString dst = dir.filePath(QStringLiteral("sounds/sound-messages-odnoklassniki.mp3"));
+
+    QFile srcFile(src);
+    if (!srcFile.exists())
+        return QString();
+    if (!srcFile.open(QIODevice::ReadOnly))
+        return QString();
+    const QByteArray bytes = srcFile.readAll();
+    srcFile.close();
+    if (bytes.isEmpty())
+        return QString();
+
+    QFile dstFile(dst);
+    bool rewrite = true;
+    if (dstFile.exists() && dstFile.open(QIODevice::ReadOnly)) {
+        rewrite = (dstFile.readAll() != bytes);
+        dstFile.close();
+    }
+    if (rewrite) {
+        QFile::remove(dst);
+        if (!dstFile.open(QIODevice::WriteOnly))
+            return QString();
+        if (dstFile.write(bytes) != bytes.size()) {
+            dstFile.close();
+            return QString();
+        }
+        dstFile.close();
+    }
+    return QDir::toNativeSeparators(dst);
+}
+
+#ifdef Q_OS_WIN
+QString mciErrorText(MCIERROR code)
+{
+    if (code == 0)
+        return QString();
+    wchar_t buf[256] = {0};
+    if (::mciGetErrorStringW(code, buf, 255))
+        return QString::fromWCharArray(buf);
+    return QStringLiteral("MCI error code %1").arg(static_cast<unsigned int>(code));
+}
+#endif
+}
+
 
 bool initNotificationsTable()
 {
@@ -162,6 +240,69 @@ void addNotificationForUser(const QString &targetUser,
         qDebug() << "addNotificationForUser failed:" << q.lastError().text();
         qDebug() << "  target_user=" << user << "title=" << title.left(50);
     }
+}
+
+void playNotificationSound()
+{
+#ifdef Q_OS_WIN
+    QString soundPath = firstExistingSoundPath();
+    if (soundPath.isEmpty())
+        soundPath = ensureNotificationSoundPath();
+    if (!soundPath.isEmpty()) {
+        static QString openedPath;
+        static bool openedOk = false;
+
+        // (Re)open if needed.
+        if (!openedOk || openedPath != soundPath) {
+            mciSendStringW(L"close agv_notify_sound", nullptr, 0, nullptr);
+            const QString openCmdAuto = QStringLiteral("open \"%1\" alias agv_notify_sound").arg(soundPath);
+            MCIERROR err = mciSendStringW(reinterpret_cast<LPCWSTR>(openCmdAuto.utf16()), nullptr, 0, nullptr);
+            if (err != 0) {
+                const QString openCmdMpeg = QStringLiteral("open \"%1\" type mpegvideo alias agv_notify_sound").arg(soundPath);
+                err = mciSendStringW(reinterpret_cast<LPCWSTR>(openCmdMpeg.utf16()), nullptr, 0, nullptr);
+            }
+            if (err != 0) {
+                openedOk = false;
+                qDebug() << "Notification sound open failed:" << mciErrorText(err) << "path=" << soundPath;
+            } else {
+                openedOk = true;
+                openedPath = soundPath;
+                // Try to raise volume (0..1000 for MCI).
+                mciSendStringW(L"setaudio agv_notify_sound volume to 1000", nullptr, 0, nullptr);
+            }
+        }
+
+        if (openedOk) {
+            mciSendStringW(L"stop agv_notify_sound", nullptr, 0, nullptr);
+            mciSendStringW(L"seek agv_notify_sound to start", nullptr, 0, nullptr);
+            const MCIERROR playErr = mciSendStringW(L"play agv_notify_sound from 0", nullptr, 0, nullptr);
+            if (playErr == 0)
+                return;
+            qDebug() << "Notification sound play failed:" << mciErrorText(playErr);
+        }
+    }
+
+    // Non-standard fallback tone if MP3 isn't available.
+    Beep(1046, 90);
+    Beep(1396, 130);
+    return;
+#endif
+    QApplication::beep();
+}
+
+void clearChatNotificationsForThread(const QString &username, int threadId)
+{
+    QString u = username.trimmed();
+    if (u.isEmpty() || threadId <= 0) return;
+
+    QSqlDatabase db = QSqlDatabase::database("main_connection");
+    if (!db.isOpen()) return;
+
+    QSqlQuery q(db);
+    q.prepare("UPDATE notifications SET is_read = 1 WHERE target_user = :u AND message LIKE :pattern");
+    q.bindValue(":u", u);
+    q.bindValue(":pattern", QString("[chat:%1]%%").arg(threadId));
+    q.exec();
 }
 
 QString notificationMessageForDisplay(const QString &storedMessage)

@@ -30,6 +30,7 @@
 #include <QComboBox>
 #include <QScrollArea>
 #include <QPair>
+#include <QString>
 #include <memory>
 
 #include "db_models.h"   // ModelInfo, loadModelList(), insertModelToDb(), deleteModelByName()
@@ -175,6 +176,7 @@ signals:
 
 protected:
     void resizeEvent(QResizeEvent *event) override;
+    void showEvent(QShowEvent *event) override;
 
 private slots:
     void openAddModelDialog();
@@ -191,6 +193,7 @@ private:
     void clearList();
     void addModel(const ModelInfo &m);
     void rebuildModelsVisible();
+    void refreshModelsIfChanged();
 
     void showListMode();
     void showTemplateMode(const ModelInfo &model);
@@ -215,6 +218,8 @@ private:
 
     QVector<ModelInfo> modelsAll_;
     int modelsShownCount_ = 0;
+    QString modelsFingerprint_;
+    QTimer *modelsRefreshTimer_ = nullptr;
     static constexpr int kModelsPageBatch = 50;
 
     // Кнопка "Добавить модель"

@@ -28,7 +28,6 @@ SOURCES += \
     src/features/agv/ui/internal/listagvinfo_render.cpp \
     src/features/agv/ui/internal/listagvinfo_constructor.cpp \
     src/features/agv/ui/internal/listagvinfo_constructor_impl.cpp \
-    src/features/agv/ui/internal/addagvdialog_impl.cpp \
     src/features/agv/ui/internal/agvsettings/agvsettingspage_constructor.cpp \
     src/features/agv/ui/internal/agvsettings/agvsettingspage_ui.cpp \
     src/features/agv/ui/internal/agvsettings/agvsettingspage_agv_edit.cpp \

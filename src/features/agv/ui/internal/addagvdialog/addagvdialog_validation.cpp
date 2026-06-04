@@ -1,16 +1,16 @@
 #include "addagvdialog.h"
 
 #include <QEvent>
+#include <QLabel>
+#include <QLineEdit>
 #include <QPushButton>
 
 void AddAgvDialog::validateAll()
 {
-    bool ok =
-        validateName() &
-        validateSerial() &
-        validateAlias();
-
-    addBtn->setEnabled(ok);
+    const bool okName = validateName();
+    const bool okSerial = validateSerial();
+    const bool okAlias = validateAlias();
+    addBtn->setEnabled(okName && okSerial && okAlias);
 }
 
 bool AddAgvDialog::validateName()

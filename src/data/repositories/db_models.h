@@ -23,7 +23,7 @@ QStringList loadModelNames();
 QVector<ModelInfo> loadModelList();
 
 // Write
-bool insertModelToDb(const ModelInfo &m);
+bool insertModelToDb(const ModelInfo &m, QString *outError = nullptr);
 bool deleteModelByName(const QString &name);
 
 #endif

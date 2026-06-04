@@ -5,6 +5,37 @@
 // C++11: constexpr static member needs one out-of-line definition for the linker.
 constexpr int ModelListPage::kModelsPageBatch;
 
+namespace {
+
+QString modelListFingerprint(const QVector<ModelInfo> &models)
+{
+    QString fp;
+    fp.reserve(models.size() * 96);
+    for (const ModelInfo &m : models) {
+        fp += m.name;
+        fp += QLatin1Char('\x1f');
+        fp += m.versionPo;
+        fp += QLatin1Char('\x1f');
+        fp += m.versionEplan;
+        fp += QLatin1Char('\x1f');
+        fp += m.category;
+        fp += QLatin1Char('\x1f');
+        fp += QString::number(m.capacityKg);
+        fp += QLatin1Char('\x1f');
+        fp += QString::number(m.maxSpeed);
+        fp += QLatin1Char('\x1f');
+        fp += m.dimensions;
+        fp += QLatin1Char('\x1f');
+        fp += QString::number(m.couplingCount);
+        fp += QLatin1Char('\x1f');
+        fp += m.direction;
+        fp += QLatin1Char('\x1e');
+    }
+    return fp;
+}
+
+}
+
 // ====================== TaskRow ======================
 // ====================== TaskRow (адаптивный) ======================
 
@@ -1640,6 +1671,11 @@ ModelListPage::ModelListPage(std::function<int(int)> scale, QWidget *parent)
         rebuildModelsVisible();
     });
 
+    modelsRefreshTimer_ = new QTimer(this);
+    modelsRefreshTimer_->setInterval(5000);
+    connect(modelsRefreshTimer_, &QTimer::timeout, this, &ModelListPage::refreshModelsIfChanged);
+    modelsRefreshTimer_->start();
+
     reloadFromDatabase();
 }
 
@@ -1651,6 +1687,12 @@ void ModelListPage::resizeEvent(QResizeEvent *event)
         int y = height() - addBtn_->height() - s_(20);
         addBtn_->move(x, y);
     }
+}
+
+void ModelListPage::showEvent(QShowEvent *event)
+{
+    QFrame::showEvent(event);
+    refreshModelsIfChanged();
 }
 
 void ModelListPage::clearList()
@@ -1791,7 +1833,25 @@ void ModelListPage::reloadFromDatabase()
     }
 
     modelsAll_ = loadModelList();
+    modelsFingerprint_ = modelListFingerprint(modelsAll_);
     modelsShownCount_ = qMin(kModelsPageBatch, modelsAll_.size());
+    rebuildModelsVisible();
+}
+
+void ModelListPage::refreshModelsIfChanged()
+{
+    if (mode_ != Mode_List || !isVisible())
+        return;
+
+    QVector<ModelInfo> latest = loadModelList();
+    const QString latestFingerprint = modelListFingerprint(latest);
+    if (latestFingerprint == modelsFingerprint_)
+        return;
+
+    const int previousShown = modelsShownCount_ > 0 ? modelsShownCount_ : kModelsPageBatch;
+    modelsAll_ = latest;
+    modelsFingerprint_ = latestFingerprint;
+    modelsShownCount_ = qMin(qMax(previousShown, kModelsPageBatch), modelsAll_.size());
     rebuildModelsVisible();
 }
 
@@ -1816,11 +1876,18 @@ void ModelListPage::showTemplateMode(const ModelInfo &model)
 
     connect(templatePage_, &TemplatePageWidget::saveRequested,
             this, [this](const ModelInfo &model, const QVector<MaintenanceTask> &tasks){
-                insertModelToDb(model);
+                QString insertError;
+                if (!insertModelToDb(model, &insertError)) {
+                    QMessageBox::warning(this,
+                                         "Модель AGV",
+                                         "Не удалось добавить модель: " + insertError);
+                    return;
+                }
 
                 QSqlDatabase db = QSqlDatabase::database("main_connection");
                 if (!db.isOpen()) {
-                    qDebug() << "TemplatePageWidget: main_connection НЕ ОТКРЫТА!";
+                    QMessageBox::warning(this, "Модель AGV", "База данных не открыта.");
+                    return;
                 } else {
                     for (const auto &t : tasks) {
                         QSqlQuery q(db);
@@ -1901,12 +1968,18 @@ void ModelListPage::openAddModelDialog()
         q.exec();
         q.next();
         if (q.value(0).toInt() > 0) {
-            qDebug() << "Модель уже существует";
+            QMessageBox::warning(this, "Модель AGV", "Модель с таким названием уже существует.");
             return;
         }
     }
 
-    insertModelToDb(res.model);
+    QString insertError;
+    if (!insertModelToDb(res.model, &insertError)) {
+        QMessageBox::warning(this,
+                             "Модель AGV",
+                             "Не удалось добавить модель: " + insertError);
+        return;
+    }
     reloadFromDatabase();
 }
 

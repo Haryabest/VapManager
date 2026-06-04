@@ -119,6 +119,8 @@ void AgvSettingsPage::closeForm()
         undoDeleteBtn->hide();
     if (historyTasksBtn)
         historyTasksBtn->show();
+    if (historyErrorsBtn)
+        historyErrorsBtn->show();
 }
 
 void AgvSettingsPage::openAddTaskForm()
@@ -130,6 +132,8 @@ void AgvSettingsPage::openAddTaskForm()
     undoDeleteBtn->hide();
     if (historyTasksBtn)
         historyTasksBtn->hide();
+    if (historyErrorsBtn)
+        historyErrorsBtn->hide();
 
     QFrame *form = new QFrame(this);
     form->setStyleSheet("background:white;border-radius:10px;");
@@ -436,6 +440,8 @@ void AgvSettingsPage::openEditTaskForm(const QString &taskId, const AgvTask &tas
     undoDeleteBtn->hide();
     if (historyTasksBtn)
         historyTasksBtn->hide();
+    if (historyErrorsBtn)
+        historyErrorsBtn->hide();
 
     QFrame *form = new QFrame(this);
     form->setStyleSheet("background:white;border-radius:10px;");

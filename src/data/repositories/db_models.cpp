@@ -101,10 +101,15 @@ QVector<ModelInfo> loadModelList()
 // ===============================
 // Добавление модели
 // ===============================
-bool insertModelToDb(const ModelInfo &m)
+bool insertModelToDb(const ModelInfo &m, QString *outError)
 {
+    if (outError)
+        outError->clear();
+
     QSqlDatabase db = openMainDb();
     if (!ensureDbOpen(db, "insertModelToDb:")) {
+        if (outError)
+            *outError = QStringLiteral("База данных не открыта.");
         return false;
     }
 
@@ -124,7 +129,10 @@ bool insertModelToDb(const ModelInfo &m)
     q.bindValue(":dir", m.direction);
 
     if (!q.exec()) {
-        qDebug() << "insertModelToDb error:" << q.lastError().text();
+        const QString err = q.lastError().text();
+        qDebug() << "insertModelToDb error:" << err;
+        if (outError)
+            *outError = err;
         return false;
     }
     db.commit();

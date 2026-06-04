@@ -481,17 +481,25 @@ AgvSettingsPage::AgvSettingsPage(std::function<int(int)> scale, QWidget *parent)
 
     connect(editModeBtn, &QPushButton::clicked, this, &AgvSettingsPage::toggleEditMode);
 
-    historyTasksBtn = new QPushButton("История задач", this);
-    historyTasksBtn->setFixedSize(s(190), s(40));
-    historyTasksBtn->setStyleSheet(QString(
+    const QString historyBtnStyle = QString(
         "QPushButton { background:#E6E6E6; border-radius:%1px; font-family:Inter; font-size:%2px; font-weight:800; color:black; }"
         "QPushButton:hover { background:#D5D5D5; }"
-    ).arg(s(8)).arg(s(14)));
+    ).arg(s(8)).arg(s(14));
+
+    historyErrorsBtn = new QPushButton("История ошибок", this);
+    historyErrorsBtn->setFixedSize(s(190), s(40));
+    historyErrorsBtn->setStyleSheet(historyBtnStyle);
+    connect(historyErrorsBtn, &QPushButton::clicked, this, &AgvSettingsPage::openErrorHistoryDialog);
+
+    historyTasksBtn = new QPushButton("История задач", this);
+    historyTasksBtn->setFixedSize(s(190), s(40));
+    historyTasksBtn->setStyleSheet(historyBtnStyle);
     connect(historyTasksBtn, &QPushButton::clicked, this, &AgvSettingsPage::openTaskHistoryDialog);
 
     bottomBar->addWidget(addTaskBtn, 0, Qt::AlignLeft);
     bottomBar->addWidget(writeTaskBtn, 0, Qt::AlignLeft);
     bottomBar->addStretch();
+    bottomBar->addWidget(historyErrorsBtn, 0, Qt::AlignRight);
     bottomBar->addWidget(historyTasksBtn, 0, Qt::AlignRight);
     bottomBar->addWidget(undoDeleteBtn, 0, Qt::AlignRight);
     bottomBar->addWidget(deleteSelectedBtn, 0, Qt::AlignRight);

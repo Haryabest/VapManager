@@ -97,6 +97,7 @@ private:
     QPushButton *deleteSelectedBtn = nullptr;
     QPushButton *undoDeleteBtn = nullptr;
     QPushButton *historyTasksBtn = nullptr;
+    QPushButton *historyErrorsBtn = nullptr;
 
     bool editMode = false;
 
@@ -133,6 +134,7 @@ private:
     bool ensureTaskHistoryTable() const;
     bool completeTaskNow(const QString &taskId, const AgvTask &task);
     void openTaskHistoryDialog();
+    void openErrorHistoryDialog();
 
     // ===== Undo удаления =====
     void startUndoTimer();

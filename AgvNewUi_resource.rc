@@ -1,6 +1,6 @@
 #include <windows.h>
 
-IDI_ICON1	ICON	DISCARDABLE	"C:\\AgvNewUi\\noback\\agvIcon.ico"
+IDI_ICON1	ICON	DISCARDABLE	"C:\\Users\\Dima\\Desktop\\AGV_NewUI\\VapManager\\noback\\agvIcon.ico"
 
 VS_VERSION_INFO VERSIONINFO
 	FILEVERSION 0,0,0,0
@@ -23,8 +23,8 @@ VS_VERSION_INFO VERSIONINFO
 				VALUE "FileDescription", "\0"
 				VALUE "FileVersion", "0.0.0.0\0"
 				VALUE "LegalCopyright", "\0"
-				VALUE "OriginalFilename", "AgvNewUi.exe\0"
-				VALUE "ProductName", "AgvNewUi\0"
+				VALUE "OriginalFilename", "VapManager.exe\0"
+				VALUE "ProductName", "VapManager\0"
 				VALUE "ProductVersion", "0.0.0.0\0"
 			END
 		END

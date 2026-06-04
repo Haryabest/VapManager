@@ -1,19 +1,21 @@
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
 
-echo === AGV New UI: Qt + MySQL runtime deploy ===
+echo === VapManager: Qt + MySQL runtime deploy ===
 echo.
 
 set "EXE_PATH=%~1"
 if "%EXE_PATH%"=="" (
+  if exist "%~dp0debug\VapManager.exe" set "EXE_PATH=%~dp0debug\VapManager.exe"
+  if exist "%~dp0release\VapManager.exe" set "EXE_PATH=%~dp0release\VapManager.exe"
   if exist "%~dp0debug\AgvNewUi.exe" set "EXE_PATH=%~dp0debug\AgvNewUi.exe"
   if exist "%~dp0release\AgvNewUi.exe" set "EXE_PATH=%~dp0release\AgvNewUi.exe"
 )
 
 if "%EXE_PATH%"=="" (
-  echo Usage: deploy_runtime.bat "path\to\AgvNewUi.exe"
+  echo Usage: deploy_runtime.bat "path\to\VapManager.exe"
   echo Example:
-  echo   deploy_runtime.bat "C:\Users\Dima\Desktop\agv admin backup\build-AgvNewUi-Desktop_Qt_5_14_2_MinGW_64_bit-Debug\debug\AgvNewUi.exe"
+  echo   deploy_runtime.bat "path\to\debug\VapManager.exe"
   exit /b 1
 )
 
@@ -94,7 +96,7 @@ if not exist "%EXE_DIR%config.ini" (
 
 echo.
 if exist "%EXE_DIR%sqldrivers\qsqlmysql.dll" if exist "%EXE_DIR%libmysql.dll" (
-  echo Deploy complete. Run AgvNewUi.exe from:
+  echo Deploy complete. Run VapManager.exe from:
   echo   %EXE_DIR%
 ) else (
   echo Deploy finished with missing files — see messages above.

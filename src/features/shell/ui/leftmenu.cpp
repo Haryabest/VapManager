@@ -5309,7 +5309,7 @@ void leftMenu::buildProfilePage()
         savedExtPhone   = dbProfile.extPhone;
         savedTelegram   = dbProfile.telegram;
     } else {
-        QSettings settings("AgvNewUi", "AgvNewUi");
+        QSettings settings("VapManager", "VapManager");
     settings.beginGroup(QString("profiles/%1").arg(userKey));
         savedFio        = settings.value("fio").toString();
         savedEmployeeId = settings.value("employee_id").toString();
@@ -5716,7 +5716,7 @@ void leftMenu::buildProfilePage()
             telegram = out;
         }
 
-        QSettings s("AgvNewUi", "AgvNewUi");
+        QSettings s("VapManager", "VapManager");
         s.beginGroup(QString("profiles/%1").arg(userKey));
         s.setValue("fio",          fioEdit->text().trimmed());
         s.setValue("employee_id",  employeeIdEdit->text().trimmed());
@@ -6934,7 +6934,7 @@ bool saveUserAvatarToDb(const QString &username, const QPixmap &pm)
                 }
 
                 auto isMutedPeer = [&](const QString &peer) -> bool {
-                    QSettings s("AgvNewUi", "AgvNewUi");
+                    QSettings s("VapManager", "VapManager");
                     return s.value(QString("chat/mute/%1/%2").arg(currentUser.trimmed(), peer.trimmed()), false).toBool();
                 };
 
@@ -7019,7 +7019,7 @@ bool saveUserAvatarToDb(const QString &username, const QPixmap &pm)
             return m.hasMatch() ? m.captured(1).toInt() : 0;
         };
         auto isMutedPeer = [&](const QString &peer) -> bool {
-            QSettings s("AgvNewUi", "AgvNewUi");
+            QSettings s("VapManager", "VapManager");
             return s.value(QString("chat/mute/%1/%2").arg(currentUser.trimmed(), peer.trimmed()), false).toBool();
         };
         QVector<int> chatIds;

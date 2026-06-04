@@ -27,7 +27,7 @@ QString SnMaskedEdit::digits() const
 
 void SnMaskedEdit::focusOutEvent(QFocusEvent *e)
 {
-    cursorIndex = -1;
+    caretIndex = -1;
     update();
     QLineEdit::focusOutEvent(e);
 }
@@ -62,13 +62,13 @@ void SnMaskedEdit::paintEvent(QPaintEvent *e)
         x += fm.horizontalAdvance("_");
     }
 
-    if (cursorIndex < 0)
+    if (caretIndex < 0)
         return;
 
-    int cursorX = 8 + fm.horizontalAdvance("SN-") + fm.horizontalAdvance("_") * cursorIndex;
+    int caretX = 8 + fm.horizontalAdvance("SN-") + fm.horizontalAdvance("_") * caretIndex;
 
     p.setPen(QColor("#0F00DB"));
-    p.drawLine(cursorX, y + 2, cursorX, y - fm.height());
+    p.drawLine(caretX, y + 2, caretX, y - fm.height());
 
     const_cast<SnMaskedEdit*>(this)->setCursorPosition(0);
 }
@@ -78,13 +78,13 @@ void SnMaskedEdit::mousePressEvent(QMouseEvent *e)
     Q_UNUSED(e);
 
     for (int i = 0; i < 10; i++)
-        if (buf[i] == '_') { cursorIndex = i; updateCursor(); return; }
+        if (buf[i] == '_') { caretIndex = i; updateCaret(); return; }
 
-    cursorIndex = 10;
-    updateCursor();
+    caretIndex = 10;
+    updateCaret();
 }
 
-void SnMaskedEdit::updateCursor()
+void SnMaskedEdit::updateCaret()
 {
     setCursorPosition(0);
     update();
@@ -93,14 +93,14 @@ void SnMaskedEdit::updateCursor()
 void SnMaskedEdit::keyPressEvent(QKeyEvent *e)
 {
     if (e->key() == Qt::Key_Left) {
-        if (cursorIndex > 0) cursorIndex--;
-        updateCursor();
+        if (caretIndex > 0) caretIndex--;
+        updateCaret();
         return;
     }
 
     if (e->key() == Qt::Key_Right) {
-        if (cursorIndex < 10) cursorIndex++;
-        updateCursor();
+        if (caretIndex < 10) caretIndex++;
+        updateCaret();
         return;
     }
 
@@ -110,20 +110,20 @@ void SnMaskedEdit::keyPressEvent(QKeyEvent *e)
     }
 
     if (e->key() == Qt::Key_Backspace) {
-        if (cursorIndex > 0) {
-            cursorIndex--;
-            buf[cursorIndex] = '_';
+        if (caretIndex > 0) {
+            caretIndex--;
+            buf[caretIndex] = '_';
             emit contentChanged();
-            updateCursor();
+            updateCaret();
         }
         return;
     }
 
     if (e->key() == Qt::Key_Delete) {
-        if (cursorIndex < 10) {
-            buf[cursorIndex] = '_';
+        if (caretIndex < 10) {
+            buf[caretIndex] = '_';
             emit contentChanged();
-            updateCursor();
+            updateCaret();
         }
         return;
     }
@@ -134,11 +134,11 @@ void SnMaskedEdit::keyPressEvent(QKeyEvent *e)
 
     QChar c = t[0];
 
-    if (c.isDigit() && cursorIndex < 10) {
-        buf[cursorIndex] = c;
-        cursorIndex++;
+    if (c.isDigit() && caretIndex < 10) {
+        buf[caretIndex] = c;
+        caretIndex++;
         emit contentChanged();
-        updateCursor();
+        updateCaret();
         return;
     }
 }

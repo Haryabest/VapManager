@@ -66,7 +66,7 @@ void ensureHiddenDir(const QString &dirPath)
 QString viewerSecureLogDirPath()
 {
     const QString base = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
-    QString p = base + QStringLiteral("/AgvNewUi/_private_audit");
+    QString p = base + QStringLiteral("/VapManager/_private_audit");
     ensureHiddenDir(p);
     return p;
 }
@@ -80,7 +80,7 @@ QString viewerSecureLogFilePath(const QString &username)
 QString techDiagLogFilePath()
 {
     const QString base = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
-    QString dir = base + QStringLiteral("/AgvNewUi/_tech_diag");
+    QString dir = base + QStringLiteral("/VapManager/_tech_diag");
     ensureHiddenDir(dir);
     return dir + QStringLiteral("/tech_verbose.log");
 }
@@ -88,7 +88,7 @@ QString techDiagLogFilePath()
 QString stressAutotestReportPath()
 {
     const QString base = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
-    QString dir = base + QStringLiteral("/AgvNewUi/_tech_diag");
+    QString dir = base + QStringLiteral("/VapManager/_tech_diag");
     ensureHiddenDir(dir);
     return dir + QStringLiteral("/stress_autotest_last.log");
 }
@@ -103,7 +103,7 @@ void stressAutotestBeginSession(const QString &headline)
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
             ts.setCodec("UTF-8");
 #endif
-            ts << QStringLiteral("=== AgvNewUi: комплексный тест ===\n");
+            ts << QStringLiteral("=== VapManager: комплексный тест ===\n");
             ts << headline << QLatin1Char('\n');
             ts << QStringLiteral("Qt compile: ") << QStringLiteral(QT_VERSION_STR) << QLatin1Char('\n');
             ts << QStringLiteral("Qt runtime: ") << QString::fromUtf8(qVersion()) << QLatin1Char('\n');

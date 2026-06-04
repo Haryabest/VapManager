@@ -1,0 +1,32 @@
+# Qt Creator / сборка
+*.pro.user
+*.pro.user.*
+Makefile*
+object_script.*
+.qmake.stash
+debug/
+release/
+*.o
+*.obj
+moc_*.cpp
+ui_*.h
+qrc_*.cpp
+
+# Cursor IDE
+.cursor/
+
+# Portable runtime (собирается pack_vapmanager.bat)
+dist/VapManager/*.dll
+dist/VapManager/platforms/
+dist/VapManager/sqldrivers/
+dist/VapManager/imageformats/
+dist/VapManager/styles/
+dist/VapManager/iconengines/
+dist/VapManager/printsupport/
+dist/VapManager/translations/
+
+# Логи и временные файлы
+*.log
+*.autosave
+tech_verbose.log
+stress_autotest_last.log

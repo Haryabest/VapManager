@@ -40,7 +40,7 @@ QString AgvMaskedEdit::letters() const
 
 void AgvMaskedEdit::focusOutEvent(QFocusEvent *e)
 {
-    cursorIndex = -1;
+    caretIndex = -1;
     update();
     QLineEdit::focusOutEvent(e);
 }
@@ -85,17 +85,17 @@ void AgvMaskedEdit::paintEvent(QPaintEvent *e)
         x += fm.horizontalAdvance("_");
     }
 
-    if (cursorIndex < 0)
+    if (caretIndex < 0)
         return;
 
-    int cursorX;
-    if (cursorIndex < 4)
-        cursorX = 8 + fm.horizontalAdvance("AGV-") + fm.horizontalAdvance("_") * cursorIndex;
+    int caretX;
+    if (caretIndex < 4)
+        caretX = 8 + fm.horizontalAdvance("AGV-") + fm.horizontalAdvance("_") * caretIndex;
     else
-        cursorX = 8 + fm.horizontalAdvance("AGV-____-") + fm.horizontalAdvance("_") * (cursorIndex - 4);
+        caretX = 8 + fm.horizontalAdvance("AGV-____-") + fm.horizontalAdvance("_") * (caretIndex - 4);
 
     p.setPen(QColor("#0F00DB"));
-    p.drawLine(cursorX, y + 2, cursorX, y - fm.height());
+    p.drawLine(caretX, y + 2, caretX, y - fm.height());
 
     const_cast<AgvMaskedEdit*>(this)->setCursorPosition(0);
 }
@@ -105,30 +105,30 @@ void AgvMaskedEdit::mousePressEvent(QMouseEvent *e)
     Q_UNUSED(e);
 
     for (int i = 0; i < 4; i++)
-        if (digitBuf[i] == '_') { cursorIndex = i; updateCursor(); return; }
+        if (digitBuf[i] == '_') { caretIndex = i; updateCaret(); return; }
 
     for (int i = 0; i < 10; i++)
-        if (letterBuf[i] == '_') { cursorIndex = 4 + i; updateCursor(); return; }
+        if (letterBuf[i] == '_') { caretIndex = 4 + i; updateCaret(); return; }
 
-    cursorIndex = 14;
-    updateCursor();
+    caretIndex = 14;
+    updateCaret();
 }
 
-void AgvMaskedEdit::moveCursorLeft()
+void AgvMaskedEdit::moveCaretLeft()
 {
-    if (cursorIndex > 0)
-        cursorIndex--;
-    updateCursor();
+    if (caretIndex > 0)
+        caretIndex--;
+    updateCaret();
 }
 
-void AgvMaskedEdit::moveCursorRight()
+void AgvMaskedEdit::moveCaretRight()
 {
-    if (cursorIndex < 14)
-        cursorIndex++;
-    updateCursor();
+    if (caretIndex < 14)
+        caretIndex++;
+    updateCaret();
 }
 
-void AgvMaskedEdit::updateCursor()
+void AgvMaskedEdit::updateCaret()
 {
     setCursorPosition(0);
     update();
@@ -136,33 +136,33 @@ void AgvMaskedEdit::updateCursor()
 
 void AgvMaskedEdit::keyPressEvent(QKeyEvent *e)
 {
-    if (e->key() == Qt::Key_Left)  { moveCursorLeft();  return; }
-    if (e->key() == Qt::Key_Right) { moveCursorRight(); return; }
+    if (e->key() == Qt::Key_Left)  { moveCaretLeft();  return; }
+    if (e->key() == Qt::Key_Right) { moveCaretRight(); return; }
     if (e->key() == Qt::Key_Tab)   { focusNextChild();  return; }
 
     if (e->key() == Qt::Key_Backspace) {
-        if (cursorIndex > 0) {
-            cursorIndex--;
-            if (cursorIndex < 4)
-                digitBuf[cursorIndex] = '_';
+        if (caretIndex > 0) {
+            caretIndex--;
+            if (caretIndex < 4)
+                digitBuf[caretIndex] = '_';
             else
-                letterBuf[cursorIndex - 4] = '_';
+                letterBuf[caretIndex - 4] = '_';
 
             emit contentChanged();
-            updateCursor();
+            updateCaret();
         }
         return;
     }
 
     if (e->key() == Qt::Key_Delete) {
-        if (cursorIndex < 14) {
-            if (cursorIndex < 4)
-                digitBuf[cursorIndex] = '_';
+        if (caretIndex < 14) {
+            if (caretIndex < 4)
+                digitBuf[caretIndex] = '_';
             else
-                letterBuf[cursorIndex - 4] = '_';
+                letterBuf[caretIndex - 4] = '_';
 
             emit contentChanged();
-            updateCursor();
+            updateCaret();
         }
         return;
     }
@@ -173,22 +173,22 @@ void AgvMaskedEdit::keyPressEvent(QKeyEvent *e)
 
     QChar c = t[0];
 
-    if (cursorIndex < 4 && c.isDigit()) {
-        digitBuf[cursorIndex] = c;
-        cursorIndex++;
+    if (caretIndex < 4 && c.isDigit()) {
+        digitBuf[caretIndex] = c;
+        caretIndex++;
         emit contentChanged();
-        updateCursor();
+        updateCaret();
         return;
     }
 
-    if (cursorIndex >= 4 && cursorIndex < 14 &&
+    if (caretIndex >= 4 && caretIndex < 14 &&
         c.isLetter() &&
         ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')))
     {
-        letterBuf[cursorIndex - 4] = c;
-        cursorIndex++;
+        letterBuf[caretIndex - 4] = c;
+        caretIndex++;
         emit contentChanged();
-        updateCursor();
+        updateCaret();
         return;
     }
 }

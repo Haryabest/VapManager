@@ -79,14 +79,14 @@ static QString muteKey(const QString &currentUser, const QString &peerUser)
 static bool isMuted(const QString &currentUser, const QString &peerUser)
 {
     if (currentUser.trimmed().isEmpty() || peerUser.trimmed().isEmpty()) return false;
-    QSettings s("AgvNewUi", "AgvNewUi");
+    QSettings s("VapManager", "VapManager");
     return s.value(muteKey(currentUser, peerUser), false).toBool();
 }
 
 static void setMuted(const QString &currentUser, const QString &peerUser, bool muted)
 {
     if (currentUser.trimmed().isEmpty() || peerUser.trimmed().isEmpty()) return;
-    QSettings s("AgvNewUi", "AgvNewUi");
+    QSettings s("VapManager", "VapManager");
     s.setValue(muteKey(currentUser, peerUser), muted);
 }
 
@@ -1156,12 +1156,12 @@ void TaskChatWidget::setupUi()
         });
     }
 
-    QFrame *composer = new QFrame(this);
-    composer->setStyleSheet("QFrame{background:#FFFFFF;border:none;border-radius:12px;}");
-    QVBoxLayout *composerL = new QVBoxLayout(composer);
-    composerL->setContentsMargins(8, 8, 8, 8);
-    composerL->setSpacing(6);
-    QWidget *attachRow = new QWidget(composer);
+    QFrame *messageInputPanel = new QFrame(this);
+    messageInputPanel->setStyleSheet("QFrame{background:#FFFFFF;border:none;border-radius:12px;}");
+    QVBoxLayout *inputLayout = new QVBoxLayout(messageInputPanel);
+    inputLayout->setContentsMargins(8, 8, 8, 8);
+    inputLayout->setSpacing(6);
+    QWidget *attachRow = new QWidget(messageInputPanel);
     QHBoxLayout *attachRowL = new QHBoxLayout(attachRow);
     attachRowL->setContentsMargins(0, 0, 0, 0);
     attachRowL->setSpacing(6);
@@ -1181,7 +1181,7 @@ void TaskChatWidget::setupUi()
     });
     attachRowL->addWidget(attachPreviewLbl_, 1);
     attachRowL->addWidget(attachClearBtn_, 0, Qt::AlignTop);
-    composerL->addWidget(attachRow);
+    inputLayout->addWidget(attachRow);
     QHBoxLayout *replyRow = new QHBoxLayout();
     replyRow->setContentsMargins(0, 0, 0, 0);
     replyRow->setSpacing(8);
@@ -1202,8 +1202,8 @@ void TaskChatWidget::setupUi()
     replyRow->addWidget(attachBtn_);
     replyRow->addWidget(replyEdit_, 1);
     replyRow->addWidget(sendBtn_);
-    composerL->addLayout(replyRow);
-    root->addWidget(composer);
+    inputLayout->addLayout(replyRow);
+    root->addWidget(messageInputPanel);
 
     refreshMessages();
     liveRefreshTimer_ = new QTimer(this);
@@ -2594,12 +2594,12 @@ void TaskChatDialog::setupViewUi()
     scrollArea_->setWidget(host);
     root->addWidget(scrollArea_, 1);
 
-    QFrame *composer = new QFrame(this);
-    composer->setStyleSheet("QFrame{background:#FFFFFF;border:none;border-radius:12px;}");
-    QVBoxLayout *composerL = new QVBoxLayout(composer);
-    composerL->setContentsMargins(8, 8, 8, 8);
-    composerL->setSpacing(6);
-    QWidget *attachRow = new QWidget(composer);
+    QFrame *messageInputPanel = new QFrame(this);
+    messageInputPanel->setStyleSheet("QFrame{background:#FFFFFF;border:none;border-radius:12px;}");
+    QVBoxLayout *inputLayout = new QVBoxLayout(messageInputPanel);
+    inputLayout->setContentsMargins(8, 8, 8, 8);
+    inputLayout->setSpacing(6);
+    QWidget *attachRow = new QWidget(messageInputPanel);
     QHBoxLayout *attachRowL = new QHBoxLayout(attachRow);
     attachRowL->setContentsMargins(0, 0, 0, 0);
     attachRowL->setSpacing(6);
@@ -2619,7 +2619,7 @@ void TaskChatDialog::setupViewUi()
     });
     attachRowL->addWidget(attachPreviewLbl_, 1);
     attachRowL->addWidget(attachClearBtn_, 0, Qt::AlignTop);
-    composerL->addWidget(attachRow);
+    inputLayout->addWidget(attachRow);
     QHBoxLayout *replyRow = new QHBoxLayout();
     replyRow->setContentsMargins(0, 0, 0, 0);
     replyRow->setSpacing(8);
@@ -2642,8 +2642,8 @@ void TaskChatDialog::setupViewUi()
     replyRow->addWidget(attachBtn_);
     replyRow->addWidget(replyEdit_, 1);
     replyRow->addWidget(sendBtn_);
-    composerL->addLayout(replyRow);
-    root->addWidget(composer);
+    inputLayout->addLayout(replyRow);
+    root->addWidget(messageInputPanel);
 
     if (isAdmin_) {
         deleteChatBtn_ = new QPushButton("Удалить чат", this);

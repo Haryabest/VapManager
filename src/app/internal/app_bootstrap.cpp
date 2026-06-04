@@ -69,11 +69,13 @@ bool installAppTranslator(QApplication &app, const QString &lang)
         return true;
 
     QTranslator *translator = new QTranslator(&app);
-    const QString qmFile = QString("AgvNewUi_%1.qm").arg(lang);
     const QStringList candidates = {
-        QCoreApplication::applicationDirPath() + "/" + qmFile,
-        QCoreApplication::applicationDirPath() + "/translations/" + qmFile,
-        ":/i18n/" + qmFile
+        QCoreApplication::applicationDirPath() + "/VapManager_" + lang + ".qm",
+        QCoreApplication::applicationDirPath() + "/translations/VapManager_" + lang + ".qm",
+        QCoreApplication::applicationDirPath() + "/AgvNewUi_" + lang + ".qm",
+        QCoreApplication::applicationDirPath() + "/translations/AgvNewUi_" + lang + ".qm",
+        ":/i18n/VapManager_" + lang + ".qm",
+        ":/i18n/AgvNewUi_" + lang + ".qm"
     };
 
     for (const QString &path : candidates) {
@@ -152,6 +154,9 @@ int run(int argc, char *argv[])
     QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
 #endif
     QApplication app(argc, argv);
+    app.setOrganizationName(QStringLiteral("VapManager"));
+    app.setApplicationName(QStringLiteral("VapManager"));
+    app.setApplicationDisplayName(QStringLiteral("VapManager"));
     app.setStyle(new NoFocusRectStyle(QApplication::style()->objectName()));
 
     qInstallMessageHandler(myMessageOutput);

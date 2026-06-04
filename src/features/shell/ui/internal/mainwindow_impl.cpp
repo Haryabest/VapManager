@@ -12,6 +12,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     setWindowIcon(QIcon(":/new/mainWindowIcons/noback/agvIcon.png"));
+    setWindowTitle(QStringLiteral("VapManager"));
     setMinimumSize(800, 600);
 
     // Создаём меню и сохраняем указатель

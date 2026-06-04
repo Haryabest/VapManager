@@ -1,15 +1,21 @@
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
 
-echo === AGV New UI deploy helper ===
+echo === VapManager deploy helper ===
 echo.
 
 set "EXE_PATH=%~1"
 if "%EXE_PATH%"=="" (
-  if exist "release\AgvNewUi.exe" (
+  if exist "release\VapManager.exe" (
+    set "EXE_PATH=release\VapManager.exe"
+  ) else if exist "debug\VapManager.exe" (
+    set "EXE_PATH=debug\VapManager.exe"
+  ) else if exist "release\AgvNewUi.exe" (
     set "EXE_PATH=release\AgvNewUi.exe"
   ) else if exist "debug\AgvNewUi.exe" (
     set "EXE_PATH=debug\AgvNewUi.exe"
+  ) else if exist "VapManager.exe" (
+    set "EXE_PATH=VapManager.exe"
   ) else if exist "AgvNewUi.exe" (
     set "EXE_PATH=AgvNewUi.exe"
   )
@@ -17,7 +23,7 @@ if "%EXE_PATH%"=="" (
 
 if "%EXE_PATH%"=="" (
   echo [ERROR] EXE not found.
-  echo Usage: deploy.bat "path\to\AgvNewUi.exe"
+  echo Usage: deploy.bat "path\to\VapManager.exe"
   exit /b 1
 )
 

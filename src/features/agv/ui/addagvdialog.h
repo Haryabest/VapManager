@@ -42,11 +42,11 @@ protected:
 private:
     QVector<QChar> digitBuf;   // 4 цифры
     QVector<QChar> letterBuf;  // 10 букв
-    int cursorIndex = 0;       // 0..14, -1 = скрыт
+    int caretIndex = 0;       // 0..14, -1 = скрыт
 
-    void moveCursorLeft();
-    void moveCursorRight();
-    void updateCursor();
+    void moveCaretLeft();
+    void moveCaretRight();
+    void updateCaret();
 };
 
 class SnMaskedEdit : public QLineEdit
@@ -68,9 +68,9 @@ protected:
 
 private:
     QVector<QChar> buf; // 10 цифр
-    int cursorIndex = 0;
+    int caretIndex = 0;
 
-    void updateCursor();
+    void updateCaret();
 };
 
 class AddAgvDialog : public QDialog

@@ -9,12 +9,14 @@ set "SRC_EXE="
 set "RUNTIME_SRC="
 
 if exist "%~2" set "SRC_EXE=%~2"
+if "%SRC_EXE%"=="" if exist "%~dp0release\VapManager.exe" set "SRC_EXE=%~dp0release\VapManager.exe"
+if "%SRC_EXE%"=="" if exist "C:\Users\Dima\Desktop\agv admin backup\build-AgvNewUi-Desktop_Qt_5_14_2_MinGW_64_bit-Release\release\VapManager.exe" set "SRC_EXE=C:\Users\Dima\Desktop\agv admin backup\build-AgvNewUi-Desktop_Qt_5_14_2_MinGW_64_bit-Release\release\VapManager.exe"
 if "%SRC_EXE%"=="" if exist "C:\Users\Dima\Desktop\agv admin backup\build-AgvNewUi-Desktop_Qt_5_14_2_MinGW_64_bit-Release\release\AgvNewUi.exe" set "SRC_EXE=C:\Users\Dima\Desktop\agv admin backup\build-AgvNewUi-Desktop_Qt_5_14_2_MinGW_64_bit-Release\release\AgvNewUi.exe"
 if "%SRC_EXE%"=="" if exist "%~dp0release\AgvNewUi.exe" set "SRC_EXE=%~dp0release\AgvNewUi.exe"
 
 if "%SRC_EXE%"=="" (
-  echo [ERROR] Release AgvNewUi.exe not found. Build Release x64, then:
-  echo   pack_vapmanager.bat "path\to\AgvNewUi.exe"
+  echo [ERROR] Release VapManager.exe not found. Build Release x64, then:
+  echo   pack_vapmanager.bat "path\to\VapManager.exe"
   exit /b 1
 )
 
@@ -49,7 +51,7 @@ copy /Y "%SRC_EXE%" "%OUT_DIR%\VapManager.exe" >nul
 
 if not exist "%OUT_DIR%\platforms\qwindows.dll" (
   echo [ERROR] Qt platforms missing. Run once:
-  echo   deploy_runtime.bat "path\to\debug\AgvNewUi.exe"
+  echo   deploy_runtime.bat "path\to\debug\VapManager.exe"
   echo Then pack_vapmanager.bat again.
   exit /b 1
 )

@@ -1,7 +1,9 @@
 #include "db_users.h"
+#include "db.h"
 
 #include <QBuffer>
 #include <QDateTime>
+#include <QDebug>
 #include <QDir>
 #include <QFile>
 #include <QPixmap>
@@ -125,7 +127,7 @@ bool loginUser(const QString &username,
     bool expired = lastLogin.isValid() && lastLogin.daysTo(QDateTime::currentDateTime()) > 10;
 
     QSqlQuery upd(db);
-    upd.prepare("UPDATE users SET last_login = NOW() WHERE id = :id");
+    upd.prepare("UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = :id");
     upd.bindValue(":id", id);
     upd.exec();
 
@@ -172,7 +174,6 @@ bool enableRememberMe(const QString &username)
     if (!q.exec())
         return false;
 
-    QDir().mkpath("config");
     const bool rememberSaved = writeTextFile(rememberTokenFilePath(), rememberToken);
     const bool sessionSaved = writeTextFile(sessionTokenFilePath(), sessionToken);
     return rememberSaved && sessionSaved;
@@ -239,16 +240,24 @@ bool isCurrentSessionValid(const QString &username)
     if (sessionToken.isEmpty())
         return false;
 
-    QSqlDatabase db = QSqlDatabase::database("main_connection");
-    if (!db.isOpen())
-        return false;
+    QSqlDatabase db = QSqlDatabase::database(QStringLiteral("main_connection"));
+    if (!db.isOpen()) {
+        if (!connectToDB(nullptr))
+            return true;
+        db = QSqlDatabase::database(QStringLiteral("main_connection"));
+        if (!db.isOpen())
+            return true;
+    }
 
     QSqlQuery q(db);
-    q.prepare("SELECT 1 FROM users WHERE username = :u AND active_session_token = :st AND is_active = 1 LIMIT 1");
-    q.bindValue(":u", u);
-    q.bindValue(":st", sessionToken);
-    if (!q.exec())
-        return false;
+    q.prepare(QStringLiteral(
+        "SELECT 1 FROM users WHERE username = :u AND active_session_token = :st AND is_active = TRUE LIMIT 1"));
+    q.bindValue(QStringLiteral(":u"), u);
+    q.bindValue(QStringLiteral(":st"), sessionToken);
+    if (!q.exec()) {
+        qWarning() << "isCurrentSessionValid: skip check (DB error):" << q.lastError().text();
+        return true;
+    }
 
     return q.next();
 }

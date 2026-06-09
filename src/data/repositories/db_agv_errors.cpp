@@ -1,4 +1,5 @@
 #include "db_agv_errors.h"
+#include "db_tables.h"
 
 #include <QSqlDatabase>
 #include <QSqlQuery>
@@ -9,13 +10,10 @@
 bool initAgvErrorLogsTable()
 {
     QSqlDatabase db = QSqlDatabase::database(QStringLiteral("main_connection"));
-    if (!db.isOpen())
-        return false;
-
-    QSqlQuery q(db);
-    if (!q.exec(R"(
+    QString err;
+    return ensureDbTable(db, QStringLiteral("agv_error_logs"), QStringLiteral(R"(
         CREATE TABLE IF NOT EXISTS agv_error_logs (
-            id INT AUTO_INCREMENT PRIMARY KEY,
+            id SERIAL PRIMARY KEY,
             agv_id VARCHAR(64) NOT NULL,
             error_date DATE NOT NULL,
             error_type VARCHAR(64) NOT NULL,
@@ -24,27 +22,9 @@ bool initAgvErrorLogsTable()
             time_to TIME NULL,
             duration_minutes INT NOT NULL DEFAULT 0,
             created_by VARCHAR(64) NOT NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            INDEX idx_agv_date (agv_id, error_date),
-            INDEX idx_date (error_date)
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
         )
-        CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
-    )"))
-        return false;
-
-    // If the table already existed with a legacy charset, upgrade it.
-    // This fixes "Incorrect string value" for Cyrillic/emoji/special chars.
-    if (!q.exec(QStringLiteral(
-            "ALTER TABLE agv_error_logs CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"))) {
-        const QString e = q.lastError().text();
-        // Ignore if not supported / already converted; only log unexpected.
-        if (!e.contains("collation", Qt::CaseInsensitive) &&
-            !e.contains("charset", Qt::CaseInsensitive) &&
-            !e.contains("1064") && !e.contains("syntax", Qt::CaseInsensitive)) {
-            qDebug() << "agv_error_logs charset upgrade warning:" << e;
-        }
-    }
-    return true;
+    )"), &err);
 }
 
 static QString normalizeText(QString v, int maxLen)
@@ -88,7 +68,11 @@ bool addAgvErrorLog(const QString &agvId,
         return false;
     }
     if (!initAgvErrorLogsTable()) {
-        if (outError) *outError = QStringLiteral("Не удалось создать таблицу ошибок");
+        if (outError) {
+            *outError = dbTableExists(db, QStringLiteral("agv_error_logs"))
+                ? QStringLiteral("Таблица ошибок недоступна")
+                : QStringLiteral("Таблица agv_error_logs отсутствует. Запустите install_agv_manager_db.sql от администратора БД");
+        }
         return false;
     }
 

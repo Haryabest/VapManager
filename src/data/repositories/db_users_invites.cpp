@@ -37,7 +37,7 @@ bool verifyAdminInviteKey(const QString &key, QString &error)
     }
 
     QSqlQuery q(db);
-    q.prepare("SELECT username FROM users WHERE role = 'admin' AND admin_invite_key = :k AND admin_invite_key_expire > NOW()");
+    q.prepare("SELECT username FROM users WHERE role = 'admin' AND admin_invite_key = :k AND admin_invite_key_expire > CURRENT_TIMESTAMP");
     q.bindValue(":k", key.trimmed().toUpper());
 
     if (!q.exec() || !q.next()) {
@@ -87,7 +87,7 @@ void refreshAdminInviteKeyIfNeeded(const QString &adminUsername)
     if (!expire.isValid() || expire <= QDateTime::currentDateTime()) {
         QString newKey = generateShortKey();
         QSqlQuery upd(db);
-        upd.prepare("UPDATE users SET admin_invite_key = :k, admin_invite_key_expire = DATE_ADD(NOW(), INTERVAL 10 MINUTE) WHERE username = :u");
+        upd.prepare("UPDATE users SET admin_invite_key = :k, admin_invite_key_expire = CURRENT_TIMESTAMP + INTERVAL '10 minutes' WHERE username = :u");
         upd.bindValue(":k", newKey);
         upd.bindValue(":u", adminUsername);
         upd.exec();
@@ -122,7 +122,7 @@ bool verifyTechInviteKey(const QString &key, QString &error)
     }
 
     QSqlQuery q(db);
-    q.prepare("SELECT username FROM users WHERE role = 'tech' AND tech_invite_key = :k AND tech_invite_key_expire > NOW()");
+    q.prepare("SELECT username FROM users WHERE role = 'tech' AND tech_invite_key = :k AND tech_invite_key_expire > CURRENT_TIMESTAMP");
     q.bindValue(":k", key.trimmed().toUpper());
 
     if (!q.exec() || !q.next()) {
@@ -172,7 +172,7 @@ void refreshTechInviteKeyIfNeeded(const QString &techUsername)
     if (!expire.isValid() || expire <= QDateTime::currentDateTime()) {
         QString newKey = generateShortKey();
         QSqlQuery upd(db);
-        upd.prepare("UPDATE users SET tech_invite_key = :k, tech_invite_key_expire = DATE_ADD(NOW(), INTERVAL 10 MINUTE) WHERE username = :u");
+        upd.prepare("UPDATE users SET tech_invite_key = :k, tech_invite_key_expire = CURRENT_TIMESTAMP + INTERVAL '10 minutes' WHERE username = :u");
         upd.bindValue(":k", newKey);
         upd.bindValue(":u", techUsername);
         upd.exec();

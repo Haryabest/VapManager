@@ -122,7 +122,7 @@ void AgvSettingsPage::loadAgv(const QString &agvId)
 
     {
         QSqlQuery q(db);
-        q.prepare("SELECT agv_id, model, serial, status, kilometers, blueprintPath, lastActive, assigned_user, assigned_by, alias "
+        q.prepare("SELECT agv_id, model, serial, status, kilometers, \"blueprintPath\", \"lastActive\", assigned_user, assigned_by, alias "
                   "FROM agv_list WHERE agv_id = :id");
         q.bindValue(":id", agvId);
         if (!q.exec() || !q.next()) {

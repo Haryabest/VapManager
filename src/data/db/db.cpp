@@ -4,19 +4,88 @@
 #include <QSqlError>
 #include <QSettings>
 #include <QCoreApplication>
+#include <QPluginLoader>
 #include <QDebug>
-#include <QFileInfo>
 #include <QDir>
+#include <QFileInfo>
 
-static const char *DB_HOST_KEY = "db_host";
+static const char *KEY_HOST = "db_host";
+static const char *KEY_PORT = "db_port";
+static const char *KEY_NAME = "db_name";
+static const char *KEY_USER = "db_user";
+static const char *KEY_PASSWORD = "db_password";
+static const char *KEY_DRIVER = "db_driver";
 
-// Портабельный конфиг: config.ini рядом с exe
-// Для 1000+ устройств: на каждом клиенте в config.ini задайте один и тот же db_host (IP сервера MySQL).
-static QSettings* portableSettings()
+static void removeMainConnection()
 {
-    static QSettings* s = nullptr;
+    if (QSqlDatabase::contains("main_connection")) {
+        QSqlDatabase db = QSqlDatabase::database("main_connection");
+        if (db.isOpen())
+            db.close();
+        QSqlDatabase::removeDatabase("main_connection");
+    }
+}
+
+static QString loadSqlPlugin(const QString &fileName)
+{
+    const QString appDir = QCoreApplication::applicationDirPath();
+    QCoreApplication::addLibraryPath(appDir);
+    QCoreApplication::addLibraryPath(appDir + QStringLiteral("/sqldrivers"));
+    QCoreApplication::addLibraryPath(appDir + QStringLiteral("/plugins"));
+
+    const QStringList candidates = {
+        appDir + QStringLiteral("/sqldrivers/") + fileName,
+        appDir + QStringLiteral("/plugins/sqldrivers/") + fileName,
+    };
+    for (const QString &path : candidates) {
+        if (!QFileInfo::exists(path))
+            continue;
+        QPluginLoader loader(path);
+        if (loader.load())
+            return QString();
+        return loader.errorString();
+    }
+    return QStringLiteral("file not found: ") + fileName;
+}
+
+static bool openOdbcConnection(const QString &host, int port, const QString &dbName,
+                               const QString &user, const QString &password, QString &errOut)
+{
+    const QString pluginErr = loadSqlPlugin(QStringLiteral("qsqlodbc.dll"));
+    if (!pluginErr.isEmpty() && !QSqlDatabase::isDriverAvailable(QStringLiteral("QODBC"))) {
+        errOut = QStringLiteral("qsqlodbc.dll: %1 | drivers: %2")
+                     .arg(pluginErr, QSqlDatabase::drivers().join(QLatin1Char(',')));
+        return false;
+    }
+
+    const QStringList driverNames = {
+        QStringLiteral("PostgreSQL ODBC Driver(UNICODE)"),
+        QStringLiteral("PostgreSQL ODBC Driver(ANSI)"),
+    };
+
+    removeMainConnection();
+    for (const QString &driverName : driverNames) {
+        QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QODBC"), QStringLiteral("main_connection"));
+        const QString conn = QStringLiteral("DRIVER={%1};SERVER=%2;PORT=%3;DATABASE=%4;UID=%5;PWD=%6;")
+                                 .arg(driverName, host)
+                                 .arg(port)
+                                 .arg(dbName, user, password);
+        db.setDatabaseName(conn);
+        if (db.open())
+            return true;
+        errOut = db.lastError().text();
+        if (!errOut.contains(QStringLiteral("Driver not loaded"), Qt::CaseInsensitive))
+            errOut += QStringLiteral(" [") + driverName + QLatin1Char(']');
+        removeMainConnection();
+    }
+    return false;
+}
+
+static QSettings *portableSettings()
+{
+    static QSettings *s = nullptr;
     if (!s) {
-        QString path = QCoreApplication::applicationDirPath() + "/config.ini";
+        const QString path = QCoreApplication::applicationDirPath() + "/config.ini";
         s = new QSettings(path, QSettings::IniFormat);
     }
     return s;
@@ -24,132 +93,166 @@ static QSettings* portableSettings()
 
 QString getDbHost()
 {
-    QString h = portableSettings()->value(DB_HOST_KEY, "localhost").toString();
-    return h.trimmed().isEmpty() ? "localhost" : h;
+    QString h = portableSettings()->value(KEY_HOST, "localhost").toString().trimmed();
+    const int colonPos = h.lastIndexOf(':');
+    if (colonPos > 0 && h.indexOf(':') == colonPos) {
+        bool ok = false;
+        const int p = h.mid(colonPos + 1).toInt(&ok);
+        if (ok && p > 0 && p <= 65535)
+            h = h.left(colonPos).trimmed();
+    }
+    return h.isEmpty() ? QStringLiteral("localhost") : h;
+}
+
+int getDbPort()
+{
+    QSettings *s = portableSettings();
+    if (s->contains(KEY_PORT))
+        return s->value(KEY_PORT, 5432).toInt();
+
+    QString h = s->value(KEY_HOST, "localhost").toString();
+    const int colonPos = h.lastIndexOf(':');
+    if (colonPos > 0 && h.indexOf(':') == colonPos) {
+        bool ok = false;
+        const int p = h.mid(colonPos + 1).toInt(&ok);
+        if (ok && p > 0 && p <= 65535)
+            return p;
+    }
+    return 5432;
+}
+
+QString getDbName()
+{
+    const QString n = portableSettings()->value(KEY_NAME, "agv_manager_db").toString().trimmed();
+    return n.isEmpty() ? QStringLiteral("agv_manager_db") : n;
+}
+
+QString getDbUser()
+{
+    const QString u = portableSettings()->value(KEY_USER, "vapmanager").toString().trimmed();
+    return u.isEmpty() ? QStringLiteral("vapmanager") : u;
+}
+
+QString getDbPassword()
+{
+    return portableSettings()->value(KEY_PASSWORD).toString();
 }
 
 bool connectToDB(QString *outError)
 {
-    QString host = getDbHost();
-    int port = 3306;
-    // Поддержка "host:port" в config без изменений UI.
-    const int colonPos = host.lastIndexOf(':');
-    if (colonPos > 0 && host.indexOf(':') == colonPos) {
-        bool okPort = false;
-        const int parsedPort = host.mid(colonPos + 1).toInt(&okPort);
-        if (okPort && parsedPort > 0 && parsedPort <= 65535) {
-            port = parsedPort;
-            host = host.left(colonPos).trimmed();
-        }
-    }
-    if (!QSqlDatabase::isDriverAvailable("QMYSQL")) {
-        const QString appDir = QCoreApplication::applicationDirPath();
-        const QString pluginPath = appDir + "/sqldrivers/qsqlmysql.dll";
-        const QString mysqlClient = appDir + "/libmysql.dll";
-        QString err = QString(
-            "QMYSQL driver not loaded.\n"
-            "Не найден/не загружен драйвер MySQL.\n\n"
-            "Проверьте файлы рядом с .exe:\n"
-            "1) %1\n"
-            "2) %2\n\n"
-            "Если файлов нет — скопируйте их через windeployqt и добавьте libmysql.dll той же архитектуры (x64/x86).\n\n"
-            "Где обычно лежат файлы по умолчанию:\n"
-            "- qsqlmysql.dll:\n"
-            "  C:/Qt/5.15.2/<kit>/plugins/sqldrivers/qsqlmysql.dll\n"
-            "  C:/Qt/6.x.x/<kit>/plugins/sqldrivers/qsqlmysql.dll\n"
-            "- libmysql.dll:\n"
-            "  C:/Program Files/MySQL/MySQL Server 8.0/lib/libmysql.dll\n"
-            "  C:/Program Files/MySQL/MySQL Server 8.4/lib/libmysql.dll"
-        ).arg(pluginPath, mysqlClient);
-        qDebug() << err;
-        if (outError) *outError = err;
-        return false;
-    }
+    const QString host = getDbHost();
+    const int port = getDbPort();
+    const QString dbName = getDbName();
+    const QString user = getDbUser();
+    const QString password = getDbPassword();
+    const QString driverPref = portableSettings()->value(KEY_DRIVER, "odbc").toString().trimmed().toLower();
+
+    removeMainConnection();
+
     QSqlDatabase db;
-    if (QSqlDatabase::contains("main_connection")) {
-        db = QSqlDatabase::database("main_connection");
-        if (db.isOpen())
-            db.close();
-    } else {
-        db = QSqlDatabase::addDatabase("QMYSQL", "main_connection");
-    }
-    db.setHostName(host);
-    db.setPort(port);
-    db.setDatabaseName("agv_manager_db");
-    db.setUserName("root");
-    db.setPassword("");
-    db.setConnectOptions("MYSQL_OPT_RECONNECT=1;MYSQL_OPT_CONNECT_TIMEOUT=5;MYSQL_OPT_READ_TIMEOUT=8;MYSQL_OPT_WRITE_TIMEOUT=8");
+    QString connectLabel;
 
-    if (!db.open()) {
-        QString err = QString("host=%1 port=%2 | %3")
-                          .arg(host)
-                          .arg(port)
-                          .arg(db.lastError().text());
-        qDebug() << "Ошибка подключения к базе данных:" << err;
-        if (outError) *outError = err;
+    const auto fail = [&](const QString &details) {
+        const QString err = QString("host=%1 port=%2 db=%3 user=%4 | %5")
+                                .arg(host)
+                                .arg(port)
+                                .arg(dbName)
+                                .arg(user)
+                                .arg(details);
+        qDebug() << "Ошибка подключения к PostgreSQL:" << err;
+        if (outError)
+            *outError = err;
+        removeMainConnection();
         return false;
-    }
-    QSqlQuery setCharset(db);
-    setCharset.exec("SET NAMES utf8mb4");
+    };
 
-    // Лёгкая авто-оптимизация чтения по календарю/уведомлениям/чатам.
+    if (driverPref == QLatin1String("psql") || driverPref == QLatin1String("qpsql")) {
+        const QString pluginErr = loadSqlPlugin(QStringLiteral("qsqlpsql.dll"));
+        if (!pluginErr.isEmpty() && !QSqlDatabase::isDriverAvailable(QStringLiteral("QPSQL")))
+            return fail(QStringLiteral("qsqlpsql.dll: %1").arg(pluginErr));
+        db = QSqlDatabase::addDatabase(QStringLiteral("QPSQL"), QStringLiteral("main_connection"));
+        db.setHostName(host);
+        db.setPort(port);
+        db.setDatabaseName(dbName);
+        db.setUserName(user);
+        db.setPassword(password);
+        db.setConnectOptions(QStringLiteral("connect_timeout=5"));
+        connectLabel = QStringLiteral("QPSQL");
+        if (!db.open())
+            return fail(db.lastError().text());
+    } else {
+        QString odbcErr;
+        if (!openOdbcConnection(host, port, dbName, user, password, odbcErr))
+            return fail(odbcErr);
+        connectLabel = QStringLiteral("QODBC");
+        db = QSqlDatabase::database(QStringLiteral("main_connection"));
+    }
+
+    QSqlQuery enc(db);
+    enc.exec(QStringLiteral("SET client_encoding TO 'UTF8'"));
+
     static bool perfIndexesEnsured = false;
     if (!perfIndexesEnsured) {
         perfIndexesEnsured = true;
         QSqlQuery idx(db);
-        auto tryExec = [&](const QString &sql) {
+        const QStringList indexSql = {
+            QStringLiteral("CREATE INDEX IF NOT EXISTS idx_agv_tasks_next_date ON agv_tasks (next_date)"),
+            QStringLiteral("CREATE INDEX IF NOT EXISTS idx_agv_tasks_agv_next ON agv_tasks (agv_id, next_date)"),
+            QStringLiteral("CREATE INDEX IF NOT EXISTS idx_agv_tasks_assigned_to ON agv_tasks (assigned_to)"),
+            QStringLiteral("CREATE INDEX IF NOT EXISTS idx_agv_list_created_at ON agv_list (created_at)"),
+            QStringLiteral("CREATE INDEX IF NOT EXISTS idx_hist_done_task ON agv_task_history (completed_at, agv_id, task_name)"),
+            QStringLiteral("CREATE INDEX IF NOT EXISTS idx_notifications_target_read ON notifications (target_user, is_read, created_at)"),
+            QStringLiteral("CREATE INDEX IF NOT EXISTS idx_users_full_name ON users (full_name)"),
+            QStringLiteral("CREATE INDEX IF NOT EXISTS idx_chat_messages_thread_created ON task_chat_messages (thread_id, created_at)"),
+            QStringLiteral("CREATE INDEX IF NOT EXISTS idx_chat_messages_thread_id_id ON task_chat_messages (thread_id, id)"),
+            QStringLiteral("CREATE INDEX IF NOT EXISTS idx_chat_threads_created_at ON task_chat_threads (created_by, created_at)"),
+            QStringLiteral("CREATE INDEX IF NOT EXISTS idx_chat_threads_recipient_at ON task_chat_threads (recipient_user, created_at)"),
+            QStringLiteral("CREATE INDEX IF NOT EXISTS idx_chat_hidden_user_thread ON task_chat_hidden (username, thread_id)"),
+        };
+        for (const QString &sql : indexSql) {
             if (!idx.exec(sql)) {
                 const QString e = idx.lastError().text();
-                // Дубликат индекса/отсутствие таблицы на старой БД не считаем фатальной ошибкой.
-                if (!e.contains("1061") && !e.contains("Duplicate key name", Qt::CaseInsensitive)
-                    && !e.contains("already exists", Qt::CaseInsensitive)
-                    && !e.contains("1146") && !e.contains("doesn't exist", Qt::CaseInsensitive)) {
-                    qDebug() << "DB index optimize warning:" << e << "SQL:" << sql;
+                if (!e.contains(QStringLiteral("already exists"), Qt::CaseInsensitive)
+                    && !e.contains(QStringLiteral("duplicate"), Qt::CaseInsensitive)) {
+                    qDebug() << "DB index warning:" << e << "SQL:" << sql;
                 }
             }
-        };
-        tryExec("ALTER TABLE agv_tasks ADD INDEX idx_agv_tasks_next_date (next_date)");
-        tryExec("ALTER TABLE agv_tasks ADD INDEX idx_agv_tasks_agv_next (agv_id, next_date)");
-        tryExec("ALTER TABLE agv_tasks ADD INDEX idx_agv_tasks_assigned_to (assigned_to)");
-        tryExec("ALTER TABLE agv_list ADD INDEX idx_agv_list_created_at (created_at)");
-        tryExec("ALTER TABLE agv_task_history ADD INDEX idx_hist_done_task (completed_at, agv_id, task_name)");
-        tryExec("ALTER TABLE notifications ADD INDEX idx_notifications_target_read (target_user, is_read, created_at)");
-        tryExec("ALTER TABLE users ADD INDEX idx_users_full_name (full_name)");
-        tryExec("ALTER TABLE task_chat_messages ADD INDEX idx_chat_messages_thread_created (thread_id, created_at)");
-        tryExec("ALTER TABLE task_chat_messages ADD INDEX idx_chat_messages_thread_id_id (thread_id, id)");
-        tryExec("ALTER TABLE task_chat_threads ADD INDEX idx_chat_threads_created_at (created_by, created_at)");
-        tryExec("ALTER TABLE task_chat_threads ADD INDEX idx_chat_threads_recipient_at (recipient_user, created_at)");
-        tryExec("ALTER TABLE task_chat_hidden ADD INDEX idx_chat_hidden_user_thread (username, thread_id)");
+        }
     }
 
-    qDebug() << "Успешно подключились к базе данных!";
+    qDebug() << "Успешно подключились к PostgreSQL через" << connectLabel;
     return true;
 }
 
 bool reconnectWithHost(const QString &host, QString *outError)
 {
-    portableSettings()->setValue(DB_HOST_KEY, host.trimmed().isEmpty() ? "localhost" : host.trimmed());
-    portableSettings()->sync();
-
-    {
-        QSqlDatabase db = QSqlDatabase::database("main_connection");
-        if (db.isOpen())
-            db.close();
+    QString h = host.trimmed();
+    int port = getDbPort();
+    const int colonPos = h.lastIndexOf(':');
+    if (colonPos > 0 && h.indexOf(':') == colonPos) {
+        bool ok = false;
+        const int p = h.mid(colonPos + 1).toInt(&ok);
+        if (ok && p > 0 && p <= 65535) {
+            port = p;
+            h = h.left(colonPos).trimmed();
+        }
     }
-    QSqlDatabase::removeDatabase("main_connection");
+    QSettings *s = portableSettings();
+    s->setValue(KEY_HOST, h.isEmpty() ? QStringLiteral("localhost") : h);
+    s->setValue(KEY_PORT, port);
+    s->sync();
 
+    removeMainConnection();
     return connectToDB(outError);
 }
 
 void testConnection()
 {
     QSqlQuery query(QSqlDatabase::database("main_connection"));
-    query.prepare("SELECT COUNT(*) FROM agv_models");
+    query.prepare(QStringLiteral("SELECT COUNT(*) FROM agv_models"));
     if (!query.exec()) {
         qDebug() << "Ошибка выполнения запроса:" << query.lastError().text();
-    } else {
-        if (query.next()) {
-            qDebug() << "Количество записей в таблице models_agv:" << query.value(0).toInt();
-        }
+    } else if (query.next()) {
+        qDebug() << "Количество записей в agv_models:" << query.value(0).toInt();
     }
 }

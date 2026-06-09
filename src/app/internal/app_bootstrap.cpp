@@ -4,6 +4,7 @@
 #include "leftmenu.h"
 #include "db.h"
 #include "db_users.h"
+#include "db_agv_errors.h"
 #include "db_agv_tasks.h"
 #include "db_task_chat.h"
 #include "notifications_logs.h"
@@ -182,7 +183,7 @@ int run(int argc, char *argv[])
         QVBoxLayout *layout = new QVBoxLayout(&dbDlg);
         QLabel *title = new QLabel("Подключение к базе данных", &dbDlg);
         layout->addWidget(title);
-        QLabel *lab = new QLabel("Введите IP-адрес или хост сервера MySQL", &dbDlg);
+        QLabel *lab = new QLabel("Введите IP-адрес или хост сервера PostgreSQL (порт в config.ini: db_port)", &dbDlg);
         lab->setWordWrap(true);
         layout->addWidget(lab);
 
@@ -222,6 +223,7 @@ int run(int argc, char *argv[])
     initUsersTable();
     initNotificationsTable();
     initMaintenanceNotificationSentTable();
+    initAgvErrorLogsTable();
     initTaskChatTables();
     ensureAssignedToColumn();
     ensureAgvListAssignedUserColumn();

@@ -47,7 +47,7 @@ void ListAgvInfo::restoreDeletedAgvs()
         QSqlQuery q(db);
         q.prepare(R"(
             INSERT INTO agv_list
-            (agv_id, model, serial, status, alias, kilometers, blueprintPath, lastActive)
+            (agv_id, model, serial, status, alias, kilometers, "blueprintPath", "lastActive")
             VALUES (:agv_id, :model, :serial, :status, :alias, :kilometers, :blueprintPath, :lastActive)
         )");
         q.bindValue(":agv_id", info.id);

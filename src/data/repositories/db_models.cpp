@@ -79,7 +79,7 @@ QVector<ModelInfo> loadModelList()
 
     QSqlQuery q(db);
     QString sql = QStringLiteral(
-        "SELECT name, version_po, version_eplan, category, capacityKg, maxSpeed, dimensions, "
+        "SELECT name, version_po, version_eplan, category, \"capacityKg\", \"maxSpeed\", dimensions, "
         "coupling_count, direction FROM agv_models ORDER BY created_at DESC");
     if (QCoreApplication::instance()
         && QCoreApplication::instance()->property("autotest_running").toBool()) {
@@ -115,8 +115,8 @@ bool insertModelToDb(const ModelInfo &m, QString *outError)
 
     QSqlQuery q(db);
     q.prepare(R"(
-        INSERT INTO agv_models (name, version_po, version_eplan, category, capacityKg, maxSpeed, dimensions, coupling_count, direction, created_at)
-        VALUES (:name, :vpo, :veplan, :category, :capacityKg, :maxSpeed, :dim, :coup, :dir, NOW())
+        INSERT INTO agv_models (name, version_po, version_eplan, category, "capacityKg", "maxSpeed", dimensions, coupling_count, direction, created_at)
+        VALUES (:name, :vpo, :veplan, :category, :capacityKg, :maxSpeed, :dim, :coup, :dir, CURRENT_TIMESTAMP)
     )");
     q.bindValue(":name", m.name);
     q.bindValue(":vpo", m.versionPo);

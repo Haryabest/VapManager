@@ -1207,7 +1207,7 @@ ModelDetailsPageWidget::ModelDetailsPageWidget(const ModelInfo &model,
         }
 
         QSqlQuery q(db);
-        q.prepare("UPDATE agv_models SET name=:new_name, version_po=:vpo, version_eplan=:veplan, category=:cat, capacityKg=:cap, maxSpeed=:spd, dimensions=:dim, coupling_count=:coup, direction=:dir WHERE name=:old_name");
+        q.prepare("UPDATE agv_models SET name=:new_name, version_po=:vpo, version_eplan=:veplan, category=:cat, \"capacityKg\"=:cap, \"maxSpeed\"=:spd, dimensions=:dim, coupling_count=:coup, direction=:dir WHERE name=:old_name");
         q.bindValue(":new_name", newName);
         q.bindValue(":vpo", newVersionPo);
         q.bindValue(":veplan", newVersionEplan);

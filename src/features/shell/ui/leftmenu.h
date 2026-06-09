@@ -161,6 +161,11 @@ private:
 
     void changeMonth(int delta);
     void setSelectedMonthYear(int month, int year);
+    void buildCalendarTable();
+    void refreshCalendarMonthLight();
+    void updateCalendarNavButtons();
+    void invalidateCalendarEventsCache();
+    void applyCalendarEventsToVisibleCells(int loadGeneration);
     void selectDay(int year, int month, int day);
     void refreshCalendarSelectionVisuals();
     QString monthYearLabelText(int month, int year) const;
@@ -176,6 +181,7 @@ private:
     void updateAgvCounter();
     void updateUpcomingMaintenance();
     void updateSystemStatus();
+    void scheduleDeferredStartupLoads();
 
 private slots:
     void changeAvatar();
@@ -198,6 +204,7 @@ private:
     QWidget *bottomRow_ = nullptr;
 
     QWidget *rightCalendarFrame = nullptr;
+    QVBoxLayout *rightCalendarLayout_ = nullptr;
     QWidget *rightUpcomingMaintenanceFrame = nullptr;
 
     ListAgvInfo *listAgvInfo = nullptr;
@@ -219,6 +226,10 @@ private:
 
     QLabel *monthLabel = nullptr;
     QWidget *calendarActionsFrame = nullptr;
+    QLabel *calendarActionsLabel_ = nullptr;
+    QPushButton *prevMonthBtn_ = nullptr;
+    QPushButton *nextMonthBtn_ = nullptr;
+    QFrame *calendarDayOverlay_ = nullptr;
 
     QPushButton *backButton = nullptr;
 
@@ -237,6 +248,13 @@ private:
     /// Подавляет подробный CALENDAR-лог при массовом стресс-тесте (оставляются только строки STRESS).
     bool calendarStressDiagQuiet_ = false;
     bool pendingCalendarReload_ = false;
+    int calendarLoadGeneration_ = 0;
+    QMap<QDate, QTableWidgetItem *> calendarVisibleCells_;
+    QMap<QDate, QVector<CalendarEvent>> calendarEventsByDate_;
+    QString calendarEventsCacheKey_;
+    QVector<CalendarEvent> calendarEventsCacheData_;
+    QDate calendarEventsCacheFrom_;
+    QDate calendarEventsCacheTo_;
     bool agvListDirty_ = true;
     ActivePage activePage_ = ActivePage::Calendar;
     QString activeAgvId_;

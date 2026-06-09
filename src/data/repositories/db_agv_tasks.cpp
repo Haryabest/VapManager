@@ -79,7 +79,7 @@ bool copyModelTasksToAgv(const QString &agvId, const QString &modelName)
             interval_days,
             duration_minutes,
             is_default,
-            DATE_ADD(CURDATE(), INTERVAL interval_days DAY)
+            CURRENT_DATE + (interval_days * INTERVAL '1 day')
         FROM model_maintenance_template
         WHERE model_name = :model_name
     )");

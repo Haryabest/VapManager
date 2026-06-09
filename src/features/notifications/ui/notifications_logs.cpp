@@ -1,4 +1,5 @@
 #include "notifications_logs.h"
+#include "db_tables.h"
 #include <QApplication>
 #include <QDir>
 #include <QFile>
@@ -86,35 +87,28 @@ QString mciErrorText(MCIERROR code)
 bool initNotificationsTable()
 {
     QSqlDatabase db = QSqlDatabase::database("main_connection");
-    if (!db.isOpen()) return false;
-
-    QSqlQuery q(db);
-    if (!q.exec(R"(
+    return ensureDbTable(db, QStringLiteral("notifications"), QStringLiteral(R"(
         CREATE TABLE IF NOT EXISTS notifications (
-            id INT AUTO_INCREMENT PRIMARY KEY,
+            id SERIAL PRIMARY KEY,
             target_user VARCHAR(64) NOT NULL,
             title VARCHAR(256) NOT NULL,
             message TEXT,
-            is_read TINYINT(1) NOT NULL DEFAULT 0,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            INDEX idx_target (target_user)
+            is_read BOOLEAN NOT NULL DEFAULT FALSE,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
         )
-    )")) return false;
-    return true;
+    )"));
 }
 
 bool initMaintenanceNotificationSentTable()
 {
     QSqlDatabase db = QSqlDatabase::database("main_connection");
-    if (!db.isOpen()) return false;
-    QSqlQuery q(db);
-    return q.exec(R"(
+    return ensureDbTable(db, QStringLiteral("maintenance_notification_sent"), QStringLiteral(R"(
         CREATE TABLE IF NOT EXISTS maintenance_notification_sent (
             agv_id VARCHAR(64) NOT NULL,
             notify_date DATE NOT NULL,
             PRIMARY KEY (agv_id, notify_date)
         )
-    )");
+    )"));
 }
 
 bool wasMaintenanceNotificationSentToday(const QString &agvId)
@@ -122,7 +116,7 @@ bool wasMaintenanceNotificationSentToday(const QString &agvId)
     QSqlDatabase db = QSqlDatabase::database("main_connection");
     if (!db.isOpen()) return true;
     QSqlQuery q(db);
-    q.prepare("SELECT 1 FROM maintenance_notification_sent WHERE agv_id = :id AND notify_date = CURDATE()");
+    q.prepare("SELECT 1 FROM maintenance_notification_sent WHERE agv_id = :id AND notify_date = CURRENT_DATE");
     q.bindValue(":id", agvId);
     if (!q.exec() || !q.next()) return false;
     return true;
@@ -133,7 +127,7 @@ void markMaintenanceNotificationSentToday(const QString &agvId)
     QSqlDatabase db = QSqlDatabase::database("main_connection");
     if (!db.isOpen()) return;
     QSqlQuery q(db);
-    q.prepare("INSERT IGNORE INTO maintenance_notification_sent (agv_id, notify_date) VALUES (:id, CURDATE())");
+    q.prepare("INSERT INTO maintenance_notification_sent (agv_id, notify_date) VALUES (:id, CURRENT_DATE) ON CONFLICT DO NOTHING");
     q.bindValue(":id", agvId);
     q.exec();
 }

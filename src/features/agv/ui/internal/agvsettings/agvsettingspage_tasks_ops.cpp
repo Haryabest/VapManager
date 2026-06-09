@@ -1,5 +1,6 @@
 #include "agvsettingspage.h"
 
+#include "db_tables.h"
 #include "app_session.h"
 #include "databus.h"
 #include "db_users.h"
@@ -20,28 +21,22 @@
 bool AgvSettingsPage::ensureTaskHistoryTable() const
 {
     QSqlDatabase db = QSqlDatabase::database("main_connection");
-    if (!db.isOpen())
-        return false;
-
-    QSqlQuery q(db);
-    if (!q.exec(
-            "CREATE TABLE IF NOT EXISTS agv_task_history ("
-            "  id INT AUTO_INCREMENT PRIMARY KEY,"
-            "  agv_id VARCHAR(64) NOT NULL,"
-            "  task_id INT NULL,"
-            "  task_name VARCHAR(255) NOT NULL,"
-            "  interval_days INT NOT NULL DEFAULT 0,"
-            "  completed_at DATE NOT NULL,"
-            "  completed_ts DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,"
-            "  next_date_after DATE NULL,"
-            "  performed_by VARCHAR(128) NULL,"
-            "  INDEX idx_hist_agv_date (agv_id, completed_at),"
-            "  INDEX idx_hist_completed_ts (completed_ts)"
-            ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4")) {
-        qDebug() << "AgvSettingsPage::ensureTaskHistoryTable failed:" << q.lastError().text();
-        return false;
-    }
-    return true;
+    QString err;
+    const bool ok = ensureDbTable(db, QStringLiteral("agv_task_history"), QStringLiteral(
+        "CREATE TABLE IF NOT EXISTS agv_task_history ("
+        "  id SERIAL PRIMARY KEY,"
+        "  agv_id VARCHAR(64) NOT NULL,"
+        "  task_id INT NULL,"
+        "  task_name VARCHAR(255) NOT NULL,"
+        "  interval_days INT NOT NULL DEFAULT 0,"
+        "  completed_at DATE NOT NULL,"
+        "  completed_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+        "  next_date_after DATE NULL,"
+        "  performed_by VARCHAR(128) NULL"
+        ")"), &err);
+    if (!ok)
+        qDebug() << "AgvSettingsPage::ensureTaskHistoryTable failed:" << err;
+    return ok;
 }
 
 bool AgvSettingsPage::completeTaskNow(const QString &taskId, const AgvTask &task)

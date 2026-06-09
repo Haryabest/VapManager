@@ -3,6 +3,7 @@
 #include "app_session.h"
 #include "databus.h"
 #include "db_users.h"
+#include "ui_action_logger.h"
 
 #include <QDebug>
 #include <QMessageBox>
@@ -24,13 +25,29 @@ QVector<AgvInfo> ListAgvInfo::loadAgvList()
     }
 
     QSqlQuery q(db);
-    q.prepare("SELECT agv_id, model, serial, status, alias, kilometers, blueprintPath, lastActive, "
-              "COALESCE(assigned_user, '') FROM agv_list ORDER BY created_at DESC");
-
-    if (!q.exec()) {
+    if (!q.exec(R"(
+        SELECT a.agv_id, a.model, a.serial, a.status, a.alias, a.kilometers,
+               a."blueprintPath", a."lastActive",
+               COALESCE(a.assigned_user, ''),
+               COALESCE(tf.has_overdue, 0),
+               COALESCE(tf.has_soon, 0)
+        FROM agv_list a
+        LEFT JOIN (
+            SELECT agv_id,
+                   MAX(CASE WHEN next_date <= CURRENT_DATE + 3 THEN 1 ELSE 0 END) AS has_overdue,
+                   MAX(CASE WHEN next_date > CURRENT_DATE + 3
+                             AND next_date <= CURRENT_DATE + 6 THEN 1 ELSE 0 END) AS has_soon
+            FROM agv_tasks
+            WHERE next_date IS NOT NULL
+            GROUP BY agv_id
+        ) tf ON tf.agv_id = a.agv_id
+        ORDER BY a.created_at DESC
+    )")) {
         qDebug() << "loadAgvList: запрос не выполнился:" << q.lastError().text();
         return list;
     }
+
+    list.reserve(4096);
 
     while (q.next()) {
         AgvInfo info;
@@ -38,9 +55,6 @@ QVector<AgvInfo> ListAgvInfo::loadAgvList()
         info.model        = q.value(1).toString();
         info.serial       = q.value(2).toString();
         info.status       = q.value(3).toString();
-        info.maintenanceState = "green";
-        info.hasOverdueMaintenance = false;
-        info.hasSoonMaintenance = false;
         info.task         = q.value(4).toString().trimmed();
         if (info.task == "—")
             info.task.clear();
@@ -49,59 +63,21 @@ QVector<AgvInfo> ListAgvInfo::loadAgvList()
         info.lastActive   = q.value(7).toDate();
         info.assignedUser = q.value(8).toString().trimmed();
 
+        const bool hasOverdue = q.value(9).toInt() > 0;
+        const bool hasSoon = q.value(10).toInt() > 0;
+        info.hasOverdueMaintenance = hasOverdue;
+        info.hasSoonMaintenance = hasSoon;
+        if (hasOverdue)
+            info.maintenanceState = "red";
+        else if (hasSoon)
+            info.maintenanceState = "orange";
+        else
+            info.maintenanceState = "green";
+
         if (info.blueprintPath.isEmpty())
             info.blueprintPath = ":/new/mainWindowIcons/noback/blueprint.png";
 
         list.push_back(info);
-    }
-
-    QMap<QString, QString> maintenanceByAgv;
-    QMap<QString, bool> hasOverdueByAgv;
-    QMap<QString, bool> hasSoonByAgv;
-    for (int i = 0; i < list.size(); ++i)
-    {
-        maintenanceByAgv[list[i].id] = "green";
-        hasOverdueByAgv[list[i].id] = false;
-        hasSoonByAgv[list[i].id] = false;
-    }
-
-    QSqlQuery tasksQ(db);
-    tasksQ.prepare(R"(
-        SELECT
-            agv_id,
-            MAX(CASE WHEN next_date <= DATE_ADD(CURDATE(), INTERVAL 3 DAY) THEN 1 ELSE 0 END) AS has_overdue,
-            MAX(CASE WHEN next_date > DATE_ADD(CURDATE(), INTERVAL 3 DAY)
-                      AND next_date <= DATE_ADD(CURDATE(), INTERVAL 6 DAY)
-                     THEN 1 ELSE 0 END) AS has_soon
-        FROM agv_tasks
-        GROUP BY agv_id
-    )");
-    if (tasksQ.exec()) {
-        while (tasksQ.next()) {
-            const QString agvId = tasksQ.value(0).toString();
-            if (!maintenanceByAgv.contains(agvId))
-                continue;
-
-            const bool hasOverdue = tasksQ.value(1).toInt() > 0;
-            const bool hasSoon = tasksQ.value(2).toInt() > 0;
-            if (hasOverdue) {
-                hasOverdueByAgv[agvId] = true;
-                maintenanceByAgv[agvId] = "red";
-            }
-            if (hasSoon) {
-                hasSoonByAgv[agvId] = true;
-                if (!hasOverdue)
-                    maintenanceByAgv[agvId] = "orange";
-            }
-        }
-    } else {
-        qDebug() << "loadAgvList: agv_tasks query failed:" << tasksQ.lastError().text();
-    }
-
-    for (int i = 0; i < list.size(); ++i) {
-        list[i].maintenanceState = maintenanceByAgv.value(list[i].id, "green");
-        list[i].hasOverdueMaintenance = hasOverdueByAgv.value(list[i].id, false);
-        list[i].hasSoonMaintenance = hasSoonByAgv.value(list[i].id, false);
     }
 
     const QString me = AppSession::currentUsername();
@@ -119,31 +95,51 @@ QVector<AgvInfo> ListAgvInfo::loadAgvList()
 
 void ListAgvInfo::addAgv(const AgvInfo &info)
 {
-    AgvItem *item = new AgvItem(info, s, content);
+    QVector<AgvInfo> agvs = loadAgvList();
+    agvs.prepend(info);
+    rebuildList(agvs);
+}
 
-    connect(item, &AgvItem::openDetailsRequested, this, [this](const QString &id){
-        emit openAgvDetails(id);
-    });
+bool insertAgvToDb(const AgvInfo &info)
+{
+    QSqlDatabase db = QSqlDatabase::database("main_connection");
+    if (!db.isOpen())
+        return false;
 
-    int count = layout->count();
-    if (count > 0) {
-        QLayoutItem *last = layout->itemAt(count - 1);
-        if (last->spacerItem()) {
-            layout->insertWidget(count - 1, item);
-        } else {
-            layout->addWidget(item);
-        }
-    } else {
-        layout->addWidget(item);
-        layout->addStretch();
+    QSqlQuery q(db);
+    q.prepare(R"(
+        INSERT INTO agv_list
+        (agv_id, model, serial, status, alias, kilometers, "blueprintPath", "lastActive")
+        VALUES (:agv_id, :model, :serial, :status, :alias, :kilometers, :blueprintPath, :lastActive)
+    )");
+    q.bindValue(":agv_id", info.id);
+    q.bindValue(":model", info.model);
+    q.bindValue(":serial", info.serial);
+    q.bindValue(":status", info.status);
+    q.bindValue(":alias", info.task);
+    q.bindValue(":kilometers", info.kilometers);
+    q.bindValue(":blueprintPath", info.blueprintPath);
+    q.bindValue(":lastActive", info.lastActive.isValid() ? info.lastActive : QVariant());
+
+    if (!q.exec()) {
+        qDebug() << "insertAgvToDb failed:" << q.lastError().text();
+        return false;
     }
+
+    logAction(AppSession::currentUsername(),
+              QStringLiteral("agv_created"),
+              QStringLiteral("Создан AGV: %1; модель=%2; serial=%3")
+                  .arg(info.id, info.model, info.serial));
+
+    DataBus::instance().triggerAgvListChanged();
+    return true;
 }
 
 static bool deleteAgvFromDb(const QString &id)
 {
-    QSqlQuery q(QSqlDatabase::database("main_connection"));
-    q.prepare("DELETE FROM agv_list WHERE agv_id = :id");
-    q.bindValue(":id", id);
+    QSqlQuery q(QSqlDatabase::database(QStringLiteral("main_connection")));
+    q.prepare(QStringLiteral("DELETE FROM agv_list WHERE agv_id = :id"));
+    q.bindValue(QStringLiteral(":id"), id);
 
     if (!q.exec()) {
         qDebug() << "Ошибка удаления AGV из БД:" << q.lastError().text();
@@ -151,9 +147,8 @@ static bool deleteAgvFromDb(const QString &id)
     }
 
     logAction(AppSession::currentUsername(),
-              "agv_deleted",
-              QString("Удален AGV: %1").arg(id));
-
+              QStringLiteral("agv_deleted"),
+              QStringLiteral("Удален AGV: %1").arg(id));
     return true;
 }
 
@@ -164,60 +159,8 @@ void ListAgvInfo::removeAgvById(const QString &id)
         return;
     }
 
-    for (int i = 0; i < layout->count(); ++i) {
-        QLayoutItem *it = layout->itemAt(i);
-        QWidget *w = it ? it->widget() : nullptr;
-        AgvItem *agvItem = qobject_cast<AgvItem*>(w);
-
-        if (agvItem && agvItem->agvId() == id) {
-            layout->removeItem(it);
-            agvItem->deleteLater();
-            delete it;
-            break;
-        }
-    }
-
     QVector<AgvInfo> agvs = loadAgvList();
     rebuildList(agvs);
-    qDebug() << "AGV" << id << "успешно удалён из БД и UI";
-}
-
-bool insertAgvToDb(const AgvInfo &info)
-{
-    QSqlDatabase db = QSqlDatabase::database("main_connection");
-    if (!db.isOpen()) {
-        qDebug() << "insertAgvToDb: main_connection НЕ ОТКРЫТА!";
-        return false;
-    }
-
-    QSqlQuery q(db);
-    q.prepare(R"(
-        INSERT INTO agv_list
-        (agv_id, model, serial, status, alias, kilometers, blueprintPath, lastActive)
-        VALUES (:agv_id, :model, :serial, :status, :alias, :kilometers, :blueprintPath, :lastActive)
-    )");
-
-    q.bindValue(":agv_id", info.id);
-    q.bindValue(":model", info.model);
-    q.bindValue(":serial", info.serial);
-    q.bindValue(":status", info.status);
-    q.bindValue(":alias", info.task);
-    q.bindValue(":kilometers", info.kilometers);
-    q.bindValue(":blueprintPath", info.blueprintPath);
-    q.bindValue(":lastActive", info.lastActive);
-
-    if (!q.exec()) {
-        qDebug() << "Ошибка вставки AGV:" << q.lastError().text();
-        return false;
-    }
-    db.commit();
-    qDebug() << "AGV добавлен в БД:" << db.hostName() << db.databaseName() << "agv_id=" << info.id;
-
-    logAction(AppSession::currentUsername(),
-              "agv_created",
-              QString("Создан AGV: %1; модель=%2; serial=%3")
-                  .arg(info.id, info.model, info.serial));
-
-    emit DataBus::instance().agvListChanged();
-    return true;
+    emit agvListChanged();
+    DataBus::instance().triggerAgvListChanged();
 }

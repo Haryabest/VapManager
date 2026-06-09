@@ -95,7 +95,7 @@ void touchUserPresence(const QString &username)
         return;
 
     QSqlQuery q(db);
-    q.prepare("UPDATE users SET last_login = NOW() WHERE username = :u AND is_active = 1");
+    q.prepare("UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE username = :u AND is_active = TRUE");
     q.bindValue(":u", u);
     if (q.exec())
         s_lastTouchAt.insert(u, now);

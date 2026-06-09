@@ -1,7 +1,9 @@
 #include "db_users_internal_state.h"
 
+#include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QDateTime>
+#include <QDir>
 #include <QFile>
 #include <QPixmap>
 #include <QUuid>
@@ -92,14 +94,21 @@ QString hashPassword(const QString &password)
     return QString::fromLatin1(hash.toHex());
 }
 
+static QString appConfigDir()
+{
+    const QString dir = QCoreApplication::applicationDirPath() + QStringLiteral("/config");
+    QDir().mkpath(dir);
+    return dir;
+}
+
 QString rememberTokenFilePath()
 {
-    return QStringLiteral("config/remember_me.txt");
+    return appConfigDir() + QStringLiteral("/remember_me.txt");
 }
 
 QString sessionTokenFilePath()
 {
-    return QStringLiteral("config/session_token.txt");
+    return appConfigDir() + QStringLiteral("/session_token.txt");
 }
 
 bool writeTextFile(const QString &path, const QString &value)

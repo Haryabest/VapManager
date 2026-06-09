@@ -50,6 +50,7 @@ SOURCES += \
     src/features/chat/ui/internal/taskchatdialog_impl.cpp \
     src/core/events/databus.cpp \
     src/data/db/db.cpp \
+    src/data/db/db_tables.cpp \
     src/data/repositories/db_agv_tasks.cpp \
     src/data/repositories/db_agv_errors.cpp \
     src/data/repositories/db_models.cpp \
@@ -63,6 +64,7 @@ SOURCES += \
     src/data/repositories/db_users_avatar_presence.cpp \
     src/data/repositories/internal/db_users_internal_state.cpp \
     src/features/shell/ui/internal/leftmenu_calendar_utils.cpp \
+    src/features/shell/ui/internal/leftmenu_calendar_grid.cpp \
     src/features/shell/ui/internal/leftmenu_settings_dialogs.cpp \
     src/features/shell/ui/leftmenu.cpp \
     src/features/agv/ui/listagvinfo.cpp \
@@ -93,6 +95,7 @@ HEADERS += \
     src/features/agv/ui/internal/listagvinfo_ui_modules.h \
     src/core/events/databus.h \
     src/data/db/db.h \
+    src/data/db/db_tables.h \
     src/data/repositories/db_agv_tasks.h \
     src/data/repositories/db_agv_errors.h \
     src/data/repositories/db_models.h \

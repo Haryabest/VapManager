@@ -58,24 +58,35 @@ if not exist "%OUT_DIR%\platforms\qwindows.dll" (
 
 if exist "%OUT_DIR%\sqldrivers\qsqlite.dll" del /q "%OUT_DIR%\sqldrivers\qsqlite.dll"
 if exist "%OUT_DIR%\sqldrivers\qsqlodbc.dll" del /q "%OUT_DIR%\sqldrivers\qsqlodbc.dll"
-if exist "%OUT_DIR%\sqldrivers\qsqlpsql.dll" del /q "%OUT_DIR%\sqldrivers\qsqlpsql.dll"
+if exist "%OUT_DIR%\sqldrivers\qsqlmysql.dll" del /q "%OUT_DIR%\sqldrivers\qsqlmysql.dll"
+if exist "%OUT_DIR%\libmysql.dll" del /q "%OUT_DIR%\libmysql.dll"
 
-if not exist "%OUT_DIR%\sqldrivers\qsqlmysql.dll" if exist "C:\Qt\Qt5.14.2\5.14.2\mingw73_64\plugins\sqldrivers\qsqlmysql.dll" (
-  copy /Y "C:\Qt\Qt5.14.2\5.14.2\mingw73_64\plugins\sqldrivers\qsqlmysql.dll" "%OUT_DIR%\sqldrivers\" >nul
+if not exist "%OUT_DIR%\sqldrivers\qsqlpsql.dll" if exist "C:\Qt\Qt5.14.2\5.14.2\mingw73_64\plugins\sqldrivers\qsqlpsql.dll" (
+  copy /Y "C:\Qt\Qt5.14.2\5.14.2\mingw73_64\plugins\sqldrivers\qsqlpsql.dll" "%OUT_DIR%\sqldrivers\" >nul
 )
 
-set "LIBMYSQL_SRC="
-if exist "C:\Program Files\MySQL\MySQL Server 9.6\lib\libmysql.dll" set "LIBMYSQL_SRC=C:\Program Files\MySQL\MySQL Server 9.6\lib\libmysql.dll"
-if "%LIBMYSQL_SRC%"=="" if exist "C:\Program Files\MySQL\MySQL Server 8.4\lib\libmysql.dll" set "LIBMYSQL_SRC=C:\Program Files\MySQL\MySQL Server 8.4\lib\libmysql.dll"
-if "%LIBMYSQL_SRC%"=="" if exist "C:\Program Files\MySQL\MySQL Server 8.0\lib\libmysql.dll" set "LIBMYSQL_SRC=C:\Program Files\MySQL\MySQL Server 8.0\lib\libmysql.dll"
-if not "%LIBMYSQL_SRC%"=="" copy /Y "%LIBMYSQL_SRC%" "%OUT_DIR%\libmysql.dll" >nul
+set "PG_BIN="
+if exist "C:\Program Files\PostgreSQL\16\bin\libpq.dll" set "PG_BIN=C:\Program Files\PostgreSQL\16\bin"
+if "%PG_BIN%"=="" if exist "C:\Program Files\PostgreSQL\15\bin\libpq.dll" set "PG_BIN=C:\Program Files\PostgreSQL\15\bin"
+if not "%PG_BIN%"=="" (
+  copy /Y "%PG_BIN%\libpq.dll" "%OUT_DIR%\" >nul
+  copy /Y "%PG_BIN%\libssl-3-x64.dll" "%OUT_DIR%\" >nul 2>nul
+  copy /Y "%PG_BIN%\libcrypto-3-x64.dll" "%OUT_DIR%\" >nul 2>nul
+)
 
 copy /Y "%~dp0install_agv_manager_db.sql" "%OUT_DIR%\install_agv_manager_db.sql" >nul
 
-(
-echo [General]
-echo db_host=localhost
-) > "%OUT_DIR%\config.ini"
+copy /Y "%~dp0config.ini" "%OUT_DIR%\config.ini" >nul 2>nul
+if not exist "%OUT_DIR%\config.ini" (
+  (
+  echo db_host=localhost
+  echo db_port=5432
+  echo db_name=agv_manager_db
+  echo db_user=vapmanager
+  echo db_password=vapmanager_change_me
+  echo language=ru
+  ) > "%OUT_DIR%\config.ini"
+)
 
 (
 echo [Paths]
@@ -90,5 +101,5 @@ echo.
 echo [OK] Portable VapManager:
 echo   %OUT_DIR%\VapManager.exe
 echo.
-dir /b "%OUT_DIR%\VapManager.exe" "%OUT_DIR%\libmysql.dll" "%OUT_DIR%\sqldrivers\qsqlmysql.dll" "%OUT_DIR%\platforms\qwindows.dll" 2>nul
+dir /b "%OUT_DIR%\VapManager.exe" "%OUT_DIR%\libpq.dll" "%OUT_DIR%\sqldrivers\qsqlpsql.dll" "%OUT_DIR%\platforms\qwindows.dll" 2>nul
 exit /b 0

@@ -1,4 +1,5 @@
 #include "db_task_chat.h"
+#include "db_tables.h"
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlError>
@@ -62,60 +63,50 @@ TaskChatMessage rowToMessage(const QSqlQuery &q)
 bool initTaskChatTables()
 {
     QSqlDatabase db = openMainDb();
-    if (!db.isOpen()) return false;
+    if (!db.isOpen())
+        return false;
 
-    QSqlQuery q(db);
-    if (!q.exec(R"(
+    const struct { const char *name; const char *sql; } tables[] = {
+        {"task_chat_threads", R"(
         CREATE TABLE IF NOT EXISTS task_chat_threads (
-            id INT AUTO_INCREMENT PRIMARY KEY,
+            id SERIAL PRIMARY KEY,
             agv_id VARCHAR(64) NOT NULL,
             task_id INT NULL,
             task_name VARCHAR(255) NULL,
             created_by VARCHAR(64) NOT NULL,
             recipient_user VARCHAR(64) NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            closed_at DATETIME NULL,
-            closed_by VARCHAR(64) NULL,
-            INDEX idx_created_by (created_by),
-            INDEX idx_recipient (recipient_user),
-            INDEX idx_closed (closed_at)
-        )
-    )")) return false;
-
-    if (!q.exec(R"(
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            closed_at TIMESTAMP NULL,
+            closed_by VARCHAR(64) NULL
+        ))"},
+        {"task_chat_messages", R"(
         CREATE TABLE IF NOT EXISTS task_chat_messages (
-            id INT AUTO_INCREMENT PRIMARY KEY,
+            id SERIAL PRIMARY KEY,
             thread_id INT NOT NULL,
             from_user VARCHAR(64) NOT NULL,
-            message MEDIUMTEXT NOT NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            INDEX idx_thread (thread_id)
-        )
-    )")) return false;
-
-    // Для вложений (base64) увеличиваем емкость поля сообщения на существующих БД.
-    q.exec("ALTER TABLE task_chat_messages MODIFY COLUMN message MEDIUMTEXT NOT NULL");
-
-    if (!q.exec(R"(
+            message TEXT NOT NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        ))"},
+        {"task_chat_hidden", R"(
         CREATE TABLE IF NOT EXISTS task_chat_hidden (
             thread_id INT NOT NULL,
             username VARCHAR(64) NOT NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (thread_id, username),
-            INDEX idx_hidden_user (username)
-        )
-    )")) return false;
-
-    if (!q.exec(R"(
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (thread_id, username)
+        ))"},
+        {"task_chat_message_hidden", R"(
         CREATE TABLE IF NOT EXISTS task_chat_message_hidden (
             message_id INT NOT NULL,
             username VARCHAR(64) NOT NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (message_id, username),
-            INDEX idx_msg_hidden_user (username)
-        )
-    )")) return false;
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (message_id, username)
+        ))"},
+    };
 
+    for (const auto &t : tables) {
+        if (!ensureDbTable(db, QString::fromLatin1(t.name), QString::fromLatin1(t.sql)))
+            return false;
+    }
     return true;
 }
 
@@ -194,7 +185,7 @@ bool closeThread(int threadId, const QString &closedBy, QString &error)
     if (!ensureDbAvailable(db, error)) { return false; }
 
     QSqlQuery q(db);
-    q.prepare("UPDATE task_chat_threads SET closed_at = NOW(), closed_by = :by WHERE id = :id");
+    q.prepare("UPDATE task_chat_threads SET closed_at = CURRENT_TIMESTAMP, closed_by = :by WHERE id = :id");
     q.bindValue(":by", closedBy);
     q.bindValue(":id", threadId);
     if (!q.exec()) {
@@ -235,7 +226,7 @@ bool hideThreadForUser(int threadId, const QString &username, QString &error)
     if (u.isEmpty()) { error = "Пользователь не задан"; return false; }
 
     QSqlQuery q(db);
-    q.prepare("INSERT IGNORE INTO task_chat_hidden (thread_id, username) VALUES (:tid, :u)");
+    q.prepare("INSERT INTO task_chat_hidden (thread_id, username) VALUES (:tid, :u) ON CONFLICT DO NOTHING");
     q.bindValue(":tid", threadId);
     q.bindValue(":u", u);
     if (!q.exec()) {
@@ -252,7 +243,7 @@ bool hideMessageForUser(int messageId, const QString &username, QString &error)
     const QString u = normalizedUsername(username);
     if (u.isEmpty()) { error = "Пользователь не задан"; return false; }
     QSqlQuery q(db);
-    q.prepare("INSERT IGNORE INTO task_chat_message_hidden (message_id, username) VALUES (:mid, :u)");
+    q.prepare("INSERT INTO task_chat_message_hidden (message_id, username) VALUES (:mid, :u) ON CONFLICT DO NOTHING");
     q.bindValue(":mid", messageId);
     q.bindValue(":u", u);
     if (!q.exec()) { error = q.lastError().text(); return false; }

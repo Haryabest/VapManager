@@ -425,7 +425,7 @@ ListAgvInfo::ListAgvInfo(std::function<int(int)> scale, QWidget *parent)
 
                     QSqlQuery q(db);
                     q.prepare(QString(
-                        "SELECT agv_id, model, serial, status, alias, kilometers, blueprintPath, lastActive "
+                        "SELECT agv_id, model, serial, status, alias, kilometers, \"blueprintPath\", \"lastActive\" "
                         "FROM agv_list WHERE agv_id IN (%1)").arg(placeholders.join(",")));
                     for (int i = 0; i < count; ++i)
                         q.bindValue(QString(":id%1").arg(i), ids[offset + i]);

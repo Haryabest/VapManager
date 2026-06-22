@@ -1,5 +1,6 @@
 #include "db_task_chat.h"
 #include "db_tables.h"
+#include "chat_message_crypto.h"
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlError>
@@ -53,7 +54,7 @@ TaskChatMessage rowToMessage(const QSqlQuery &q)
     m.id = q.value(0).toInt();
     m.threadId = q.value(1).toInt();
     m.fromUser = q.value(2).toString();
-    m.message = q.value(3).toString();
+    m.message = ChatMessageCrypto::decrypt(q.value(3).toString());
     m.createdAt = q.value(4).toDateTime();
     return m;
 }
@@ -139,7 +140,7 @@ int createThread(const QString &agvId, int taskId, const QString &taskName,
     q.prepare("INSERT INTO task_chat_messages (thread_id, from_user, message) VALUES (:tid, :u, :m)");
     q.bindValue(":tid", threadId);
     q.bindValue(":u", createdBy);
-    q.bindValue(":m", firstMessage);
+    q.bindValue(":m", ChatMessageCrypto::encrypt(firstMessage));
     if (!q.exec()) {
         error = q.lastError().text();
         QSqlQuery del(db);
@@ -171,7 +172,7 @@ bool addChatMessage(int threadId, const QString &fromUser, const QString &messag
     q.prepare("INSERT INTO task_chat_messages (thread_id, from_user, message) VALUES (:tid, :u, :m)");
     q.bindValue(":tid", threadId);
     q.bindValue(":u", fromUser);
-    q.bindValue(":m", message);
+    q.bindValue(":m", ChatMessageCrypto::encrypt(message));
     if (!q.exec()) {
         error = q.lastError().text();
         return false;
@@ -264,9 +265,49 @@ bool deleteMessage(int messageId, const QString &actingUser, QString &error)
     bool canDelete = (actingUser == author) || (role == "admin" || role == "tech");
     if (!canDelete) { error = "Нет прав удалить сообщение"; return false; }
     q.prepare("UPDATE task_chat_messages SET message = :m WHERE id = :id");
-    q.bindValue(":m", QStringLiteral("Сообщение удалено"));
+    q.bindValue(":m", ChatMessageCrypto::encrypt(QStringLiteral("Сообщение удалено")));
     q.bindValue(":id", messageId);
     if (!q.exec()) { error = q.lastError().text(); return false; }
+    return true;
+}
+
+bool updateChatMessageText(int messageId, const QString &actingUser, const QString &newText, QString &error)
+{
+    QSqlDatabase db = openMainDb();
+    if (!ensureDbAvailable(db, error))
+        return false;
+
+    QSqlQuery q(db);
+    q.prepare("SELECT from_user FROM task_chat_messages WHERE id = :id");
+    q.bindValue(":id", messageId);
+    if (!q.exec() || !q.next()) {
+        error = QStringLiteral("Сообщение не найдено");
+        return false;
+    }
+
+    const QString author = q.value(0).toString();
+    QString role;
+    {
+        QSqlQuery r(db);
+        r.prepare("SELECT role FROM users WHERE username = :u");
+        r.bindValue(":u", actingUser);
+        if (r.exec() && r.next())
+            role = r.value(0).toString();
+    }
+
+    const bool canEdit = (actingUser == author) || (role == QStringLiteral("admin") || role == QStringLiteral("tech"));
+    if (!canEdit) {
+        error = QStringLiteral("Нет прав изменить сообщение");
+        return false;
+    }
+
+    q.prepare("UPDATE task_chat_messages SET message = :m WHERE id = :id");
+    q.bindValue(":m", ChatMessageCrypto::encrypt(newText.trimmed()));
+    q.bindValue(":id", messageId);
+    if (!q.exec()) {
+        error = q.lastError().text();
+        return false;
+    }
     return true;
 }
 

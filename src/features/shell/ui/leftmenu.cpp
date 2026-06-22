@@ -500,6 +500,8 @@ void leftMenu::setScaleFactor(qreal factor)
     setUpdatesEnabled(false);
     disconnect(&DataBus::instance(), nullptr, this, nullptr);
 
+    destroyCalendarDayOverlay();
+
     if (QLayout *old = layout()) {
         QLayoutItem *item;
         while ((item = old->takeAt(0)) != nullptr) {
@@ -1923,7 +1925,11 @@ void leftMenu::initUI()
         if (logsTable) logsTable->setRowCount(0);
         showCalendar();
     });
-    connect(logsRefresh, &QPushButton::clicked, this, [this](){ reloadLogs(lastLogsMaxRows_); });
+    connect(logsRefresh, &QPushButton::clicked, this, [this](){
+        logsStale_ = true;
+        reloadingLogs_ = false;
+        reloadLogs(lastLogsMaxRows_);
+    });
     if (logsLoadAllBtn) {
         connect(logsLoadAllBtn, &QPushButton::clicked, this, [this](){ reloadLogs(0); });
     }
@@ -2129,12 +2135,16 @@ void leftMenu::initUI()
     {
         connect(listAgvInfo, &ListAgvInfo::agvListChanged,
                 this, &leftMenu::updateAgvCounter);
+        connect(listAgvInfo, &ListAgvInfo::agvListChanged, this, [this]() {
+            logsStale_ = true;
+        });
 
     }
 
     // Моментальное обновление счётчика при изменениях через DataBus.
     connect(&DataBus::instance(), &DataBus::agvListChanged,
             this, [this](){
+                logsStale_ = true;
                 invalidateCalendarEventsCache();
                 updateAgvCounter();
                 updateSystemStatus();
@@ -2240,6 +2250,7 @@ void leftMenu::restoreActivePage()
 void leftMenu::showAgvList()
 {
     activePage_ = ActivePage::AgvList;
+    logsStale_ = true;
     hideAllPages();
     clearSearch();
 
@@ -2280,14 +2291,60 @@ void leftMenu::showCalendar()
 // ======================= ДЕТАЛЬНАЯ СТРАНИЦА AGV =======================
 //
 
+void leftMenu::destroyCalendarDayOverlay()
+{
+    if (!calendarDayOverlay_)
+        return;
+    calendarDayOverlay_->hide();
+    delete calendarDayOverlay_;
+    calendarDayOverlay_ = nullptr;
+}
+
+void leftMenu::hideCalendarDayOverlay()
+{
+    if (calendarDayOverlay_)
+        calendarDayOverlay_->hide();
+}
+
+void leftMenu::openAgvTaskFromCalendar(const QString &agvId, const QString &taskTitle)
+{
+    const QString id = agvId.trimmed();
+    if (id.isEmpty() || !agvSettingsPage)
+        return;
+
+    hideCalendarDayOverlay();
+
+    showAgvDetailInfo(id);
+
+    QString taskName = taskTitle.trimmed();
+    static const QString kCompletedSuffix = QStringLiteral(" (обслужена)");
+    if (taskName.endsWith(kCompletedSuffix))
+        taskName.chop(kCompletedSuffix.size());
+
+    if (taskName.isEmpty())
+        return;
+
+    QTimer::singleShot(0, this, [this, taskName]() {
+        if (agvSettingsPage)
+            agvSettingsPage->highlightTask(taskName);
+    });
+}
+
 void leftMenu::showAgvDetailInfo(const QString &agvId)
 {
+    const QString id = agvId.trimmed();
+    if (id.isEmpty() || !agvSettingsPage)
+        return;
+
+    hideCalendarDayOverlay();
+
     activePage_ = ActivePage::AgvDetails;
-    activeAgvId_ = agvId;
+    logsStale_ = true;
+    activeAgvId_ = id;
     hideAllPages();
     clearSearch();
 
-    agvSettingsPage->loadAgv(agvId);
+    agvSettingsPage->loadAgv(id);
     agvSettingsPage->setVisible(true);
     stressSuiteLogPageEntered(QStringLiteral("agv_detail"));
 }
@@ -2405,6 +2462,8 @@ void leftMenu::setSelectedMonthYear(int month, int year)
 
     setUpdatesEnabled(false);
     disconnect(&DataBus::instance(), nullptr, this, nullptr);
+
+    destroyCalendarDayOverlay();
 
     // Полностью пересоздаём UI под новый месяц (без изменения scale).
     // Важно: setScaleFactor(scaleFactor_) тут не подходит, т.к. внутри стоит ранний return
@@ -4190,7 +4249,7 @@ QVector<CalendarEvent> leftMenu::loadCalendarEventsRange(const QDate &from, cons
         ev.date = nextDate;
 
         const int daysLeft = today.daysTo(nextDate);
-        if (daysLeft <= 3) ev.severity = "overdue";
+        if (daysLeft < 0) ev.severity = "overdue";
         else if (daysLeft < 7) ev.severity = "soon";
         else ev.severity = "planned";
         events.push_back(ev);
@@ -4341,7 +4400,7 @@ QVector<MaintenanceItemData> leftMenu::loadUpcomingMaintenance(int month, int ye
             a.assignedUser = assignedUser;
         }
 
-        if (daysLeft <= 3) {
+        if (daysLeft < 0) {
             a.overdueCount++;
 
             if (!a.bestOverdueDate.isValid() ||
@@ -4488,7 +4547,8 @@ void leftMenu::showLogs()
     // стресс-теста календаря (когда показывали только календарь) при restore на «Логи»
     // activePage_ уже Logs, и мы бы пропустили hideAllPages: календарь+ТО остались бы видимыми.
     const bool skipHeavyReload = (activePage_ == ActivePage::Logs)
-        && logsTable && logsTable->rowCount() > 0;
+        && logsTable && logsTable->rowCount() > 0
+        && !logsStale_;
 
     activePage_ = ActivePage::Logs;
     hideAllPages();
@@ -4510,13 +4570,14 @@ void leftMenu::showLogs()
     const bool recentReload = lastLogsReloadTimer_.isValid()
                            && lastLogsReloadTimer_.elapsed() < logDebounceMs;
     const bool hasRenderedRows = logsTable && logsTable->rowCount() > 0;
-    if (recentReload && hasRenderedRows) {
+    if (!logsStale_ && recentReload && hasRenderedRows) {
         stressSuiteLogPageEntered(QStringLiteral("logs"));
         return;
     }
 
     // После тяжёлых сценариев reloadLogs мог не дойти до конца — снимаем залипание.
     reloadingLogs_ = false;
+    logsStale_ = false;
     reloadLogs(lastLogsMaxRows_);
     stressSuiteLogPageEntered(QStringLiteral("logs"));
 }
@@ -4529,10 +4590,33 @@ static const QStringList AGV_ACTIONS = {
 
 void leftMenu::reloadLogs(int maxRows)
 {
-    if (!logsTable || reloadingLogs_)
+    if (!logsTable) {
+        reloadingLogs_ = false;
         return;
+    }
+    if (reloadingLogs_) {
+        logsReloadPending_ = true;
+        lastLogsMaxRows_ = maxRows;
+        return;
+    }
     reloadingLogs_ = true;
+    logsReloadPending_ = false;
     lastLogsMaxRows_ = maxRows;
+
+    struct LogsReloadGuard {
+        leftMenu *menu;
+        explicit LogsReloadGuard(leftMenu *m) : menu(m) {}
+        ~LogsReloadGuard()
+        {
+            menu->reloadingLogs_ = false;
+            if (menu->logsReloadPending_) {
+                menu->logsReloadPending_ = false;
+                QTimer::singleShot(0, menu, [menu]() {
+                    menu->reloadLogs(menu->lastLogsMaxRows_);
+                });
+            }
+        }
+    } guard(this);
 
     struct Row { QString time, source, user, category, details; };
     QVector<Row> rows;
@@ -4540,6 +4624,11 @@ void leftMenu::reloadLogs(int maxRows)
     QSet<QString> uniqueUsers, uniqueSources, uniqueCategories;
 
     QString filterUser = logFilterUser_ ? logFilterUser_->currentData().toString() : "";
+    if (filterUser.isEmpty()) {
+        const QString me = AppSession::currentUsername().trimmed();
+        if (!me.isEmpty())
+            filterUser = me;
+    }
     QString filterSource = logFilterSource_ ? logFilterSource_->currentData().toString() : "";
     QString filterCategory = logFilterCategory_ ? logFilterCategory_->currentData().toString() : "";
     QString filterTime = logFilterTime_ ? logFilterTime_->currentData().toString() : "";
@@ -4690,8 +4779,6 @@ void leftMenu::reloadLogs(int maxRows)
         }
         int idx = logFilterCategory_->findData(cur);
         if (idx >= 0) logFilterCategory_->setCurrentIndex(idx);
-        else if (logFilterCategory_->findData("agv_actions") >= 0 && cur.isEmpty())
-            logFilterCategory_->setCurrentIndex(logFilterCategory_->findData("agv_actions"));
         logFilterCategory_->blockSignals(false);
     }
 
@@ -4730,7 +4817,6 @@ void leftMenu::reloadLogs(int maxRows)
     logsTable->setUpdatesEnabled(true);
     logsTable->viewport()->update();
     lastLogsReloadTimer_.restart();
-    reloadingLogs_ = false;
 }
 
 void leftMenu::showProfile()

@@ -19,6 +19,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
     src/core/logging/diag_logger.cpp \
+    src/core/crypto/chat_message_crypto.cpp \
     src/features/account/ui/accountinfodialog.cpp \
     src/core/session/app_session.cpp \
     src/features/agv/ui/addagvdialog.cpp \
@@ -113,6 +114,7 @@ HEADERS += \
     src/features/notifications/ui/notifications_logs.h \
     src/features/chat/ui/taskchatdialog.h \
     src/core/logging/ui_action_logger.h \
+    src/core/crypto/chat_message_crypto.h \
     src/features/users/ui/userspage.h
 
 FORMS +=
@@ -130,6 +132,7 @@ INCLUDEPATH += \
     src/core/session \
     src/core/events \
     src/core/logging \
+    src/core/crypto \
     src/data/db \
     src/data/repositories
 

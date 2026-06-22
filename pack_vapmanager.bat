@@ -83,7 +83,7 @@ if not exist "%OUT_DIR%\config.ini" (
   echo db_port=5432
   echo db_name=agv_manager_db
   echo db_user=vapmanager
-  echo db_password=vapmanager_change_me
+  echo db_password=51525354
   echo language=ru
   ) > "%OUT_DIR%\config.ini"
 )

@@ -135,7 +135,10 @@ QString getDbUser()
 
 QString getDbPassword()
 {
-    return portableSettings()->value(KEY_PASSWORD).toString();
+    const QString fromCfg = portableSettings()->value(KEY_PASSWORD).toString().trimmed();
+    if (!fromCfg.isEmpty())
+        return fromCfg;
+    return QStringLiteral("51525354");
 }
 
 bool connectToDB(QString *outError)
@@ -226,6 +229,11 @@ bool connectToDB(QString *outError)
 
 bool reconnectWithHost(const QString &host, QString *outError)
 {
+    return reconnectWithSettings(host, getDbPassword(), outError);
+}
+
+bool reconnectWithSettings(const QString &host, const QString &password, QString *outError)
+{
     QString h = host.trimmed();
     int port = getDbPort();
     const int colonPos = h.lastIndexOf(':');
@@ -240,6 +248,7 @@ bool reconnectWithHost(const QString &host, QString *outError)
     QSettings *s = portableSettings();
     s->setValue(KEY_HOST, h.isEmpty() ? QStringLiteral("localhost") : h);
     s->setValue(KEY_PORT, port);
+    s->setValue(KEY_PASSWORD, password);
     s->sync();
 
     removeMainConnection();

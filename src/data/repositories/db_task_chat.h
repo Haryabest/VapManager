@@ -38,6 +38,7 @@ bool hideThreadForUser(int threadId, const QString &username, QString &error);
 bool hideMessageForUser(int messageId, const QString &username, QString &error);
 /// Удалить сообщение для всех (только админ или автор сообщения)
 bool deleteMessage(int messageId, const QString &actingUser, QString &error);
+bool updateChatMessageText(int messageId, const QString &actingUser, const QString &newText, QString &error);
 QVector<TaskChatThread> getThreadsForUser(const QString &username);
 QVector<TaskChatThread> getThreadsForAdmin(const QString &adminUsername);
 /// Найти тред между двумя пользователями (участники: user1 и user2). optionalAgvId — при желании фильтр по agv_id.

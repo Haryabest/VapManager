@@ -189,6 +189,7 @@ int run(int argc, char *argv[])
 
         QLineEdit *hostEdit = new QLineEdit(&dbDlg);
         hostEdit->setText(getDbHost());
+        hostEdit->setPlaceholderText(QStringLiteral("192.168.1.10"));
         layout->addWidget(hostEdit);
 
         QLabel *errLabel = new QLabel(&dbDlg);

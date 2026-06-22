@@ -22,9 +22,7 @@ void leftMenu::refreshCalendarMonthLight()
         monthLabel->setText(monthYearLabelText(selectedMonth_, selectedYear_));
     updateCalendarNavButtons();
     if (calendarDayOverlay_) {
-        calendarDayOverlay_->hide();
-        delete calendarDayOverlay_;
-        calendarDayOverlay_ = nullptr;
+        destroyCalendarDayOverlay();
     }
     if (calendarTablePtr && rightCalendarLayout_) {
         rightCalendarLayout_->removeWidget(calendarTablePtr);
@@ -378,11 +376,14 @@ void leftMenu::buildCalendarTable()
             return;
 
         const QVector<CalendarEvent> dayEvents = calendarEventsByDate_.value(date);
-        if (calendarDayOverlay_->isVisible() && overlayDate == date) {
+        if (calendarDayOverlay_ && calendarDayOverlay_->isVisible() && overlayDate == date) {
             calendarDayOverlay_->hide();
             overlayDate = QDate();
             return;
         }
+
+        if (!calendarDayOverlay_)
+            return;
 
         QRect cellRect = calendarTable->visualRect(calendarTable->model()->index(r, c));
         QPoint globalTopLeft = calendarTable->viewport()->mapToGlobal(cellRect.topLeft());
@@ -461,10 +462,7 @@ void leftMenu::buildCalendarTable()
             taskBtn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
             taskBtn->setToolTip(fullText);
             connect(taskBtn, &QPushButton::clicked, this, [this, ev](){
-                calendarDayOverlay_->hide();
-                showAgvDetailInfo(ev.agvId);
-                if (agvSettingsPage)
-                    agvSettingsPage->highlightTask(ev.taskTitle);
+                openAgvTaskFromCalendar(ev.agvId, ev.taskTitle);
             });
             rowLayout->addWidget(taskBtn, 1, Qt::AlignVCenter);
             dayOverlayTasksLayout->addWidget(rowHost);

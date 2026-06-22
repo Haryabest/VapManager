@@ -130,6 +130,9 @@ private:
     void showAgvList();
     void showCalendar();
     void showAgvDetailInfo(const QString &agvId);
+    void openAgvTaskFromCalendar(const QString &agvId, const QString &taskTitle);
+    void destroyCalendarDayOverlay();
+    void hideCalendarDayOverlay();
     void showModelList();
     void showLogs();
     void reloadLogs(int maxRows = 2000);
@@ -272,6 +275,8 @@ private:
     QComboBox *logFilterCategory_ = nullptr;
     QComboBox *logFilterTime_ = nullptr;
     bool reloadingLogs_ = false;
+    bool logsReloadPending_ = false;
+    bool logsStale_ = false;
     int lastLogsMaxRows_ = 2000;
     QElapsedTimer lastLogsReloadTimer_;
     QString lastChatsListSignature_;

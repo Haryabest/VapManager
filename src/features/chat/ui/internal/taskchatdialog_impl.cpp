@@ -2245,14 +2245,13 @@ void TaskChatWidget::showMessageContextMenu(const QPoint &globalPos)
         bool ok = false;
         const QString edited = QInputDialog::getText(this, "Изменить сообщение", "Текст:", QLineEdit::Normal, text, &ok);
         if (ok && !edited.trimmed().isEmpty()) {
-            QSqlDatabase db = QSqlDatabase::database("main_connection");
-            QSqlQuery q(db);
-            q.prepare("UPDATE task_chat_messages SET message = :m WHERE id = :id");
-            q.bindValue(":m", edited.trimmed());
-            q.bindValue(":id", messageId);
-            q.exec();
-            logAction(currentUser_, "chat_message_edited", QString("msg=%1").arg(messageId));
-            refreshMessages();
+            QString err;
+            if (updateChatMessageText(messageId, currentUser_, edited.trimmed(), err)) {
+                logAction(currentUser_, "chat_message_edited", QString("msg=%1").arg(messageId));
+                refreshMessages();
+            } else if (!err.isEmpty()) {
+                QMessageBox::warning(this, QStringLiteral("Чат"), err);
+            }
         }
         return;
     }

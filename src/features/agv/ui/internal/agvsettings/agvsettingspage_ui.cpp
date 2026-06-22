@@ -114,6 +114,9 @@ void AgvSettingsPage::loadAgv(const QString &agvId)
 {
     currentAgvId = agvId;
 
+    if (formWrapper)
+        closeForm();
+
     QSqlDatabase db = QSqlDatabase::database("main_connection");
     if (!db.isOpen()) {
         qDebug() << "AgvSettingsPage::loadAgv: main_connection not open";
@@ -282,6 +285,7 @@ void AgvSettingsPage::addTaskRow(const AgvTask &task, const QString &taskId)
     h->addWidget(cb, 0);
 
     QLabel *name = new QLabel(task.taskName, row);
+    name->setObjectName(QStringLiteral("taskNameLabel"));
     name->setStyleSheet(QString(
         "font-family:Inter;font-size:%1px;font-weight:700;color:#000;"
     ).arg(s(16)));
@@ -374,21 +378,32 @@ void AgvSettingsPage::addTaskRow(const AgvTask &task, const QString &taskId)
 
 void AgvSettingsPage::highlightTask(const QString &taskName)
 {
-    if (!tasksLayout)
+    if (!tasksLayout || !tableWrapper)
         return;
+
+    if (formWrapper)
+        closeForm();
+
+    tableWrapper->show();
 
     QScrollArea *scroll = tableWrapper->findChild<QScrollArea *>();
     if (!scroll)
         return;
 
+    const QString needle = taskName.trimmed();
+    if (needle.isEmpty())
+        return;
+
     for (int i = 0; i < tasksLayout->count(); i++) {
         QWidget *row = tasksLayout->itemAt(i)->widget();
-        if (!row) continue;
+        if (!row)
+            continue;
 
-        QLabel *name = row->findChild<QLabel *>();
-        if (!name) continue;
+        QLabel *name = row->findChild<QLabel *>(QStringLiteral("taskNameLabel"));
+        if (!name)
+            continue;
 
-        if (name->text() == taskName) {
+        if (name->text().trimmed() == needle) {
             row->setStyleSheet("background:#FFF3CD;border-radius:10px;");
             scroll->ensureWidgetVisible(row);
             return;

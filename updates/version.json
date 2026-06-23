@@ -1,0 +1,161 @@
+{
+    "version":  "1.0.0",
+    "build":  105,
+    "notes":  "Local VapManager update from this PC",
+    "baseUrl":  "http://192.168.43.19:8765/files/",
+    "setupUrl":  "",
+    "files":  [
+                  {
+                      "path":  "D3Dcompiler_47.dll",
+                      "size":  4173928
+                  },
+                  {
+                      "path":  "install_agv_manager_db.sql",
+                      "size":  9729
+                  },
+                  {
+                      "path":  "libcrypto-3-x64.dll",
+                      "size":  5706240
+                  },
+                  {
+                      "path":  "libEGL.dll",
+                      "size":  67688
+                  },
+                  {
+                      "path":  "libgcc_s_seh-1.dll",
+                      "size":  74240
+                  },
+                  {
+                      "path":  "libGLESv2.dll",
+                      "size":  6362768
+                  },
+                  {
+                      "path":  "libiconv-2.dll",
+                      "size":  1436423
+                  },
+                  {
+                      "path":  "libintl-8.dll",
+                      "size":  188681
+                  },
+                  {
+                      "path":  "libintl-9.dll",
+                      "size":  475769
+                  },
+                  {
+                      "path":  "libpq.dll",
+                      "size":  382976
+                  },
+                  {
+                      "path":  "libssl-3-x64.dll",
+                      "size":  1311744
+                  },
+                  {
+                      "path":  "libstdc++-6.dll",
+                      "size":  1425920
+                  },
+                  {
+                      "path":  "libwinpthread-1.dll",
+                      "size":  52224
+                  },
+                  {
+                      "path":  "opengl32sw.dll",
+                      "size":  20923392
+                  },
+                  {
+                      "path":  "qt.conf",
+                      "size":  20
+                  },
+                  {
+                      "path":  "Qt5Concurrent.dll",
+                      "size":  72504
+                  },
+                  {
+                      "path":  "Qt5Core.dll",
+                      "size":  8343776
+                  },
+                  {
+                      "path":  "Qt5Gui.dll",
+                      "size":  9844240
+                  },
+                  {
+                      "path":  "Qt5Network.dll",
+                      "size":  2586952
+                  },
+                  {
+                      "path":  "Qt5PrintSupport.dll",
+                      "size":  635128
+                  },
+                  {
+                      "path":  "Qt5Sql.dll",
+                      "size":  424856
+                  },
+                  {
+                      "path":  "Qt5Svg.dll",
+                      "size":  575128
+                  },
+                  {
+                      "path":  "Qt5Widgets.dll",
+                      "size":  8623912
+                  },
+                  {
+                      "path":  "VapManager.exe",
+                      "size":  2375680
+                  },
+                  {
+                      "path":  "iconengines/qsvgicon.dll",
+                      "size":  99200
+                  },
+                  {
+                      "path":  "imageformats/qgif.dll",
+                      "size":  79072
+                  },
+                  {
+                      "path":  "imageformats/qicns.dll",
+                      "size":  98008
+                  },
+                  {
+                      "path":  "imageformats/qico.dll",
+                      "size":  83816
+                  },
+                  {
+                      "path":  "imageformats/qjpeg.dll",
+                      "size":  485632
+                  },
+                  {
+                      "path":  "imageformats/qsvg.dll",
+                      "size":  74448
+                  },
+                  {
+                      "path":  "imageformats/qtga.dll",
+                      "size":  71392
+                  },
+                  {
+                      "path":  "imageformats/qtiff.dll",
+                      "size":  527432
+                  },
+                  {
+                      "path":  "imageformats/qwbmp.dll",
+                      "size":  69736
+                  },
+                  {
+                      "path":  "imageformats/qwebp.dll",
+                      "size":  681920
+                  },
+                  {
+                      "path":  "platforms/qwindows.dll",
+                      "size":  2849024
+                  },
+                  {
+                      "path":  "printsupport/windowsprintersupport.dll",
+                      "size":  111040
+                  },
+                  {
+                      "path":  "sqldrivers/qsqlpsql.dll",
+                      "size":  178544
+                  },
+                  {
+                      "path":  "styles/qwindowsvistastyle.dll",
+                      "size":  310752
+                  }
+              ]
+}

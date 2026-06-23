@@ -211,7 +211,7 @@ CREATE INDEX IF NOT EXISTS idx_msg_hidden_user ON task_chat_message_hidden (user
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'vapmanager') THEN
-    CREATE ROLE vapmanager LOGIN PASSWORD '51525354';
+    CREATE ROLE vapmanager LOGIN PASSWORD 'vapmanager_change_me';
   END IF;
 END$$;
 

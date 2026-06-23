@@ -11,6 +11,7 @@
 #include "logindialog.h"
 #include "app_session.h"
 #include "ui_action_logger.h"
+#include "app_updater.h"
 
 #include <QApplication>
 #include <QCoreApplication>
@@ -18,7 +19,6 @@
 #include <QDialog>
 #include <QIcon>
 #include <QLabel>
-#include <QLineEdit>
 #include <QMessageBox>
 #include <QPainter>
 #include <QProxyStyle>
@@ -27,7 +27,6 @@
 #include <QThread>
 #include <QTimer>
 #include <QTranslator>
-#include <QVBoxLayout>
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -162,6 +161,8 @@ int run(int argc, char *argv[])
 
     qInstallMessageHandler(myMessageOutput);
 
+    ensurePortableConfig();
+
     {
         QString cfgPath = QCoreApplication::applicationDirPath() + "/config.ini";
         QSettings cfg(cfgPath, QSettings::IniFormat);
@@ -174,50 +175,16 @@ int run(int argc, char *argv[])
         if (connectToDbWithRetries(3, 700, dbError))
             break;
 
-        QDialog dbDlg(nullptr);
-        dbDlg.setWindowTitle("Настройки подключения к базе данных");
-        dbDlg.setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowSystemMenuHint);
-        dbDlg.setMinimumWidth(420);
-        dbDlg.setModal(true);
-
-        QVBoxLayout *layout = new QVBoxLayout(&dbDlg);
-        QLabel *title = new QLabel("Подключение к базе данных", &dbDlg);
-        layout->addWidget(title);
-        QLabel *lab = new QLabel("Введите IP-адрес или хост сервера PostgreSQL (порт в config.ini: db_port)", &dbDlg);
-        lab->setWordWrap(true);
-        layout->addWidget(lab);
-
-        QLineEdit *hostEdit = new QLineEdit(&dbDlg);
-        hostEdit->setText(getDbHost());
-        hostEdit->setPlaceholderText(QStringLiteral("192.168.1.10"));
-        layout->addWidget(hostEdit);
-
-        QLabel *errLabel = new QLabel(&dbDlg);
-        errLabel->setText(dbError);
-        errLabel->setWordWrap(true);
-        layout->addWidget(errLabel);
-
-        QHBoxLayout *btnRow = new QHBoxLayout();
-        btnRow->addStretch();
-        QPushButton *cancelBtn = new QPushButton("Отмена", &dbDlg);
-        QPushButton *connBtn = new QPushButton("OK", &dbDlg);
-        btnRow->addWidget(cancelBtn);
-        btnRow->addWidget(connBtn);
-        layout->addLayout(btnRow);
-
-        QObject::connect(connBtn, &QPushButton::clicked, &dbDlg, [&dbDlg, hostEdit, errLabel]() {
-            QString host = hostEdit->text().trimmed();
-            if (host.isEmpty()) host = "localhost";
-            QString err;
-            if (reconnectWithHost(host, &err)) {
-                dbDlg.accept();
-                return;
-            }
-            errLabel->setText(err);
-        });
-        QObject::connect(cancelBtn, &QPushButton::clicked, &dbDlg, &QDialog::reject);
-
-        if (dbDlg.exec() != QDialog::Accepted)
+        QMessageBox dbMsgBox;
+        dbMsgBox.setIcon(QMessageBox::Critical);
+        dbMsgBox.setWindowTitle(QStringLiteral("Подключение к базе данных"));
+        dbMsgBox.setText(QStringLiteral("Не удалось подключиться к серверу."));
+        dbMsgBox.setInformativeText(
+            dbError + QStringLiteral("\n\nПроверьте сеть и доступность сервера PostgreSQL."));
+        QPushButton *retryBtn = dbMsgBox.addButton(QStringLiteral("Повторить"), QMessageBox::AcceptRole);
+        dbMsgBox.addButton(QStringLiteral("Выход"), QMessageBox::RejectRole);
+        dbMsgBox.exec();
+        if (dbMsgBox.clickedButton() != retryBtn)
             return 0;
     }
 
@@ -252,6 +219,8 @@ int run(int argc, char *argv[])
     MainWindow w;
     app.setWindowIcon(QIcon(":/new/mainWindowIcons/noback/agvIcon.png"));
     w.show();
+
+    AppUpdater::startBackgroundChecks(&w);
 
     const QStringList args = QCoreApplication::arguments();
     const bool runStressCli = args.contains(QStringLiteral("--stress-autotest"))

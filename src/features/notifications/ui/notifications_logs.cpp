@@ -160,6 +160,31 @@ QVector<Notification> loadNotificationsForUser(const QString &username)
     return list;
 }
 
+QVector<Notification> loadUnreadNotificationsForUser(const QString &username)
+{
+    QVector<Notification> list;
+    QSqlDatabase db = QSqlDatabase::database("main_connection");
+    if (!db.isOpen()) return list;
+
+    QString u = username.trimmed();
+    if (u.isEmpty()) return list;
+
+    QSqlQuery q(db);
+    q.prepare("SELECT id, message FROM notifications "
+              "WHERE target_user = :u AND is_read = 0 ORDER BY created_at DESC");
+    q.bindValue(":u", u);
+    if (!q.exec()) return list;
+
+    while (q.next()) {
+        Notification n;
+        n.id = q.value(0).toInt();
+        n.message = q.value(1).toString();
+        n.isRead = false;
+        list.push_back(n);
+    }
+    return list;
+}
+
 int unreadCountForUser(const QString &username)
 {
     QSqlDatabase db = QSqlDatabase::database("main_connection");

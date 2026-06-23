@@ -43,14 +43,21 @@ QVector<TaskChatThread> getThreadsForUser(const QString &username);
 QVector<TaskChatThread> getThreadsForAdmin(const QString &adminUsername);
 /// Найти тред между двумя пользователями (участники: user1 и user2). optionalAgvId — при желании фильтр по agv_id.
 int getThreadBetweenUsers(const QString &user1, const QString &user2, const QString &optionalAgvId = QString());
-QVector<TaskChatMessage> getMessagesForThread(int threadId);
+QVector<TaskChatMessage> getMessagesForThread(int threadId, bool decryptMessage = true);
 /// Как getMessagesForThread, но исключает сообщения, скрытые для currentUser
-QVector<TaskChatMessage> getMessagesForThread(int threadId, const QString &currentUser);
+QVector<TaskChatMessage> getMessagesForThread(int threadId, const QString &currentUser,
+                                              bool decryptMessage = true);
 /// Последние limit сообщений треда (для пагинации)
-QVector<TaskChatMessage> getMessagesForThreadLastN(int threadId, const QString &currentUser, int limit);
+QVector<TaskChatMessage> getMessagesForThreadLastN(int threadId, const QString &currentUser, int limit,
+                                                   bool decryptMessage = true);
 /// До limit сообщений старше beforeId (для подгрузки при скролле вверх)
-QVector<TaskChatMessage> getMessagesForThreadOlderThan(int threadId, const QString &currentUser, int beforeId, int limit);
+QVector<TaskChatMessage> getMessagesForThreadOlderThan(int threadId, const QString &currentUser, int beforeId, int limit,
+                                                       bool decryptMessage = true);
 /// Все сообщения с id >= fromId (для обновления при уже загруженной истории)
-QVector<TaskChatMessage> getMessagesForThreadFrom(int threadId, const QString &currentUser, int fromId);
+QVector<TaskChatMessage> getMessagesForThreadFrom(int threadId, const QString &currentUser, int fromId,
+                                                  bool decryptMessage = true);
+/// Есть ли новые сообщения с id >= fromId (без расшифровки тела)
+bool hasMessagesForThreadFrom(int threadId, const QString &currentUser, int fromId);
+TaskChatMessage getChatMessageById(int messageId, bool decryptMessage = true);
 TaskChatThread getThreadById(int threadId);
 QHash<int, TaskChatThread> getThreadsByIds(const QVector<int> &threadIds);

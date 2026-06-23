@@ -100,6 +100,7 @@ signals:
 private:
     void setupUi();
     void refreshMessages(bool fullReload = true);
+    void applyRefreshedMessages(const QVector<TaskChatMessage> &msgs, bool fullReload, bool keepAtBottom);
     void loadOlderMessages();
     void sendReply();
     void sendAttachment();
@@ -165,6 +166,7 @@ private:
     int lastLoadedMessageId_ = 0;
     bool historyExhausted_ = false;
     bool loadingOlderMessages_ = false;
+    bool messagesLoading_ = false;
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event) override;
@@ -268,6 +270,7 @@ private:
     int lastLoadedMessageId_ = 0;
     bool historyExhausted_ = false;
     bool loadingOlderMessages_ = false;
+    bool messagesLoading_ = false;
     static constexpr int kMessagesPageSize = 75;
 
 protected:

@@ -13,6 +13,8 @@ QString getDbName();
 QString getDbUser();
 QString getDbPassword();
 
+void ensurePortableConfig();
+
 void testConnection();
 
 #endif // DB_H

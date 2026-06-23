@@ -1,4 +1,4 @@
-QT       += core gui sql concurrent printsupport widgets
+QT       += core gui sql concurrent printsupport widgets network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -20,6 +20,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     src/core/logging/diag_logger.cpp \
     src/core/crypto/chat_message_crypto.cpp \
+    src/core/update/app_updater.cpp \
     src/features/account/ui/accountinfodialog.cpp \
     src/core/session/app_session.cpp \
     src/features/agv/ui/addagvdialog.cpp \
@@ -115,6 +116,8 @@ HEADERS += \
     src/features/chat/ui/taskchatdialog.h \
     src/core/logging/ui_action_logger.h \
     src/core/crypto/chat_message_crypto.h \
+    src/core/update/app_updater.h \
+    src/core/update/app_version.h \
     src/features/users/ui/userspage.h
 
 FORMS +=
@@ -133,6 +136,7 @@ INCLUDEPATH += \
     src/core/events \
     src/core/logging \
     src/core/crypto \
+    src/core/update \
     src/data/db \
     src/data/repositories
 

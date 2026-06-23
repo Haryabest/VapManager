@@ -9,6 +9,8 @@
 #include <QDir>
 #include <QFileInfo>
 
+static const char *DEFAULT_DB_HOST = "192.168.43.19";
+
 static const char *KEY_HOST = "db_host";
 static const char *KEY_PORT = "db_port";
 static const char *KEY_NAME = "db_name";
@@ -91,9 +93,26 @@ static QSettings *portableSettings()
     return s;
 }
 
+void ensurePortableConfig()
+{
+    const QString path = QCoreApplication::applicationDirPath() + QStringLiteral("/config.ini");
+    if (QFileInfo::exists(path))
+        return;
+
+    QSettings cfg(path, QSettings::IniFormat);
+    cfg.setValue(KEY_DRIVER, QStringLiteral("psql"));
+    cfg.setValue(KEY_HOST, QString::fromLatin1(DEFAULT_DB_HOST));
+    cfg.setValue(KEY_PORT, 5432);
+    cfg.setValue(KEY_NAME, QStringLiteral("agv_manager_db"));
+    cfg.setValue(KEY_USER, QStringLiteral("vapmanager"));
+    cfg.setValue(KEY_PASSWORD, QStringLiteral("51525354"));
+    cfg.setValue(QStringLiteral("language"), QStringLiteral("ru"));
+    cfg.sync();
+}
+
 QString getDbHost()
 {
-    QString h = portableSettings()->value(KEY_HOST, "localhost").toString().trimmed();
+    QString h = portableSettings()->value(KEY_HOST, DEFAULT_DB_HOST).toString().trimmed();
     const int colonPos = h.lastIndexOf(':');
     if (colonPos > 0 && h.indexOf(':') == colonPos) {
         bool ok = false;
@@ -101,7 +120,7 @@ QString getDbHost()
         if (ok && p > 0 && p <= 65535)
             h = h.left(colonPos).trimmed();
     }
-    return h.isEmpty() ? QStringLiteral("localhost") : h;
+    return h.isEmpty() ? QString::fromLatin1(DEFAULT_DB_HOST) : h;
 }
 
 int getDbPort()
@@ -148,12 +167,13 @@ bool connectToDB(QString *outError)
     const QString dbName = getDbName();
     const QString user = getDbUser();
     const QString password = getDbPassword();
-    const QString driverPref = portableSettings()->value(KEY_DRIVER, "odbc").toString().trimmed().toLower();
+    const QString driverPref = portableSettings()->value(KEY_DRIVER, QStringLiteral("psql")).toString().trimmed().toLower();
 
     removeMainConnection();
 
     QSqlDatabase db;
     QString connectLabel;
+    QString psqlErr;
 
     const auto fail = [&](const QString &details) {
         const QString err = QString("host=%1 port=%2 db=%3 user=%4 | %5")
@@ -169,10 +189,13 @@ bool connectToDB(QString *outError)
         return false;
     };
 
-    if (driverPref == QLatin1String("psql") || driverPref == QLatin1String("qpsql")) {
+    const auto openPsql = [&]() -> bool {
         const QString pluginErr = loadSqlPlugin(QStringLiteral("qsqlpsql.dll"));
-        if (!pluginErr.isEmpty() && !QSqlDatabase::isDriverAvailable(QStringLiteral("QPSQL")))
-            return fail(QStringLiteral("qsqlpsql.dll: %1").arg(pluginErr));
+        if (!pluginErr.isEmpty() && !QSqlDatabase::isDriverAvailable(QStringLiteral("QPSQL"))) {
+            psqlErr = QStringLiteral("qsqlpsql.dll: %1").arg(pluginErr);
+            return false;
+        }
+        removeMainConnection();
         db = QSqlDatabase::addDatabase(QStringLiteral("QPSQL"), QStringLiteral("main_connection"));
         db.setHostName(host);
         db.setPort(port);
@@ -181,15 +204,41 @@ bool connectToDB(QString *outError)
         db.setPassword(password);
         db.setConnectOptions(QStringLiteral("connect_timeout=5"));
         connectLabel = QStringLiteral("QPSQL");
-        if (!db.open())
-            return fail(db.lastError().text());
+        if (!db.open()) {
+            psqlErr = db.lastError().text();
+            removeMainConnection();
+            return false;
+        }
+        return true;
+    };
+
+    if (driverPref == QLatin1String("psql") || driverPref == QLatin1String("qpsql")) {
+        if (!openPsql())
+            return fail(psqlErr.isEmpty() ? QStringLiteral("QPSQL unavailable") : psqlErr);
+    } else if (driverPref == QLatin1String("odbc")) {
+        QString odbcErr;
+        if (!openOdbcConnection(host, port, dbName, user, password, odbcErr)) {
+            if (!openPsql())
+                return fail(odbcErr + QStringLiteral(" | QPSQL: ") + psqlErr);
+            qDebug() << "ODBC failed, connected via QPSQL fallback:" << odbcErr;
+        } else {
+            connectLabel = QStringLiteral("QODBC");
+            db = QSqlDatabase::database(QStringLiteral("main_connection"));
+        }
     } else {
         QString odbcErr;
-        if (!openOdbcConnection(host, port, dbName, user, password, odbcErr))
-            return fail(odbcErr);
-        connectLabel = QStringLiteral("QODBC");
-        db = QSqlDatabase::database(QStringLiteral("main_connection"));
+        if (!openPsql() && !openOdbcConnection(host, port, dbName, user, password, odbcErr))
+            return fail(psqlErr.isEmpty() ? odbcErr : psqlErr + QStringLiteral(" | ") + odbcErr);
+        if (!db.isOpen()) {
+            connectLabel = QStringLiteral("QODBC");
+            db = QSqlDatabase::database(QStringLiteral("main_connection"));
+        }
     }
+
+    if (!db.isValid())
+        db = QSqlDatabase::database(QStringLiteral("main_connection"));
+    if (!db.isOpen())
+        return fail(QStringLiteral("database not open"));
 
     QSqlQuery enc(db);
     enc.exec(QStringLiteral("SET client_encoding TO 'UTF8'"));

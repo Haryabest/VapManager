@@ -1,6 +1,8 @@
 #include "leftmenu_settings_dialogs.h"
 #include "leftmenu_calendar_utils.h"
 #include "db.h"
+#include "app_updater.h"
+#include "app_version.h"
 
 #include <QApplication>
 #include <QComboBox>
@@ -231,7 +233,7 @@ public:
     {
         setWindowTitle("Настройки");
         setModal(true);
-        setFixedSize(400, 160);
+        setFixedSize(420, 270);
         setStyleSheet(
             "QDialog{background:#F7FAFF;border:1px solid #E2E8F0;border-radius:12px;}"
             "QLabel{font-family:Inter;font-size:13px;font-weight:700;color:#374151;}"
@@ -242,6 +244,8 @@ public:
             "QPushButton#okBtn:hover{background:#0F66EA;}"
             "QPushButton#cancelBtn{background:#FFFFFF;color:#374151;border:1px solid #CBD5E1;}"
             "QPushButton#cancelBtn:hover{background:#F3F4F6;}"
+            "QPushButton#updateBtn{background:#0F766E;color:white;border:none;}"
+            "QPushButton#updateBtn:hover{background:#0D655E;}"
         );
 
         QVBoxLayout *layout = new QVBoxLayout(this);
@@ -256,7 +260,32 @@ public:
         layout->addWidget(dbLbl);
         layout->addWidget(dbHostEdit_);
 
-        layout->addSpacing(10);
+        QLabel *verLbl = new QLabel(QStringLiteral("Версия: %1").arg(AppVersion::label()), this);
+        verLbl->setStyleSheet("background:transparent;color:#64748B;font-family:Inter;font-size:12px;font-weight:600;");
+        layout->addWidget(verLbl);
+
+        QPushButton *updateBtn = new QPushButton(QStringLiteral("Обновить программу"), this);
+        updateBtn->setObjectName("updateBtn");
+        updateBtn->setStyleSheet(
+            "QPushButton{background:#0F766E;color:white;border:none;"
+            "font-family:Inter;font-size:13px;font-weight:800;border-radius:8px;padding:8px 16px;}"
+            "QPushButton:hover{background:#0D655E;}"
+        );
+        connect(updateBtn, &QPushButton::clicked, this, [this]() {
+            AppUpdater::checkAndUpdate(this, updateStatusLbl_);
+        });
+        layout->addWidget(updateBtn);
+
+        AppUpdater::ensureLastUpdateDateFromInstall();
+        updateStatusLbl_ = new QLabel(this);
+        updateStatusLbl_->setWordWrap(true);
+        updateStatusLbl_->setStyleSheet(
+            "background:transparent;color:#64748B;font-family:Inter;font-size:12px;font-weight:600;");
+        updateStatusLbl_->setText(
+            QStringLiteral("Последнее обновление: %1").arg(AppUpdater::formattedLastUpdateDate()));
+        layout->addWidget(updateStatusLbl_);
+
+        layout->addSpacing(6);
 
         QHBoxLayout *btnRow = new QHBoxLayout();
         btnRow->addStretch();
@@ -305,6 +334,7 @@ public:
 
 private:
     QLineEdit *dbHostEdit_ = nullptr;
+    QLabel *updateStatusLbl_ = nullptr;
 };
 
 } // namespace

@@ -17,6 +17,8 @@ qrc_*.cpp
 
 # Portable runtime (собирается pack_vapmanager.bat)
 dist/VapManager/*.dll
+dist/VapManager/VapManager.exe
+dist/VapManager/config.ini
 dist/VapManager/platforms/
 dist/VapManager/sqldrivers/
 dist/VapManager/imageformats/
@@ -30,3 +32,13 @@ dist/VapManager/translations/
 *.autosave
 tech_verbose.log
 stress_autotest_last.log
+updates/update_server.log
+updates/files/
+
+# Сборка / релизы
+releases/
+dist/pptx_extract.txt
+dist/setup.exe
+
+# Документы-черновики
+docs/*.docx

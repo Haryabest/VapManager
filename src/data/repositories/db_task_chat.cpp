@@ -48,13 +48,14 @@ TaskChatThread rowToThread(const QSqlQuery &q)
     return t;
 }
 
-TaskChatMessage rowToMessage(const QSqlQuery &q)
+TaskChatMessage rowToMessage(const QSqlQuery &q, bool decryptMessage = true)
 {
     TaskChatMessage m;
     m.id = q.value(0).toInt();
     m.threadId = q.value(1).toInt();
     m.fromUser = q.value(2).toString();
-    m.message = ChatMessageCrypto::decrypt(q.value(3).toString());
+    const QString stored = q.value(3).toString();
+    m.message = decryptMessage ? ChatMessageCrypto::decrypt(stored) : stored;
     m.createdAt = q.value(4).toDateTime();
     return m;
 }
@@ -63,6 +64,10 @@ TaskChatMessage rowToMessage(const QSqlQuery &q)
 
 bool initTaskChatTables()
 {
+    static bool tablesReady = false;
+    if (tablesReady)
+        return true;
+
     QSqlDatabase db = openMainDb();
     if (!db.isOpen())
         return false;
@@ -108,6 +113,7 @@ bool initTaskChatTables()
         if (!ensureDbTable(db, QString::fromLatin1(t.name), QString::fromLatin1(t.sql)))
             return false;
     }
+    tablesReady = true;
     return true;
 }
 
@@ -324,11 +330,13 @@ QVector<TaskChatThread> getThreadsForUser(const QString &username)
     q.prepare(
         "SELECT t.id, t.agv_id, t.task_id, t.task_name, t.created_by, t.recipient_user, t.created_at, t.closed_at, t.closed_by "
         "FROM task_chat_threads t "
-        "LEFT JOIN ("
-        "  SELECT thread_id, MAX(created_at) AS last_msg_at "
-        "  FROM task_chat_messages "
-        "  GROUP BY thread_id"
-        ") lm ON lm.thread_id = t.id "
+        "LEFT JOIN LATERAL ("
+        "  SELECT m.created_at AS last_msg_at "
+        "  FROM task_chat_messages m "
+        "  WHERE m.thread_id = t.id "
+        "  ORDER BY m.created_at DESC, m.id DESC "
+        "  LIMIT 1"
+        ") lm ON TRUE "
         "WHERE (t.created_by = :u OR t.recipient_user = :u) "
         "AND NOT EXISTS (SELECT 1 FROM task_chat_hidden h WHERE h.thread_id = t.id AND h.username = :u) "
         "ORDER BY COALESCE(lm.last_msg_at, t.created_at) DESC");
@@ -354,29 +362,36 @@ int getThreadBetweenUsers(const QString &user1, const QString &user2, const QStr
     QSqlDatabase db = openMainDb();
     if (!db.isOpen()) return 0;
 
+    const QString agv = optionalAgvId.trimmed();
     QSqlQuery q(db);
-    QString sql =
-        "SELECT id FROM task_chat_threads "
-        "WHERE ((created_by = :u1 AND recipient_user = :u2) OR (created_by = :u2 AND recipient_user = :u1)) ";
-    if (!optionalAgvId.trimmed().isEmpty())
-        sql += "AND agv_id = :agv ";
-    sql += "ORDER BY created_at DESC LIMIT 1";
-
-    q.prepare(sql);
-    q.bindValue(":u1", u1);
-    q.bindValue(":u2", u2);
-    if (!optionalAgvId.trimmed().isEmpty())
-        q.bindValue(":agv", normalizedAgvId(optionalAgvId));
+    if (agv.isEmpty()) {
+        q.prepare(
+            "SELECT id FROM task_chat_threads "
+            "WHERE ((created_by = :u1 AND recipient_user = :u2) OR (created_by = :u2 AND recipient_user = :u1)) "
+            "ORDER BY created_at DESC LIMIT 1");
+        q.bindValue(":u1", u1);
+        q.bindValue(":u2", u2);
+    } else {
+        const QString safeAgv = normalizedAgvId(agv);
+        q.prepare(
+            "SELECT id FROM task_chat_threads "
+            "WHERE ((created_by = :u1 AND recipient_user = :u2) OR (created_by = :u2 AND recipient_user = :u1)) "
+            "AND agv_id = :agv "
+            "ORDER BY created_at DESC LIMIT 1");
+        q.bindValue(":u1", u1);
+        q.bindValue(":u2", u2);
+        q.bindValue(":agv", safeAgv);
+    }
     if (!q.exec() || !q.next()) return 0;
     return q.value(0).toInt();
 }
 
-QVector<TaskChatMessage> getMessagesForThread(int threadId)
+QVector<TaskChatMessage> getMessagesForThread(int threadId, bool decryptMessage)
 {
-    return getMessagesForThread(threadId, QString());
+    return getMessagesForThread(threadId, QString(), decryptMessage);
 }
 
-QVector<TaskChatMessage> getMessagesForThread(int threadId, const QString &currentUser)
+QVector<TaskChatMessage> getMessagesForThread(int threadId, const QString &currentUser, bool decryptMessage)
 {
     QVector<TaskChatMessage> list;
     QSqlDatabase db = openMainDb();
@@ -399,11 +414,52 @@ QVector<TaskChatMessage> getMessagesForThread(int threadId, const QString &curre
     if (!q.exec()) return list;
 
     while (q.next())
-        list.append(rowToMessage(q));
+        list.append(rowToMessage(q, decryptMessage));
     return list;
 }
 
-QVector<TaskChatMessage> getMessagesForThreadLastN(int threadId, const QString &currentUser, int limit)
+TaskChatMessage getChatMessageById(int messageId, bool decryptMessage)
+{
+    TaskChatMessage m;
+    if (messageId <= 0)
+        return m;
+
+    QSqlDatabase db = openMainDb();
+    if (!db.isOpen())
+        return m;
+
+    QSqlQuery q(db);
+    q.prepare("SELECT id, thread_id, from_user, message, created_at FROM task_chat_messages WHERE id = :id");
+    q.bindValue(":id", messageId);
+    if (!q.exec() || !q.next())
+        return m;
+    return rowToMessage(q, decryptMessage);
+}
+
+bool hasMessagesForThreadFrom(int threadId, const QString &currentUser, int fromId)
+{
+    QSqlDatabase db = openMainDb();
+    if (!db.isOpen() || threadId <= 0 || fromId <= 0)
+        return false;
+
+    QSqlQuery q(db);
+    if (normalizedUsername(currentUser).isEmpty()) {
+        q.prepare("SELECT 1 FROM task_chat_messages WHERE thread_id = :id AND id >= :from LIMIT 1");
+        q.bindValue(":id", threadId);
+        q.bindValue(":from", fromId);
+    } else {
+        q.prepare("SELECT 1 FROM task_chat_messages m "
+                  "LEFT JOIN task_chat_message_hidden h ON h.message_id = m.id AND h.username = :u "
+                  "WHERE m.thread_id = :id AND m.id >= :from AND h.message_id IS NULL LIMIT 1");
+        q.bindValue(":u", normalizedUsername(currentUser));
+        q.bindValue(":id", threadId);
+        q.bindValue(":from", fromId);
+    }
+    return q.exec() && q.next();
+}
+
+QVector<TaskChatMessage> getMessagesForThreadLastN(int threadId, const QString &currentUser, int limit,
+                                                   bool decryptMessage)
 {
     QVector<TaskChatMessage> list;
     QSqlDatabase db = openMainDb();
@@ -431,11 +487,12 @@ QVector<TaskChatMessage> getMessagesForThreadLastN(int threadId, const QString &
     if (!q.exec()) return list;
 
     while (q.next())
-        list.append(rowToMessage(q));
+        list.append(rowToMessage(q, decryptMessage));
     return list;
 }
 
-QVector<TaskChatMessage> getMessagesForThreadOlderThan(int threadId, const QString &currentUser, int beforeId, int limit)
+QVector<TaskChatMessage> getMessagesForThreadOlderThan(int threadId, const QString &currentUser, int beforeId, int limit,
+                                                       bool decryptMessage)
 {
     QVector<TaskChatMessage> list;
     QSqlDatabase db = openMainDb();
@@ -465,11 +522,12 @@ QVector<TaskChatMessage> getMessagesForThreadOlderThan(int threadId, const QStri
     if (!q.exec()) return list;
 
     while (q.next())
-        list.append(rowToMessage(q));
+        list.append(rowToMessage(q, decryptMessage));
     return list;
 }
 
-QVector<TaskChatMessage> getMessagesForThreadFrom(int threadId, const QString &currentUser, int fromId)
+QVector<TaskChatMessage> getMessagesForThreadFrom(int threadId, const QString &currentUser, int fromId,
+                                                  bool decryptMessage)
 {
     QVector<TaskChatMessage> list;
     QSqlDatabase db = openMainDb();
@@ -494,7 +552,7 @@ QVector<TaskChatMessage> getMessagesForThreadFrom(int threadId, const QString &c
     if (!q.exec()) return list;
 
     while (q.next())
-        list.append(rowToMessage(q));
+        list.append(rowToMessage(q, decryptMessage));
     return list;
 }
 

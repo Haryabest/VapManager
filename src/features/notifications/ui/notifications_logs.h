@@ -17,6 +17,8 @@ bool initMaintenanceNotificationSentTable();
 bool wasMaintenanceNotificationSentToday(const QString &agvId);
 void markMaintenanceNotificationSentToday(const QString &agvId);
 QVector<Notification> loadNotificationsForUser(const QString &username);
+/// Только непрочитанные (id + message) — для бейджа без загрузки всей ленты.
+QVector<Notification> loadUnreadNotificationsForUser(const QString &username);
 int unreadCountForUser(const QString &username);
 void markAllReadForUser(const QString &username);
 void markNotificationReadById(int notificationId);

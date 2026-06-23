@@ -4,6 +4,7 @@
 #include "notifications_logs.h"
 #include "databus.h"
 #include "app_session.h"
+#include "chat_message_crypto.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -48,6 +49,10 @@
 #include <QMimeDatabase>
 #include <QClipboard>
 #include <QMimeData>
+#include <QtConcurrent>
+#include <QFutureWatcher>
+#include <QProgressDialog>
+#include <QEventLoop>
 #include <QImage>
 #include <QBuffer>
 #include <QPainter>
@@ -67,9 +72,14 @@ static const QString kSpecialPrefix = QStringLiteral("[[SPECIAL|");
 static const QString kAttachmentPrefix = QStringLiteral("[[FILE|");
 static const QString kForwardPrefix = QStringLiteral("[[FORWARD|");
 static const QString kAttachmentSeparator = QStringLiteral("\n[[ATTACHMENT]]\n");
+static constexpr int kMaxAttachmentBytes = 10 * 1024 * 1024;
+static constexpr int kHeavyMessageInlineChars = 256 * 1024;
+static constexpr int kInlineImagePreviewMaxBytes = 2 * 1024 * 1024;
 static QHash<int, QString> g_pendingSpecialByThread;
 
 static bool openAttachmentData(QWidget *owner, const QString &fileName, const QByteArray &bytes);
+static bool openAttachmentInsideApp(QWidget *owner, const QString &fileName, const QString &mimeType, const QByteArray &bytes,
+                                    const QString &currentUser = QString(), int messageId = 0);
 
 static QString muteKey(const QString &currentUser, const QString &peerUser)
 {
@@ -236,6 +246,190 @@ static qint64 attachmentBase64DecodedByteCount(const QString &rawAttachmentPaylo
     return static_cast<qint64>((n / 4) * 3 - pad);
 }
 
+static bool isBlockedAttachmentFile(const QString &fileName, QString *outError = nullptr)
+{
+    const QString ext = QFileInfo(fileName).suffix().toLower();
+    if (ext == QLatin1String("exe") || ext == QLatin1String("dll") || ext == QLatin1String("bat")
+        || ext == QLatin1String("cmd") || ext == QLatin1String("msi") || ext == QLatin1String("scr")
+        || ext == QLatin1String("ps1") || ext == QLatin1String("vbs") || ext == QLatin1String("com")) {
+        if (outError) {
+            *outError = QStringLiteral(
+                "Исполняемые файлы (.exe и т.п.) нельзя отправлять через чат.\n"
+                "Упакуйте в .zip или передайте другим способом.");
+        }
+        return true;
+    }
+    return false;
+}
+
+static bool validateAttachmentSize(int bytes, QString *outError = nullptr)
+{
+    if (bytes <= kMaxAttachmentBytes)
+        return true;
+    if (outError) {
+        *outError = QStringLiteral("Файл слишком большой (максимум 10 МБ для чата).");
+    }
+    return false;
+}
+
+static void storeRawMessageOnRow(QWidget *row, const QString &raw)
+{
+    if (raw.size() <= kHeavyMessageInlineChars)
+        row->setProperty("rawMessage", raw);
+}
+
+static QString chatMessageRawText(int messageId, const QWidget *row)
+{
+    if (row) {
+        const QVariant cached = row->property("rawMessage");
+        if (cached.isValid() && !cached.toString().isEmpty())
+            return cached.toString();
+    }
+    return getChatMessageById(messageId).message;
+}
+
+static bool shouldDecodeInlineImagePreview(const QString &attachmentPayload)
+{
+    const qint64 bytes = attachmentBase64DecodedByteCount(attachmentPayload);
+    return bytes > 0 && bytes <= kInlineImagePreviewMaxBytes;
+}
+
+struct DecodedChatAttachment {
+    bool ok = false;
+    QByteArray data;
+    QString decodedName;
+    QString decodedMime;
+    QString error;
+};
+
+static DecodedChatAttachment decodeChatAttachmentFromStoredMessage(const QString &storedMessage)
+{
+    DecodedChatAttachment result;
+    const QString message = storedMessage.startsWith(QLatin1String("enc1:"))
+                                ? ChatMessageCrypto::decrypt(storedMessage)
+                                : storedMessage;
+
+    QString forwardedFrom;
+    QString payload = message;
+    decodeForwardMessage(message, forwardedFrom, payload);
+
+    QString messageText;
+    QString attachmentPayload;
+    if (splitCombinedMessage(payload, messageText, attachmentPayload))
+        payload = attachmentPayload;
+
+    if (!decodeAttachmentMessage(payload, result.decodedName, result.decodedMime, result.data)
+        || result.data.isEmpty()) {
+        result.error = QStringLiteral("Не удалось прочитать вложение.");
+        return result;
+    }
+
+    result.ok = true;
+    return result;
+}
+
+static void openChatAttachmentByMessageId(QWidget *owner,
+                                          int messageId,
+                                          const QString &fileName,
+                                          const QString &fileMime,
+                                          const QString &currentUser = QString())
+{
+    if (!owner || messageId <= 0)
+        return;
+
+    const TaskChatMessage stored = getChatMessageById(messageId, false);
+    if (stored.id <= 0) {
+        QMessageBox::warning(owner, QStringLiteral("Файл"), QStringLiteral("Сообщение не найдено."));
+        return;
+    }
+
+    QProgressDialog *progress = new QProgressDialog(
+        QStringLiteral("Открываю вложение…"),
+        QString(),
+        0, 0,
+        owner);
+    progress->setWindowTitle(QStringLiteral("Файл"));
+    progress->setWindowModality(Qt::WindowModal);
+    progress->setMinimumDuration(0);
+    progress->setCancelButton(nullptr);
+    progress->setAttribute(Qt::WA_DeleteOnClose);
+    progress->show();
+
+    const QString encryptedBody = stored.message;
+    auto *watcher = new QFutureWatcher<DecodedChatAttachment>(owner);
+    QObject::connect(watcher, &QFutureWatcher<DecodedChatAttachment>::finished, owner,
+                     [owner, watcher, progress, fileName, fileMime, currentUser, messageId]() {
+        progress->close();
+        const DecodedChatAttachment result = watcher->result();
+        watcher->deleteLater();
+
+        if (!result.ok) {
+            QMessageBox::warning(owner, QStringLiteral("Файл"),
+                                 result.error.isEmpty()
+                                     ? QStringLiteral("Не удалось открыть файл.")
+                                     : result.error);
+            return;
+        }
+
+        if (isImageAttachment(fileMime, fileName))
+            openAttachmentInsideApp(owner, fileName, fileMime, result.data, currentUser, messageId);
+        else
+            openAttachmentData(owner, fileName, result.data);
+    });
+    watcher->setFuture(QtConcurrent::run(decodeChatAttachmentFromStoredMessage, encryptedBody));
+}
+
+static QVector<TaskChatMessage> decryptChatMessages(QVector<TaskChatMessage> encryptedRows)
+{
+    for (TaskChatMessage &message : encryptedRows)
+        message.message = ChatMessageCrypto::decrypt(message.message);
+    return encryptedRows;
+}
+
+struct MediaHistoryItem {
+    int id = 0;
+    QString fn;
+    QString mt;
+    QByteArray thumbData;
+    QString meta;
+    bool isImage = false;
+};
+
+static QVector<MediaHistoryItem> scanMediaHistoryForThread(int threadId, const QString &currentUser)
+{
+    QVector<MediaHistoryItem> media;
+    const QVector<TaskChatMessage> msgs = getMessagesForThread(threadId, currentUser, false);
+    media.reserve(msgs.size() / 4);
+    for (const TaskChatMessage &m : msgs) {
+        const QString message = ChatMessageCrypto::decrypt(m.message);
+        QString forwardedFrom;
+        QString payload = message;
+        decodeForwardMessage(message, forwardedFrom, payload);
+        QString messageText;
+        QString attachmentPayload;
+        if (splitCombinedMessage(payload, messageText, attachmentPayload))
+            payload = attachmentPayload;
+
+        QString fn, mt;
+        if (!decodeAttachmentMeta(payload, fn, mt))
+            continue;
+
+        MediaHistoryItem it;
+        it.id = m.id;
+        it.fn = fn;
+        it.mt = mt;
+        it.meta = QString("%1\n%2").arg(m.fromUser, m.createdAt.toString("dd.MM.yy hh:mm"));
+        it.isImage = isImageAttachment(mt, fn);
+        if (it.isImage) {
+            QByteArray data;
+            if (decodeAttachmentMessage(payload, fn, mt, data))
+                it.thumbData = data;
+        }
+        media.push_back(it);
+    }
+    return media;
+}
+
 static QString formatAttachmentByteSize(qint64 bytes)
 {
     if (bytes <= 0)
@@ -325,7 +519,7 @@ static bool saveAttachmentAs(QWidget *owner, const QString &fileName, const QByt
 }
 
 static bool openAttachmentInsideApp(QWidget *owner, const QString &fileName, const QString &mimeType, const QByteArray &bytes,
-                                    const QString &currentUser = QString(), int messageId = 0)
+                                    const QString &currentUser, int messageId)
 {
     if (isImageAttachment(mimeType, fileName)) {
         QPixmap pm;
@@ -389,13 +583,11 @@ static bool pickAttachmentPayload(QWidget *owner, QString &outName, QString &out
         outError = QStringLiteral("Файл пуст.");
         return false;
     }
-    // Ограничиваем размер, чтобы не перегружать чат и БД.
-    static const int kMaxBytes = 8 * 1024 * 1024;
-    if (bytes.size() > kMaxBytes) {
-        outError = QStringLiteral("Файл слишком большой (максимум 8 МБ).");
-        return false;
-    }
     QFileInfo fi(path);
+    if (isBlockedAttachmentFile(fi.fileName(), &outError))
+        return false;
+    if (!validateAttachmentSize(bytes.size(), &outError))
+        return false;
     QMimeDatabase mdb;
     outName = fi.fileName();
     outMime = mdb.mimeTypeForFile(fi).name();
@@ -417,12 +609,11 @@ static bool loadAttachmentFromLocalPath(const QString &path, QString &outName, Q
         outError = QStringLiteral("Файл пуст.");
         return false;
     }
-    static const int kMaxBytes = 8 * 1024 * 1024;
-    if (bytes.size() > kMaxBytes) {
-        outError = QStringLiteral("Файл слишком большой (максимум 8 МБ).");
-        return false;
-    }
     QFileInfo fi(path);
+    if (isBlockedAttachmentFile(fi.fileName(), &outError))
+        return false;
+    if (!validateAttachmentSize(bytes.size(), &outError))
+        return false;
     QMimeDatabase mdb;
     outName = fi.fileName();
     outMime = mdb.mimeTypeForFile(fi).name();
@@ -462,12 +653,11 @@ static bool pickAttachmentFromClipboard(QString &outName, QString &outMime, QByt
             const QByteArray bytes = f.readAll();
             f.close();
             if (bytes.isEmpty()) continue;
-            static const int kMaxBytes = 8 * 1024 * 1024;
-            if (bytes.size() > kMaxBytes) {
-                outError = QStringLiteral("Файл из буфера слишком большой (максимум 8 МБ).");
-                return false;
-            }
             QFileInfo fi(u.toLocalFile());
+            if (isBlockedAttachmentFile(fi.fileName(), &outError))
+                return false;
+            if (!validateAttachmentSize(bytes.size(), &outError))
+                return false;
             QMimeDatabase mdb;
             outName = fi.fileName();
             outMime = mdb.mimeTypeForFile(fi).name();
@@ -829,12 +1019,9 @@ void TaskChatWidget::setThreadId(int id, const QString &peerHint)
     if (!peerHint.trimmed().isEmpty())
         peerHint_ = peerHint.trimmed();
     forceScrollToBottom_ = true;
-    if (id > 0) {
-        clearChatNotificationsForThread(currentUser_, id);
-        DataBus::instance().triggerNotificationsChanged();
-    }
     if (threadId_ == id) {
-        refreshMessages(false);
+        if (id > 0)
+            QTimer::singleShot(0, this, [this]() { refreshMessages(false); });
         return;
     }
     clearPendingAttachment();
@@ -845,7 +1032,16 @@ void TaskChatWidget::setThreadId(int id, const QString &peerHint)
     lastLoadedMessageId_ = 0;
     historyExhausted_ = false;
     loadingOlderMessages_ = false;
-    refreshMessages(true);
+
+    if (id <= 0)
+        return;
+
+    const int openId = id;
+    QTimer::singleShot(0, this, [this, openId]() {
+        clearChatNotificationsForThread(currentUser_, openId);
+        DataBus::instance().triggerNotificationsChanged();
+        refreshMessages(true);
+    });
 }
 
 bool TaskChatWidget::autotestSendTextMessage(const QString &message, QString *error)
@@ -1228,6 +1424,7 @@ void TaskChatWidget::setupUi()
 QWidget* TaskChatWidget::createMessageRow(const TaskChatMessage &m)
 {
     const bool mine = (m.fromUser == currentUser_);
+    const int attachmentMessageId = m.id;
     QString forwardedFrom;
     QString payload = m.message;
     const bool isForwarded = decodeForwardMessage(m.message, forwardedFrom, payload);
@@ -1265,7 +1462,7 @@ QWidget* TaskChatWidget::createMessageRow(const TaskChatMessage &m)
     row->setProperty("messageId", m.id);
     row->setProperty("mine", mine);
     row->setProperty("fromUser", m.fromUser);
-    row->setProperty("rawMessage", m.message);
+    storeRawMessageOnRow(row, m.message);
     row->setProperty("text", visibleText);
     row->setProperty("isAttachment", isAttachment);
     if (isAttachment) {
@@ -1322,7 +1519,7 @@ QWidget* TaskChatWidget::createMessageRow(const TaskChatMessage &m)
     }
     // Сначала вложение (если есть), потом текст
     if (isAttachment) {
-        if (isImageAttachment(fileMime, fileName)) {
+        if (isImageAttachment(fileMime, fileName) && shouldDecodeInlineImagePreview(payload)) {
             // Декодируем вложение и показываем превью
             QString decodedName;
             QString decodedMime;
@@ -1364,32 +1561,24 @@ QWidget* TaskChatWidget::createMessageRow(const TaskChatMessage &m)
                     "QPushButton{border:1px solid #BFDBFE;border-radius:10px;background:#EFF6FF;color:#1D4ED8;font-weight:800;padding:8px;text-align:left;}"
                     "QPushButton:hover{background:#DBEAFE;border:1px solid #60A5FA;}"
                 );
-                connect(thumb, &QPushButton::clicked, this, [this, payload, fileName, fileMime]() {
-                    const QString msgToDecode = payload;
-                    QString decodedName;
-                    QString decodedMime;
-                    QByteArray data;
-                    if (decodeAttachmentMessage(msgToDecode, decodedName, decodedMime, data) && !data.isEmpty()) {
-                        openAttachmentInsideApp(this, fileName, fileMime, data);
-                    }
+                connect(thumb, &QPushButton::clicked, this, [this, attachmentMessageId, fileName, fileMime]() {
+                    openChatAttachmentByMessageId(this, attachmentMessageId, fileName, fileMime, currentUser_);
                 });
                 bubbleL->addWidget(thumb, 0, mine ? Qt::AlignRight : Qt::AlignLeft);
             }
+        } else if (isImageAttachment(fileMime, fileName)) {
+            const qint64 docBytes = attachmentBase64DecodedByteCount(payload);
+            QPushButton *doc = makeDocumentAttachmentBubbleControl(bubble, mine, fileName, docBytes);
+            connect(doc, &QPushButton::clicked, this, [this, attachmentMessageId, fileName, fileMime]() {
+                openChatAttachmentByMessageId(this, attachmentMessageId, fileName, fileMime, currentUser_);
+            });
+            bubbleL->addWidget(doc, 0, mine ? Qt::AlignRight : Qt::AlignLeft);
+            doc->installEventFilter(this);
         } else {
             const qint64 docBytes = attachmentBase64DecodedByteCount(payload);
             QPushButton *doc = makeDocumentAttachmentBubbleControl(bubble, mine, fileName, docBytes);
-            connect(doc, &QPushButton::clicked, this, [this, payload, fileName, fileMime]() {
-                const QString msgToDecode = payload;
-                QString decodedName;
-                QString decodedMime;
-                QByteArray data;
-                if (decodeAttachmentMessage(msgToDecode, decodedName, decodedMime, data) && !data.isEmpty()) {
-                    if (isImageAttachment(fileMime, fileName)) {
-                        openAttachmentInsideApp(this, fileName, fileMime, data);
-                    } else {
-                        openAttachmentData(this, fileName, data);
-                    }
-                }
+            connect(doc, &QPushButton::clicked, this, [this, attachmentMessageId, fileName, fileMime]() {
+                openChatAttachmentByMessageId(this, attachmentMessageId, fileName, fileMime, currentUser_);
             });
             bubbleL->addWidget(doc, 0, mine ? Qt::AlignRight : Qt::AlignLeft);
             doc->installEventFilter(this);
@@ -1473,7 +1662,7 @@ void TaskChatWidget::updateDayLabel()
 
 void TaskChatWidget::refreshMessages(bool fullReload)
 {
-    if (threadId_ <= 0)
+    if (threadId_ <= 0 || messagesLoading_)
         return;
 
     bool keepAtBottom = forceScrollToBottom_;
@@ -1482,30 +1671,50 @@ void TaskChatWidget::refreshMessages(bool fullReload)
         keepAtBottom = (sb->maximum() - sb->value()) < 30;
     }
 
-    // Если forceScrollToBottom_, делаем полную перезагрузку
     if (forceScrollToBottom_)
         fullReload = true;
 
-    QWidget *messagesHost = scrollArea_ ? scrollArea_->widget() : nullptr;
-    if (messagesHost && fullReload)
-        messagesHost->setUpdatesEnabled(false);
+    const bool incremental = !fullReload && lastLoadedMessageId_ > 0;
+    if (incremental && !hasMessagesForThreadFrom(threadId_, currentUser_, lastLoadedMessageId_ + 1)) {
+        forceScrollToBottom_ = false;
+        return;
+    }
+    if (incremental)
+        keepAtBottom = true;
 
-    QVector<TaskChatMessage> msgs;
-    if (!fullReload && lastLoadedMessageId_ > 0) {
-        msgs = getMessagesForThreadFrom(threadId_, currentUser_, lastLoadedMessageId_ + 1);
-        if (msgs.isEmpty()) {
+    QVector<TaskChatMessage> encrypted;
+    if (incremental)
+        encrypted = getMessagesForThreadFrom(threadId_, currentUser_, lastLoadedMessageId_ + 1, false);
+    else {
+        if (fullReload) {
+            while (QLayoutItem *item = messagesLayout_->takeAt(0)) {
+                if (item->widget()) item->widget()->deleteLater();
+                delete item;
+            }
+        }
+        encrypted = getMessagesForThreadLastN(threadId_, currentUser_, kMessagesPageSize, false);
+    }
+
+    messagesLoading_ = true;
+    auto *watcher = new QFutureWatcher<QVector<TaskChatMessage>>(this);
+    connect(watcher, &QFutureWatcher<QVector<TaskChatMessage>>::finished, this, [this, watcher, fullReload, keepAtBottom, incremental]() {
+        const QVector<TaskChatMessage> msgs = watcher->result();
+        watcher->deleteLater();
+        messagesLoading_ = false;
+        if (incremental && msgs.isEmpty()) {
             forceScrollToBottom_ = false;
             return;
         }
-        // Если есть новые сообщения, всегда скроллим вниз
-        keepAtBottom = true;
-    } else {
-        while (QLayoutItem *item = messagesLayout_->takeAt(0)) {
-            if (item->widget()) item->widget()->deleteLater();
-            delete item;
-        }
-        msgs = getMessagesForThreadLastN(threadId_, currentUser_, kMessagesPageSize);
-    }
+        applyRefreshedMessages(msgs, fullReload, keepAtBottom);
+    });
+    watcher->setFuture(QtConcurrent::run(decryptChatMessages, encrypted));
+}
+
+void TaskChatWidget::applyRefreshedMessages(const QVector<TaskChatMessage> &msgs, bool fullReload, bool keepAtBottom)
+{
+    QWidget *messagesHost = scrollArea_ ? scrollArea_->widget() : nullptr;
+    if (messagesHost && fullReload)
+        messagesHost->setUpdatesEnabled(false);
 
     if (fullReload || peerUsername_.trimmed().isEmpty()) {
         TaskChatThread threadState = getThreadById(threadId_);
@@ -1853,16 +2062,23 @@ void TaskChatWidget::showMediaHistoryDialog()
     if (threadId_ <= 0)
         return;
 
-    const QVector<TaskChatMessage> msgs = getMessagesForThread(threadId_, currentUser_);
-    struct MediaItem { int id; QString fn; QString mt; QByteArray data; QString meta; };
-    QVector<MediaItem> media;
-    for (const TaskChatMessage &m : msgs) {
-        QString fn, mt;
-        QByteArray data;
-        if (!decodeAttachmentMessage(m.message, fn, mt, data))
-            continue;
-        media.push_back({m.id, fn, mt, data, QString("%1\n%2").arg(m.fromUser, m.createdAt.toString("dd.MM.yy hh:mm"))});
-    }
+    QProgressDialog progress(QStringLiteral("Загрузка медиа…"), QString(), 0, 0, this);
+    progress.setWindowTitle(QStringLiteral("Медиа и документы"));
+    progress.setWindowModality(Qt::WindowModal);
+    progress.setMinimumDuration(200);
+    progress.setCancelButton(nullptr);
+    progress.show();
+
+    const int threadId = threadId_;
+    const QString currentUser = currentUser_;
+    QFutureWatcher<QVector<MediaHistoryItem>> watcher;
+    QEventLoop loadLoop;
+    connect(&watcher, &QFutureWatcher<QVector<MediaHistoryItem>>::finished, &loadLoop, &QEventLoop::quit);
+    watcher.setFuture(QtConcurrent::run(scanMediaHistoryForThread, threadId, currentUser));
+    loadLoop.exec();
+    progress.close();
+
+    const QVector<MediaHistoryItem> media = watcher.result();
 
     QDialog dlg(this);
     dlg.setWindowTitle("Медиа и документы");
@@ -1884,7 +2100,7 @@ void TaskChatWidget::showMediaHistoryDialog()
         grid->addWidget(empty, 0, 0, 1, 5);
     } else {
         for (int i = 0; i < media.size(); ++i) {
-            const MediaItem &it = media[i];
+            const MediaHistoryItem &it = media[i];
             QToolButton *card = new QToolButton(host);
             card->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
             card->setFixedSize(160, 170);
@@ -1893,10 +2109,9 @@ void TaskChatWidget::showMediaHistoryDialog()
             card->setProperty("messageId", it.id);
             card->setProperty("fileName", it.fn);
             card->setProperty("mimeType", it.mt);
-            card->setProperty("bytes", it.data);
-            if (isImageAttachment(it.mt, it.fn)) {
+            if (it.isImage && !it.thumbData.isEmpty()) {
                 QPixmap pm;
-                pm.loadFromData(it.data);
+                pm.loadFromData(it.thumbData);
                 if (!pm.isNull())
                     card->setIcon(QIcon(pm.scaled(136, 96, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation)));
             } else {
@@ -1914,11 +2129,11 @@ void TaskChatWidget::showMediaHistoryDialog()
                 "QToolButton{background:#FFFFFF;border:1px solid #D5DCE8;border-radius:10px;padding:6px;font-size:11px;text-align:left;}"
                 "QToolButton:hover{background:rgba(80,118,251,36);border:1px solid rgb(80,118,251);}"
             );
-            connect(card, &QToolButton::clicked, &dlg, [this, card]() {
-                const QString fn = card->property("fileName").toString();
-                const QString mt = card->property("mimeType").toString();
-                const QByteArray data = card->property("bytes").toByteArray();
-                openAttachmentInsideApp(this, fn, mt, data, QString(), 0);
+            connect(card, &QToolButton::clicked, &dlg, [this, card, currentUser]() {
+                openChatAttachmentByMessageId(this, card->property("messageId").toInt(),
+                                              card->property("fileName").toString(),
+                                              card->property("mimeType").toString(),
+                                              currentUser);
             });
             connect(card, &QToolButton::customContextMenuRequested, &dlg, [this, card, &dlg](const QPoint &pos) {
                 QMenu menu(card);
@@ -1932,6 +2147,7 @@ void TaskChatWidget::showMediaHistoryDialog()
             grid->addWidget(card, i / 5, i % 5);
         }
     }
+
     scroll->setWidget(host);
     root->addWidget(scroll, 1);
 
@@ -2063,19 +2279,9 @@ bool TaskChatWidget::eventFilter(QObject *obj, QEvent *event)
                 if (row && row->property("isAttachment").toBool()) {
                     const QString fn = row->property("attachmentFileName").toString();
                     const QString mt = row->property("attachmentMime").toString();
-                    const QString raw = row->property("rawMessage").toString();
-                    QString decodedName;
-                    QString decodedMime;
-                    QByteArray data;
-                    
-                    // Проверяем, есть ли комбинированное сообщение
-                    QString messageText, attachmentPayload;
-                    bool isCombined = splitCombinedMessage(raw, messageText, attachmentPayload);
-                    const QString &msgToDecode = isCombined ? attachmentPayload : raw;
-                    
-                    if (decodeAttachmentMessage(msgToDecode, decodedName, decodedMime, data) && !data.isEmpty()) {
-                        const int mid = row->property("messageId").toInt();
-                        openAttachmentInsideApp(this, fn, mt, data, currentUser_, mid);
+                    const int mid = row->property("messageId").toInt();
+                    if (mid > 0) {
+                        openChatAttachmentByMessageId(this, mid, fn, mt, currentUser_);
                         return true;
                     }
                 }
@@ -2221,7 +2427,7 @@ void TaskChatWidget::showMessageContextMenu(const QPoint &globalPos)
     const bool mine = row->property("mine").toBool();
     const bool isAttachment = row->property("isAttachment").toBool();
     const QString sourceFromUser = row->property("fromUser").toString().trimmed();
-    const QString sourceRawMessage = row->property("rawMessage").toString();
+    const QString sourceRawMessage = chatMessageRawText(messageId, row);
     QMenu menu;
     menu.setStyleSheet(
         "QMenu{background:#FFFFFF;border:1px solid #D5DCE8;border-radius:10px;padding:6px;}"
@@ -2685,7 +2891,7 @@ void TaskChatDialog::setupViewUi()
     refreshMessages();
 
     liveRefreshTimer_ = new QTimer(this);
-    liveRefreshTimer_->setInterval(1500);
+    liveRefreshTimer_->setInterval(3000);
     connect(liveRefreshTimer_, &QTimer::timeout, this, [this]() {
         if (!isVisible() || threadId_ <= 0)
             return;
@@ -2710,7 +2916,7 @@ void TaskChatDialog::refreshMessages(bool fullReload)
         fullReload = true;
 
     if (!fullReload && lastLoadedMessageId_ > 0) {
-        if (getMessagesForThreadFrom(threadId_, currentUser_, lastLoadedMessageId_ + 1).isEmpty()) {
+        if (!hasMessagesForThreadFrom(threadId_, currentUser_, lastLoadedMessageId_ + 1)) {
             forceScrollToBottom_ = false;
             return;
         }
@@ -2719,18 +2925,31 @@ void TaskChatDialog::refreshMessages(bool fullReload)
         fullReload = true;
     }
 
-    QWidget *messagesHost = scrollArea_ ? scrollArea_->widget() : nullptr;
-    if (messagesHost)
-        messagesHost->setUpdatesEnabled(false);
+    if (messagesLoading_)
+        return;
+
     while (QLayoutItem *item = messagesLayout_->takeAt(0)) {
         if (item->widget()) item->widget()->deleteLater();
         delete item;
     }
-    QVector<TaskChatMessage> msgs = getMessagesForThreadLastN(threadId_, currentUser_, kMessagesPageSize);
-    oldestLoadedMessageId_ = 0;
-    lastLoadedMessageId_ = 0;
-    historyExhausted_ = false;
-    for (const TaskChatMessage &m : msgs) {
+
+    const QVector<TaskChatMessage> encrypted =
+        getMessagesForThreadLastN(threadId_, currentUser_, kMessagesPageSize, false);
+    messagesLoading_ = true;
+
+    auto *watcher = new QFutureWatcher<QVector<TaskChatMessage>>(this);
+    connect(watcher, &QFutureWatcher<QVector<TaskChatMessage>>::finished, this, [this, watcher, keepAtBottom]() {
+        const QVector<TaskChatMessage> msgs = watcher->result();
+        watcher->deleteLater();
+        messagesLoading_ = false;
+
+        QWidget *messagesHost = scrollArea_ ? scrollArea_->widget() : nullptr;
+        if (messagesHost)
+            messagesHost->setUpdatesEnabled(false);
+        oldestLoadedMessageId_ = 0;
+        lastLoadedMessageId_ = 0;
+        historyExhausted_ = false;
+        for (const TaskChatMessage &m : msgs) {
         const bool mine = (m.fromUser == currentUser_);
         QString forwardedFrom;
         QString payload = m.message;
@@ -2763,12 +2982,13 @@ void TaskChatDialog::refreshMessages(bool fullReload)
             }
         }
         const bool wasSelected = selectedMessageIds_.contains(m.id);
+        const int attachmentMessageId = m.id;
 
         QWidget *row = new QWidget(this);
         row->setStyleSheet(wasSelected ? "background:rgba(59, 130, 246, 0.25);border-radius:8px;" : "background:transparent;");
         row->setProperty("messageId", m.id);
         row->setProperty("fromUser", m.fromUser);
-        row->setProperty("rawMessage", m.message);
+        storeRawMessageOnRow(row, m.message);
         row->setProperty("selected", wasSelected);
         row->setProperty("isAttachment", isAttachment);
         if (isAttachment) {
@@ -2825,7 +3045,7 @@ void TaskChatDialog::refreshMessages(bool fullReload)
         }
         // Сначала вложение (если есть), потом текст
         if (isAttachment) {
-            if (isImageAttachment(fileMime, fileName)) {
+            if (isImageAttachment(fileMime, fileName) && shouldDecodeInlineImagePreview(payload)) {
                 // Декодируем вложение и показываем превью
                 QString decodedName;
                 QString decodedMime;
@@ -2864,32 +3084,25 @@ void TaskChatDialog::refreshMessages(bool fullReload)
                         "QPushButton{border:1px solid #BFDBFE;border-radius:10px;background:#EFF6FF;color:#1D4ED8;font-weight:800;padding:8px;text-align:left;}"
                         "QPushButton:hover{background:#DBEAFE;border:1px solid #60A5FA;}"
                     );
-                    connect(thumb, &QPushButton::clicked, this, [this, payload]() {
-                        const QString msgToDecode = payload;
-                        QString fileName;
-                        QString fileMime;
-                        QByteArray fileData;
-                        if (!decodeAttachmentMessage(msgToDecode, fileName, fileMime, fileData) || fileData.isEmpty())
-                            return;
-                        openAttachmentInsideApp(this, fileName, fileMime, fileData);
+                    connect(thumb, &QPushButton::clicked, this, [this, attachmentMessageId, fileName, fileMime]() {
+                        openChatAttachmentByMessageId(this, attachmentMessageId, fileName, fileMime);
                     });
                     bubbleL->addWidget(thumb, 0, mine ? Qt::AlignRight : Qt::AlignLeft);
                     thumb->installEventFilter(this);
                 }
+            } else if (isImageAttachment(fileMime, fileName)) {
+                const qint64 docBytes = attachmentBase64DecodedByteCount(payload);
+                QPushButton *doc = makeDocumentAttachmentBubbleControl(bubble, mine, fileName, docBytes);
+                connect(doc, &QPushButton::clicked, this, [this, attachmentMessageId, fileName, fileMime]() {
+                    openChatAttachmentByMessageId(this, attachmentMessageId, fileName, fileMime);
+                });
+                bubbleL->addWidget(doc, 0, mine ? Qt::AlignRight : Qt::AlignLeft);
+                doc->installEventFilter(this);
             } else {
                 const qint64 docBytes = attachmentBase64DecodedByteCount(payload);
                 QPushButton *doc = makeDocumentAttachmentBubbleControl(bubble, mine, fileName, docBytes);
-                connect(doc, &QPushButton::clicked, this, [this, payload, fileName, fileMime]() {
-                    const QString msgToDecode = payload;
-                    QString decodedName;
-                    QString decodedMime;
-                    QByteArray fileData;
-                    if (!decodeAttachmentMessage(msgToDecode, decodedName, decodedMime, fileData) || fileData.isEmpty())
-                        return;
-                    if (isImageAttachment(fileMime, fileName))
-                        openAttachmentInsideApp(this, fileName, fileMime, fileData);
-                    else
-                        openAttachmentData(this, fileName, fileData);
+                connect(doc, &QPushButton::clicked, this, [this, attachmentMessageId, fileName, fileMime]() {
+                    openChatAttachmentByMessageId(this, attachmentMessageId, fileName, fileMime);
                 });
                 bubbleL->addWidget(doc, 0, mine ? Qt::AlignRight : Qt::AlignLeft);
                 doc->installEventFilter(this);
@@ -2936,6 +3149,8 @@ void TaskChatDialog::refreshMessages(bool fullReload)
         messagesHost->setUpdatesEnabled(true);
         messagesHost->update();
     }
+    });
+    watcher->setFuture(QtConcurrent::run(decryptChatMessages, encrypted));
 }
 
 void TaskChatDialog::loadOlderMessages()
@@ -3009,12 +3224,13 @@ void TaskChatDialog::loadOlderMessages()
             }
         }
         const bool wasSelected = selectedMessageIds_.contains(m.id);
+        const int attachmentMessageId = m.id;
 
         QWidget *row = new QWidget(this);
         row->setStyleSheet(wasSelected ? "background:rgba(59, 130, 246, 0.25);border-radius:8px;" : "background:transparent;");
         row->setProperty("messageId", m.id);
         row->setProperty("fromUser", m.fromUser);
-        row->setProperty("rawMessage", m.message);
+        storeRawMessageOnRow(row, m.message);
         row->setProperty("selected", wasSelected);
         row->setProperty("isAttachment", isAttachment);
         if (isAttachment) {
@@ -3071,7 +3287,7 @@ void TaskChatDialog::loadOlderMessages()
         }
         // Сначала вложение (если есть), потом текст
         if (isAttachment) {
-            if (isImageAttachment(fileMime, fileName)) {
+            if (isImageAttachment(fileMime, fileName) && shouldDecodeInlineImagePreview(payload)) {
                 // Декодируем вложение и показываем превью
                 QString decodedName;
                 QString decodedMime;
@@ -3110,32 +3326,25 @@ void TaskChatDialog::loadOlderMessages()
                         "QPushButton{border:1px solid #BFDBFE;border-radius:10px;background:#EFF6FF;color:#1D4ED8;font-weight:800;padding:8px;text-align:left;}"
                         "QPushButton:hover{background:#DBEAFE;border:1px solid #60A5FA;}"
                     );
-                    connect(thumb, &QPushButton::clicked, this, [this, payload]() {
-                        const QString msgToDecode = payload;
-                        QString fileName;
-                        QString fileMime;
-                        QByteArray fileData;
-                        if (!decodeAttachmentMessage(msgToDecode, fileName, fileMime, fileData) || fileData.isEmpty())
-                            return;
-                        openAttachmentInsideApp(this, fileName, fileMime, fileData);
+                    connect(thumb, &QPushButton::clicked, this, [this, attachmentMessageId, fileName, fileMime]() {
+                        openChatAttachmentByMessageId(this, attachmentMessageId, fileName, fileMime);
                     });
                     bubbleL->addWidget(thumb, 0, mine ? Qt::AlignRight : Qt::AlignLeft);
                     thumb->installEventFilter(this);
                 }
+            } else if (isImageAttachment(fileMime, fileName)) {
+                const qint64 docBytes = attachmentBase64DecodedByteCount(payload);
+                QPushButton *doc = makeDocumentAttachmentBubbleControl(bubble, mine, fileName, docBytes);
+                connect(doc, &QPushButton::clicked, this, [this, attachmentMessageId, fileName, fileMime]() {
+                    openChatAttachmentByMessageId(this, attachmentMessageId, fileName, fileMime);
+                });
+                bubbleL->addWidget(doc, 0, mine ? Qt::AlignRight : Qt::AlignLeft);
+                doc->installEventFilter(this);
             } else {
                 const qint64 docBytes = attachmentBase64DecodedByteCount(payload);
                 QPushButton *doc = makeDocumentAttachmentBubbleControl(bubble, mine, fileName, docBytes);
-                connect(doc, &QPushButton::clicked, this, [this, payload, fileName, fileMime]() {
-                    const QString msgToDecode = payload;
-                    QString decodedName;
-                    QString decodedMime;
-                    QByteArray fileData;
-                    if (!decodeAttachmentMessage(msgToDecode, decodedName, decodedMime, fileData) || fileData.isEmpty())
-                        return;
-                    if (isImageAttachment(fileMime, fileName))
-                        openAttachmentInsideApp(this, fileName, fileMime, fileData);
-                    else
-                        openAttachmentData(this, fileName, fileData);
+                connect(doc, &QPushButton::clicked, this, [this, attachmentMessageId, fileName, fileMime]() {
+                    openChatAttachmentByMessageId(this, attachmentMessageId, fileName, fileMime);
                 });
                 bubbleL->addWidget(doc, 0, mine ? Qt::AlignRight : Qt::AlignLeft);
                 doc->installEventFilter(this);
@@ -3371,12 +3580,9 @@ bool TaskChatDialog::eventFilter(QObject *obj, QEvent *event)
             if (row && row->property("isAttachment").toBool()) {
                 const QString fn = row->property("attachmentFileName").toString();
                 const QString mt = row->property("attachmentMime").toString();
-                const QString raw = row->property("rawMessage").toString();
-                QString decodedName;
-                QString decodedMime;
-                QByteArray data;
-                if (decodeAttachmentFromStoredMessage(raw, decodedName, decodedMime, data) && !data.isEmpty()) {
-                    openAttachmentInsideApp(this, fn, mt, data, QString(), 0);
+                const int mid = row->property("messageId").toInt();
+                if (mid > 0) {
+                    openChatAttachmentByMessageId(this, mid, fn, mt);
                     return true;
                 }
             }
@@ -3683,24 +3889,7 @@ void TaskChatDialog::showStartChatDialog(const QString &currentUser, QWidget *pa
         QString recipientUser = list[row].username;
         if (recipientUser.isEmpty()) return;
         dlg.accept();
-        QString err;
-        const QString placeHolderAgv("—");
-        int tid = createThread(placeHolderAgv, 0, QString(), currentUser, recipientUser, QStringLiteral("—"), err);
-        if (tid <= 0) {
-            QMessageBox::warning(parent, "Ошибка", "Не удалось создать чат: " + err);
-            return;
-        }
-        logAction(currentUser, "chat_created",
-                  QString("thread=%1 start_chat to=%2").arg(tid).arg(recipientUser));
-        QString title = "Новый чат";
-        const QString fromName = userDisplayName(currentUser);
-        QString body = QString("[chat:%1] %2 начал(а) чат с вами.").arg(tid).arg(fromName);
-        addNotificationForUser(recipientUser, title, body);
-        DataBus::instance().triggerNotificationsChanged();
-        const QString role = getUserRole(currentUser);
-        const bool isAdmin = (role == "admin" || role == "tech");
-        TaskChatDialog chatDlg(tid, currentUser, isAdmin, parent);
-        chatDlg.exec();
+        TaskChatDialog::openOrCreateChatWith(currentUser, recipientUser, QString(), parent);
     });
     QPushButton *cancelBtn = new QPushButton("Отмена", &dlg);
     cancelBtn->setStyleSheet("QPushButton{background:#E2E8F0;color:#334155;font-weight:700;padding:10px 20px;border-radius:10px;} QPushButton:hover{background:#CBD5E1;}");
@@ -3750,12 +3939,15 @@ int TaskChatDialog::ensureThreadWithUser(const QString &currentUser, const QStri
         if (outError) *outError = err;
         return 0;
     }
-    logAction(currentUser, "chat_created",
-              QString("thread=%1 open_dialog to=%2 agv=%3").arg(tid).arg(otherUser, safeAgvId));
+    const int newTid = tid;
     const QString fromName = userDisplayName(currentUser);
-    addNotificationForUser(otherUser, "Новый чат",
-                           QString("[chat:%1] %2 открыл(а) диалог с вами.").arg(tid).arg(fromName));
-    DataBus::instance().triggerNotificationsChanged();
+    QTimer::singleShot(0, qApp, [currentUser, newTid, otherUser, safeAgvId, fromName]() {
+        logAction(currentUser, "chat_created",
+                  QString("thread=%1 open_dialog to=%2 agv=%3").arg(newTid).arg(otherUser, safeAgvId));
+        addNotificationForUser(otherUser, "Новый чат",
+                               QString("[chat:%1] %2 открыл(а) диалог с вами.").arg(newTid).arg(fromName));
+        DataBus::instance().triggerNotificationsChanged();
+    });
     return tid;
 }
 

@@ -1,4 +1,5 @@
 #include "leftmenu.h"
+#include "app_version.h"
 #include "multisectionwidget.h"
 #include "listagvinfo.h"
 #include "agvsettingspage.h"
@@ -575,7 +576,7 @@ void leftMenu::resizeEvent(QResizeEvent *event)
 
 void leftMenu::initUI()
 {
-    const QString appVersionText = "1.0.0 от 30.11.2025";
+    const QString appVersionText = AppVersion::label();
 
     QVBoxLayout *rootLayout = new QVBoxLayout(this);
     rootLayout->setSpacing(s(5));
@@ -585,7 +586,7 @@ void leftMenu::initUI()
     if (!findChild<QTimer*>("presenceHeartbeatTimer")) {
         QTimer *presenceTimer = new QTimer(this);
         presenceTimer->setObjectName("presenceHeartbeatTimer");
-        presenceTimer->setInterval(15000);
+        presenceTimer->setInterval(30000);
         connect(presenceTimer, &QTimer::timeout, this, [this, presenceTimer]() {
             const QString username = AppSession::currentUsername();
             if (username.trimmed().isEmpty())
@@ -2184,7 +2185,7 @@ void leftMenu::initUI()
     QTimer::singleShot(100, this, &leftMenu::updateNotifBadge);
 
     notifPollTimer = new QTimer(this);
-    notifPollTimer->setInterval(3000);
+    notifPollTimer->setInterval(5000);
     connect(notifPollTimer, &QTimer::timeout, this, &leftMenu::updateNotifBadge);
     notifPollTimer->start();
 
@@ -4608,11 +4609,12 @@ void leftMenu::reloadLogs(int maxRows)
         explicit LogsReloadGuard(leftMenu *m) : menu(m) {}
         ~LogsReloadGuard()
         {
-            menu->reloadingLogs_ = false;
-            if (menu->logsReloadPending_) {
-                menu->logsReloadPending_ = false;
-                QTimer::singleShot(0, menu, [menu]() {
-                    menu->reloadLogs(menu->lastLogsMaxRows_);
+            leftMenu *const target = menu;
+            target->reloadingLogs_ = false;
+            if (target->logsReloadPending_) {
+                target->logsReloadPending_ = false;
+                QTimer::singleShot(0, target, [target]() {
+                    target->reloadLogs(target->lastLogsMaxRows_);
                 });
             }
         }
@@ -6606,7 +6608,7 @@ bool saveUserAvatarToDb(const QString &username, const QPixmap &pm)
     {
         if (!notifBadge_) return;
         const QString currentUser = AppSession::currentUsername();
-        QVector<Notification> notifs = loadNotificationsForUser(currentUser);
+        const QVector<Notification> notifs = loadUnreadNotificationsForUser(currentUser);
         auto parseChatId = [&](const QString &text) -> int {
             QRegularExpression re("\\[chat:(\\d+)\\]");
             QRegularExpressionMatch m = re.match(text);
@@ -6618,19 +6620,18 @@ bool saveUserAvatarToDb(const QString &username, const QPixmap &pm)
         };
         QVector<int> chatIds;
         chatIds.reserve(notifs.size());
-        int unreadAnyCount = 0;
         for (const Notification &n : notifs) {
-            if (n.isRead) continue;
-            unreadAnyCount++;
             const int chatId = parseChatId(n.message);
             if (chatId > 0)
                 chatIds.push_back(chatId);
         }
-        const QHash<int, TaskChatThread> threadMap = getThreadsByIds(chatIds);
+        const QHash<int, TaskChatThread> threadMap = chatIds.isEmpty()
+            ? QHash<int, TaskChatThread>()
+            : getThreadsByIds(chatIds);
+        const int unreadAnyCount = notifs.size();
         int count = 0;
         int unreadChatCount = 0;
         for (const Notification &n : notifs) {
-            if (n.isRead) continue;
             const int chatId = parseChatId(n.message);
             if (chatId > 0) {
                 const TaskChatThread t = threadMap.value(chatId);
@@ -7004,13 +7005,20 @@ bool saveUserAvatarToDb(const QString &username, const QPixmap &pm)
                 root->addWidget(hint);
                 QListWidget *list = new QListWidget(&pick);
                 list->setIconSize(QSize(s(40), s(40)));
+                const QPixmap defaultUserPm = QPixmap(QStringLiteral(":/new/mainWindowIcons/noback/user.png"));
+                QSet<QString> peerNames;
+                for (const UserInfo &u : candidates)
+                    peerNames.insert(u.username);
+                const QHash<QString, ChatPeerMeta> peerMeta = loadChatPeerMeta(peerNames);
                 for (const UserInfo &u : candidates) {
-                    const QString display = u.fullName.isEmpty() ? u.username : (u.fullName + " (" + u.username + ")");
-                    QListWidgetItem *it = new QListWidgetItem(display, list);
-                    QPixmap avatar = loadUserAvatarFromDb(u.username);
-                    if (avatar.isNull()) avatar = QPixmap(":/new/mainWindowIcons/noback/user.png");
-                    if (!avatar.isNull())
-                        it->setIcon(QIcon(makeRoundPixmap(avatar, s(40))));
+                    const ChatPeerMeta meta = peerMeta.value(u.username);
+                    const QString display = meta.displayName.isEmpty()
+                        ? (u.fullName.isEmpty() ? u.username : (u.fullName + " (" + u.username + ")"))
+                        : (meta.displayName + " (" + u.username + ")");
+                    QPixmap avatar = meta.avatar;
+                    if (avatar.isNull())
+                        avatar = defaultUserPm;
+                    QListWidgetItem *it = new QListWidgetItem(QIcon(makeRoundPixmap(avatar, s(40))), display, list);
                     it->setSizeHint(QSize(0, s(58)));
                     it->setData(Qt::UserRole, u.username);
                 }
@@ -7023,7 +7031,7 @@ bool saveUserAvatarToDb(const QString &username, const QPixmap &pm)
                     const QString other = it->data(Qt::UserRole).toString().trimmed();
                     if (other.isEmpty()) return;
                     QString err;
-                    int tid = TaskChatDialog::ensureThreadWithUser(currentUser, other, QString(), &err);
+                    const int tid = TaskChatDialog::ensureThreadWithUser(currentUser, other, QString(), &err);
                     if (tid <= 0) {
                         QMessageBox::warning(this, "Чат", err.isEmpty() ? QStringLiteral("Не удалось открыть чат") : err);
                         return;
@@ -7031,12 +7039,12 @@ bool saveUserAvatarToDb(const QString &username, const QPixmap &pm)
                     pick.accept();
                     showChatsPage();
                     if (embeddedChatWidget_ && chatsStack_) {
-                        embeddedChatWidget_->setThreadId(tid, other);
                         chatsStack_->setCurrentIndex(1);
+                        embeddedChatWidget_->setThreadId(tid, other);
                     }
+                    QTimer::singleShot(0, this, [this]() { reloadChatsPageList(); });
                 });
                 pick.exec();
-                reloadChatsPageList();
             });
             fabRow->addWidget(addChatFab, 0, Qt::AlignRight | Qt::AlignBottom);
             listMain->addLayout(fabRow);

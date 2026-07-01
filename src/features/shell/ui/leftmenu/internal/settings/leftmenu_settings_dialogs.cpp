@@ -1,5 +1,5 @@
 #include "leftmenu_settings_dialogs.h"
-#include "leftmenu_calendar_utils.h"
+#include "../calendar/leftmenu_calendar_utils.h"
 #include "db.h"
 #include "app_updater.h"
 #include "app_version.h"

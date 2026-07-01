@@ -1,4 +1,5 @@
 #pragma once
+#include "leftmenu/types/leftmenu_types.h"
 #include "userspage.h"
 #include <QWidget>
 #include <QDate>
@@ -56,35 +57,6 @@
 #include "modellistpage.h"
 
 class TaskChatWidget;
-
-// ★ Calendar event
-struct CalendarEvent {
-    QString agvId;
-    QString taskTitle;
-    QDate date;
-    QString severity;
-};
-
-// ★ Maintenance item
-struct MaintenanceItemData {
-    QString agvId;
-    QString agvName;
-    QString type;
-    QDate   date;
-    QString details;
-    QString severity;
-    QString assignedInfo;   // "за X", "делегирована X" или "общая"
-    QString assignedUser;  // username для уведомлений (если закреплён)
-    bool isDelegatedToMe = false;  // true = разово делегировано (assigned_to=я, AGV за кем-то другим)
-};
-
-// ★ System status
-struct SystemStatus {
-    int active;
-    int maintenance;
-    int error;
-    int disabled;
-};
 
 class leftMenu : public QWidget
 {

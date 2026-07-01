@@ -1,5 +1,5 @@
 #include "leftmenu.h"
-#include "internal/leftmenu_calendar_utils.h"
+#include "leftmenu_calendar_utils.h"
 #include "db_users.h"
 #include "app_session.h"
 #include <QScrollArea>

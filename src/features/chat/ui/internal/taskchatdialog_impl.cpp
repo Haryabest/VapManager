@@ -72,7 +72,7 @@ static const QString kSpecialPrefix = QStringLiteral("[[SPECIAL|");
 static const QString kAttachmentPrefix = QStringLiteral("[[FILE|");
 static const QString kForwardPrefix = QStringLiteral("[[FORWARD|");
 static const QString kAttachmentSeparator = QStringLiteral("\n[[ATTACHMENT]]\n");
-static constexpr int kMaxAttachmentBytes = 10 * 1024 * 1024;
+static constexpr qint64 kMaxAttachmentBytes = 500LL * 1024 * 1024;
 static constexpr int kHeavyMessageInlineChars = 256 * 1024;
 static constexpr int kInlineImagePreviewMaxBytes = 2 * 1024 * 1024;
 static QHash<int, QString> g_pendingSpecialByThread;
@@ -262,12 +262,12 @@ static bool isBlockedAttachmentFile(const QString &fileName, QString *outError =
     return false;
 }
 
-static bool validateAttachmentSize(int bytes, QString *outError = nullptr)
+static bool validateAttachmentSize(qint64 bytes, QString *outError = nullptr)
 {
     if (bytes <= kMaxAttachmentBytes)
         return true;
     if (outError) {
-        *outError = QStringLiteral("Файл слишком большой (максимум 10 МБ для чата).");
+        *outError = QStringLiteral("Файл слишком большой (максимум 500 МБ для чата).");
     }
     return false;
 }

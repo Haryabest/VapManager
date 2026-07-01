@@ -65,9 +65,11 @@ SOURCES += \
     src/data/repositories/db_users_profile.cpp \
     src/data/repositories/db_users_avatar_presence.cpp \
     src/data/repositories/internal/db_users_internal_state.cpp \
-    src/features/shell/ui/internal/leftmenu_calendar_utils.cpp \
-    src/features/shell/ui/internal/leftmenu_calendar_grid.cpp \
-    src/features/shell/ui/internal/leftmenu_settings_dialogs.cpp \
+    src/features/shell/ui/leftmenu/internal/calendar/leftmenu_calendar_utils.cpp \
+    src/features/shell/ui/leftmenu/internal/calendar/leftmenu_calendar_grid.cpp \
+    src/features/shell/ui/leftmenu/internal/settings/leftmenu_settings_dialogs.cpp \
+    src/features/shell/ui/leftmenu/internal/logs/leftmenu_logs.cpp \
+    src/features/shell/ui/leftmenu/internal/status/leftmenu_status.cpp \
     src/features/shell/ui/leftmenu.cpp \
     src/features/agv/ui/listagvinfo.cpp \
     src/features/account/ui/logindialog.cpp \
@@ -103,8 +105,9 @@ HEADERS += \
     src/data/repositories/db_models.h \
     src/data/repositories/db_task_chat.h \
     src/data/repositories/db_users.h \
-    src/features/shell/ui/internal/leftmenu_calendar_utils.h \
-    src/features/shell/ui/internal/leftmenu_settings_dialogs.h \
+    src/features/shell/ui/leftmenu/internal/calendar/leftmenu_calendar_utils.h \
+    src/features/shell/ui/leftmenu/internal/settings/leftmenu_settings_dialogs.h \
+    src/features/shell/ui/leftmenu/types/leftmenu_types.h \
     src/features/shell/ui/leftmenu.h \
     src/features/agv/ui/listagvinfo.h \
     src/features/account/ui/logindialog.h \
@@ -131,6 +134,8 @@ INCLUDEPATH += \
     src/features/notifications/ui \
     src/features/chat/ui \
     src/features/shell/ui \
+    src/features/shell/ui/leftmenu/internal/calendar \
+    src/features/shell/ui/leftmenu/internal/settings \
     src/features/users/ui \
     src/core/session \
     src/core/events \

@@ -70,6 +70,9 @@ SOURCES += \
     src/features/shell/ui/leftmenu/internal/settings/leftmenu_settings_dialogs.cpp \
     src/features/shell/ui/leftmenu/internal/logs/leftmenu_logs.cpp \
     src/features/shell/ui/leftmenu/internal/status/leftmenu_status.cpp \
+    src/features/shell/ui/leftmenu/internal/stress/leftmenu_stress.cpp \
+    src/features/shell/ui/leftmenu/internal/stress/leftmenu_stress_autotest_ui.cpp \
+    src/features/shell/ui/leftmenu/internal/profile/leftmenu_profile.cpp \
     src/features/shell/ui/leftmenu.cpp \
     src/features/agv/ui/listagvinfo.cpp \
     src/features/account/ui/logindialog.cpp \
@@ -107,6 +110,8 @@ HEADERS += \
     src/data/repositories/db_users.h \
     src/features/shell/ui/leftmenu/internal/calendar/leftmenu_calendar_utils.h \
     src/features/shell/ui/leftmenu/internal/settings/leftmenu_settings_dialogs.h \
+    src/features/shell/ui/leftmenu/internal/stress/leftmenu_stress_utils.h \
+    src/features/shell/ui/leftmenu/internal/stress/leftmenu_stress_autotest_ui.h \
     src/features/shell/ui/leftmenu/types/leftmenu_types.h \
     src/features/shell/ui/leftmenu.h \
     src/features/agv/ui/listagvinfo.h \

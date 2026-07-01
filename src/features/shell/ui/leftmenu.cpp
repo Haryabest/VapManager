@@ -57,66 +57,6 @@ void touchUserPresence(const QString &username);
 namespace {
 // Единый лимит стен-времени для комплексного теста (лог SUITE_START и обрезка фаз).
 
-void flashTaskbarOnNewNotification(QWidget *owner)
-{
-#ifdef Q_OS_WIN
-    QWidget *top = owner ? owner->window() : nullptr;
-    if (!top || !top->isWindow()) {
-        const auto tops = QApplication::topLevelWidgets();
-        for (QWidget *w : tops) {
-            if (w && w->isVisible() && w->isWindow()) {
-                top = w;
-                break;
-            }
-        }
-    }
-    if (!top)
-        return;
-    HWND hwnd = reinterpret_cast<HWND>(top->winId());
-    if (!hwnd)
-        return;
-    FLASHWINFO fi{};
-    fi.cbSize = sizeof(FLASHWINFO);
-    fi.hwnd = hwnd;
-    // Persistent taskbar highlight until user activates app window.
-    fi.dwFlags = FLASHW_TRAY | FLASHW_TIMERNOFG;
-    fi.uCount = 0;
-    fi.dwTimeout = 0;
-    FlashWindowEx(&fi);
-#else
-    Q_UNUSED(owner);
-#endif
-}
-
-void stopTaskbarFlash(QWidget *owner)
-{
-#ifdef Q_OS_WIN
-    QWidget *top = owner ? owner->window() : nullptr;
-    if (!top || !top->isWindow()) {
-        const auto tops = QApplication::topLevelWidgets();
-        for (QWidget *w : tops) {
-            if (w && w->isVisible() && w->isWindow()) {
-                top = w;
-                break;
-            }
-        }
-    }
-    if (!top)
-        return;
-    HWND hwnd = reinterpret_cast<HWND>(top->winId());
-    if (!hwnd)
-        return;
-    FLASHWINFO fi{};
-    fi.cbSize = sizeof(FLASHWINFO);
-    fi.hwnd = hwnd;
-    fi.dwFlags = FLASHW_STOP;
-    fi.uCount = 0;
-    fi.dwTimeout = 0;
-    FlashWindowEx(&fi);
-#else
-    Q_UNUSED(owner);
-#endif
-}
 
 int minCalendarYear()
 {
@@ -128,108 +68,6 @@ int maxCalendarYear()
     return LeftMenuCalendar::maxYear();
 }
 
-QString makeChatListSignature(const QVector<TaskChatThread> &threads)
-{
-    QStringList parts;
-    parts.reserve(threads.size());
-    for (const TaskChatThread &t : threads) {
-        parts.append(QStringLiteral("%1|%2|%3|%4|%5")
-                         .arg(t.id)
-                         .arg(t.createdAt.toString(Qt::ISODate))
-                         .arg(t.closedAt.toString(Qt::ISODate))
-                         .arg(t.createdBy)
-                         .arg(t.recipientUser));
-    }
-    return parts.join(QLatin1Char('\n'));
-}
-
-struct ChatPeerMeta
-{
-    QString displayName;
-    QPixmap avatar;
-    bool isActive = false;
-    QDateTime lastLogin;
-};
-
-bool chatListPeerShowsOnline(bool isActive, const QDateTime &lastLogin)
-{
-    if (!isActive || !lastLogin.isValid())
-        return false;
-    const qint64 secs = lastLogin.secsTo(QDateTime::currentDateTime());
-    return secs >= 0 && secs < 180;
-}
-
-QString formatLastSeenText(bool isActive, const QDateTime &lastLogin)
-{
-    if (chatListPeerShowsOnline(isActive, lastLogin))
-        return QStringLiteral("в сети");
-
-    if (!lastLogin.isValid())
-        return QStringLiteral("не в сети");
-
-    const qint64 secs = lastLogin.secsTo(QDateTime::currentDateTime());
-    if (secs < 60)
-        return QStringLiteral("был в сети только что");
-    if (secs < 3600)
-        return QStringLiteral("был в сети %1 мин назад").arg(qMax<qint64>(1, secs / 60));
-    if (secs < 86400)
-        return QStringLiteral("был в сети %1 ч назад").arg(qMax<qint64>(1, secs / 3600));
-    if (secs < 172800)
-        return QStringLiteral("был в сети вчера");
-    return QStringLiteral("был в сети %1").arg(lastLogin.toString(QStringLiteral("dd.MM.yyyy hh:mm")));
-}
-
-QHash<QString, ChatPeerMeta> loadChatPeerMeta(const QSet<QString> &usernames)
-{
-    QHash<QString, ChatPeerMeta> result;
-    if (usernames.isEmpty())
-        return result;
-
-    QSqlDatabase db = QSqlDatabase::database(QStringLiteral("main_connection"));
-    if (!db.isOpen())
-        return result;
-
-    QStringList names = usernames.values();
-    names.removeAll(QString());
-    if (names.isEmpty())
-        return result;
-
-    QStringList placeholders;
-    placeholders.reserve(names.size());
-    for (int i = 0; i < names.size(); ++i)
-        placeholders.append(QStringLiteral("?"));
-
-    QSqlQuery q(db);
-    q.prepare(QStringLiteral("SELECT username, full_name, avatar, is_active, last_login FROM users WHERE username IN (%1)")
-                  .arg(placeholders.join(QStringLiteral(","))));
-    for (const QString &name : names)
-        q.addBindValue(name);
-
-    if (!q.exec())
-        return result;
-
-    while (q.next()) {
-        const QString username = q.value(0).toString().trimmed();
-        const QString fullName = q.value(1).toString().trimmed();
-        if (username.isEmpty())
-            continue;
-
-        ChatPeerMeta meta;
-        meta.displayName = fullName.isEmpty() ? username : fullName;
-
-        const QByteArray avatarBytes = q.value(2).toByteArray();
-        if (!avatarBytes.isEmpty()) {
-            QPixmap pm;
-            pm.loadFromData(avatarBytes);
-            meta.avatar = pm;
-        }
-        meta.isActive = q.value(3).toInt() == 1;
-        meta.lastLogin = q.value(4).toDateTime();
-
-        result.insert(username, meta);
-    }
-    return result;
-}
 
 }
 
@@ -2687,1674 +2525,409 @@ bool leftMenu::eventFilter(QObject *obj, QEvent *event)
 }
 
 
-    void leftMenu::showAnnualReportDialog()
+void leftMenu::showAnnualReportDialog()
+{
+    QDialog dlg(this);
+    dlg.setWindowTitle("Годовой отчёт AGV");
+    dlg.setFixedSize(s(560), s(520));
+    dlg.setStyleSheet(
+        "QDialog{background:#F5F7FB;}"
+        "QLabel{background:transparent;font-family:Inter;color:#1A1A1A;}"
+        "QComboBox{background:#FFFFFF;border:1px solid #C7D2FE;border-radius:10px;"
+        "padding:7px 12px;font-family:Inter;font-size:13px;color:#111827;min-height:20px;}"
+        "QComboBox:hover{border:1px solid #8EA2FF;}"
+        "QComboBox::drop-down{border:none;width:20px;}"
+    );
+
+    QVBoxLayout *root = new QVBoxLayout(&dlg);
+    root->setContentsMargins(s(20), s(20), s(20), s(20));
+    root->setSpacing(s(14));
+
+    QLabel *title = new QLabel("Сформировать годовой отчёт", &dlg);
+    title->setStyleSheet(QString(
+        "font-family:Inter;font-size:%1px;font-weight:900;color:#0F172A;"
+    ).arg(s(22)));
+    root->addWidget(title);
+
+    QLabel *subtitle = new QLabel("Выберите AGV и диапазон дат для формирования PDF-отчёта", &dlg);
+    subtitle->setWordWrap(true);
+    subtitle->setStyleSheet(QString(
+        "font-family:Inter;font-size:%1px;font-weight:500;color:#6B7280;"
+    ).arg(s(13)));
+    root->addWidget(subtitle);
+
+    QLabel *reportTypeLabel = new QLabel(QStringLiteral("Тип отчёта:"), &dlg);
+    reportTypeLabel->setStyleSheet(QString("font-size:%1px;font-weight:700;").arg(s(14)));
+    root->addWidget(reportTypeLabel);
+
+    QComboBox *reportTypeCombo = new QComboBox(&dlg);
+    reportTypeCombo->addItem(QStringLiteral("Отчёт ТО"), QStringLiteral("maintenance"));
+    reportTypeCombo->addItem(QStringLiteral("Отчёт об ошибках"), QStringLiteral("errors"));
+    root->addWidget(reportTypeCombo);
+
+    QLabel *agvLabel = new QLabel("AGV:", &dlg);
+    agvLabel->setStyleSheet(QString("font-size:%1px;font-weight:700;").arg(s(14)));
+    root->addWidget(agvLabel);
+
+    QComboBox *agvCombo = new QComboBox(&dlg);
+    agvCombo->addItem("Все AGV", "");
+
     {
-        QDialog dlg(this);
-        dlg.setWindowTitle("Годовой отчёт AGV");
-        dlg.setFixedSize(s(560), s(520));
-        dlg.setStyleSheet(
-            "QDialog{background:#F5F7FB;}"
-            "QLabel{background:transparent;font-family:Inter;color:#1A1A1A;}"
-            "QComboBox{background:#FFFFFF;border:1px solid #C7D2FE;border-radius:10px;"
-            "padding:7px 12px;font-family:Inter;font-size:13px;color:#111827;min-height:20px;}"
-            "QComboBox:hover{border:1px solid #8EA2FF;}"
-            "QComboBox::drop-down{border:none;width:20px;}"
-        );
-
-        QVBoxLayout *root = new QVBoxLayout(&dlg);
-        root->setContentsMargins(s(20), s(20), s(20), s(20));
-        root->setSpacing(s(14));
-
-        QLabel *title = new QLabel("Сформировать годовой отчёт", &dlg);
-        title->setStyleSheet(QString(
-            "font-family:Inter;font-size:%1px;font-weight:900;color:#0F172A;"
-        ).arg(s(22)));
-        root->addWidget(title);
-
-        QLabel *subtitle = new QLabel("Выберите AGV и диапазон дат для формирования PDF-отчёта", &dlg);
-        subtitle->setWordWrap(true);
-        subtitle->setStyleSheet(QString(
-            "font-family:Inter;font-size:%1px;font-weight:500;color:#6B7280;"
-        ).arg(s(13)));
-        root->addWidget(subtitle);
-
-        QLabel *reportTypeLabel = new QLabel(QStringLiteral("Тип отчёта:"), &dlg);
-        reportTypeLabel->setStyleSheet(QString("font-size:%1px;font-weight:700;").arg(s(14)));
-        root->addWidget(reportTypeLabel);
-
-        QComboBox *reportTypeCombo = new QComboBox(&dlg);
-        reportTypeCombo->addItem(QStringLiteral("Отчёт ТО"), QStringLiteral("maintenance"));
-        reportTypeCombo->addItem(QStringLiteral("Отчёт об ошибках"), QStringLiteral("errors"));
-        root->addWidget(reportTypeCombo);
-
-        QLabel *agvLabel = new QLabel("AGV:", &dlg);
-        agvLabel->setStyleSheet(QString("font-size:%1px;font-weight:700;").arg(s(14)));
-        root->addWidget(agvLabel);
-
-        QComboBox *agvCombo = new QComboBox(&dlg);
-        agvCombo->addItem("Все AGV", "");
-
-        {
-            QSqlDatabase db = QSqlDatabase::database("main_connection");
-            if (db.isOpen()) {
-                QSqlQuery q(db);
-                q.prepare("SELECT agv_id FROM agv_list ORDER BY agv_id ASC");
-                if (q.exec()) {
-                    while (q.next()) {
-                        QString agvId = q.value(0).toString();
-                        agvCombo->addItem(agvId, agvId);
-                    }
+        QSqlDatabase db = QSqlDatabase::database("main_connection");
+        if (db.isOpen()) {
+            QSqlQuery q(db);
+            q.prepare("SELECT agv_id FROM agv_list ORDER BY agv_id ASC");
+            if (q.exec()) {
+                while (q.next()) {
+                    QString agvId = q.value(0).toString();
+                    agvCombo->addItem(agvId, agvId);
                 }
             }
-        }
-        root->addWidget(agvCombo);
-
-        QLabel *dateFromLabel = new QLabel("Дата начала:", &dlg);
-        dateFromLabel->setStyleSheet(QString("font-size:%1px;font-weight:700;").arg(s(14)));
-        root->addWidget(dateFromLabel);
-
-        QDateEdit *dateFrom = new QDateEdit(QDate::currentDate().addYears(-1), &dlg);
-        dateFrom->setCalendarPopup(true);
-        dateFrom->setDisplayFormat("dd.MM.yyyy");
-        dateFrom->setStyleSheet(
-            "QDateEdit{background:#FFFFFF;border:1px solid #C7D2FE;border-radius:10px;"
-            "padding:7px 12px;font-family:Inter;font-size:13px;color:#111827;}"
-        );
-        root->addWidget(dateFrom);
-
-        QLabel *dateToLabel = new QLabel("Дата окончания:", &dlg);
-        dateToLabel->setStyleSheet(QString("font-size:%1px;font-weight:700;").arg(s(14)));
-        root->addWidget(dateToLabel);
-
-        QDateEdit *dateTo = new QDateEdit(QDate::currentDate(), &dlg);
-        dateTo->setCalendarPopup(true);
-        dateTo->setDisplayFormat("dd.MM.yyyy");
-        dateTo->setStyleSheet(dateFrom->styleSheet());
-        root->addWidget(dateTo);
-
-        root->addStretch();
-
-        QLabel *errorLbl = new QLabel(&dlg);
-        errorLbl->setStyleSheet("font-family:Inter;font-size:12px;font-weight:600;color:#DC2626;");
-        errorLbl->setWordWrap(true);
-        root->addWidget(errorLbl);
-
-        QHBoxLayout *btns = new QHBoxLayout();
-        btns->setSpacing(s(12));
-
-        QPushButton *cancelBtn = new QPushButton("Отмена", &dlg);
-        cancelBtn->setStyleSheet(QString(
-            "QPushButton{background:#E6E6E6;border-radius:%1px;border:1px solid #C8C8C8;"
-            "font-family:Inter;font-size:%2px;font-weight:700;padding:%3px %4px;color:#333;}"
-            "QPushButton:hover{background:#D5D5D5;}"
-        ).arg(s(8)).arg(s(14)).arg(s(8)).arg(s(16)));
-
-        QPushButton *saveBtn = new QPushButton("Сохранить PDF", &dlg);
-        saveBtn->setStyleSheet(QString(
-            "QPushButton{background:#0F00DB;color:white;font-family:Inter;font-size:%1px;"
-            "font-weight:800;border:none;border-radius:%2px;padding:%3px %4px;}"
-            "QPushButton:hover{background:#1A4ACD;}"
-        ).arg(s(14)).arg(s(8)).arg(s(8)).arg(s(16)));
-
-        QPushButton *printBtn = new QPushButton("Печать", &dlg);
-        printBtn->setStyleSheet(QString(
-            "QPushButton{background:#0EA5E9;color:white;font-family:Inter;font-size:%1px;"
-            "font-weight:800;border:none;border-radius:%2px;padding:%3px %4px;}"
-            "QPushButton:hover{background:#0284C7;}"
-        ).arg(s(14)).arg(s(8)).arg(s(8)).arg(s(16)));
-
-        btns->addWidget(cancelBtn);
-        btns->addStretch();
-        btns->addWidget(printBtn);
-        btns->addWidget(saveBtn);
-        root->addLayout(btns);
-
-        connect(cancelBtn, &QPushButton::clicked, &dlg, &QDialog::reject);
-
-    if (stressSuiteRunning_ || qApp->property("autotest_running").toBool()) {
-        for (int attempt = 0; attempt < 6; ++attempt) {
-            QTimer::singleShot(140 + attempt * 120, &dlg, [&dlg, cancelBtn]() {
-                if (!dlg.isVisible())
-                    return;
-                if (cancelBtn && cancelBtn->isVisible() && cancelBtn->isEnabled())
-                    cancelBtn->click();
-                else
-                    dlg.reject();
-            });
         }
     }
+    root->addWidget(agvCombo);
 
-        auto generateReportHtml = [&]() -> QString {
-            const QString agvId = agvCombo->currentData().toString();
-            const QString reportType = reportTypeCombo->currentData().toString();
-            const QDate from = dateFrom->date();
-            const QDate to = dateTo->date();
+    QLabel *dateFromLabel = new QLabel("Дата начала:", &dlg);
+    dateFromLabel->setStyleSheet(QString("font-size:%1px;font-weight:700;").arg(s(14)));
+    root->addWidget(dateFromLabel);
 
-            if (from > to) {
-                errorLbl->setText("Дата начала не может быть позже даты окончания.");
+    QDateEdit *dateFrom = new QDateEdit(QDate::currentDate().addYears(-1), &dlg);
+    dateFrom->setCalendarPopup(true);
+    dateFrom->setDisplayFormat("dd.MM.yyyy");
+    dateFrom->setStyleSheet(
+        "QDateEdit{background:#FFFFFF;border:1px solid #C7D2FE;border-radius:10px;"
+        "padding:7px 12px;font-family:Inter;font-size:13px;color:#111827;}"
+    );
+    root->addWidget(dateFrom);
+
+    QLabel *dateToLabel = new QLabel("Дата окончания:", &dlg);
+    dateToLabel->setStyleSheet(QString("font-size:%1px;font-weight:700;").arg(s(14)));
+    root->addWidget(dateToLabel);
+
+    QDateEdit *dateTo = new QDateEdit(QDate::currentDate(), &dlg);
+    dateTo->setCalendarPopup(true);
+    dateTo->setDisplayFormat("dd.MM.yyyy");
+    dateTo->setStyleSheet(dateFrom->styleSheet());
+    root->addWidget(dateTo);
+
+    root->addStretch();
+
+    QLabel *errorLbl = new QLabel(&dlg);
+    errorLbl->setStyleSheet("font-family:Inter;font-size:12px;font-weight:600;color:#DC2626;");
+    errorLbl->setWordWrap(true);
+    root->addWidget(errorLbl);
+
+    QHBoxLayout *btns = new QHBoxLayout();
+    btns->setSpacing(s(12));
+
+    QPushButton *cancelBtn = new QPushButton("Отмена", &dlg);
+    cancelBtn->setStyleSheet(QString(
+        "QPushButton{background:#E6E6E6;border-radius:%1px;border:1px solid #C8C8C8;"
+        "font-family:Inter;font-size:%2px;font-weight:700;padding:%3px %4px;color:#333;}"
+        "QPushButton:hover{background:#D5D5D5;}"
+    ).arg(s(8)).arg(s(14)).arg(s(8)).arg(s(16)));
+
+    QPushButton *saveBtn = new QPushButton("Сохранить PDF", &dlg);
+    saveBtn->setStyleSheet(QString(
+        "QPushButton{background:#0F00DB;color:white;font-family:Inter;font-size:%1px;"
+        "font-weight:800;border:none;border-radius:%2px;padding:%3px %4px;}"
+        "QPushButton:hover{background:#1A4ACD;}"
+    ).arg(s(14)).arg(s(8)).arg(s(8)).arg(s(16)));
+
+    QPushButton *printBtn = new QPushButton("Печать", &dlg);
+    printBtn->setStyleSheet(QString(
+        "QPushButton{background:#0EA5E9;color:white;font-family:Inter;font-size:%1px;"
+        "font-weight:800;border:none;border-radius:%2px;padding:%3px %4px;}"
+        "QPushButton:hover{background:#0284C7;}"
+    ).arg(s(14)).arg(s(8)).arg(s(8)).arg(s(16)));
+
+    btns->addWidget(cancelBtn);
+    btns->addStretch();
+    btns->addWidget(printBtn);
+    btns->addWidget(saveBtn);
+    root->addLayout(btns);
+
+    connect(cancelBtn, &QPushButton::clicked, &dlg, &QDialog::reject);
+
+if (stressSuiteRunning_ || qApp->property("autotest_running").toBool()) {
+    for (int attempt = 0; attempt < 6; ++attempt) {
+        QTimer::singleShot(140 + attempt * 120, &dlg, [&dlg, cancelBtn]() {
+            if (!dlg.isVisible())
+                return;
+            if (cancelBtn && cancelBtn->isVisible() && cancelBtn->isEnabled())
+                cancelBtn->click();
+            else
+                dlg.reject();
+        });
+    }
+}
+
+    auto generateReportHtml = [&]() -> QString {
+        const QString agvId = agvCombo->currentData().toString();
+        const QString reportType = reportTypeCombo->currentData().toString();
+        const QDate from = dateFrom->date();
+        const QDate to = dateTo->date();
+
+        if (from > to) {
+            errorLbl->setText("Дата начала не может быть позже даты окончания.");
+            return QString();
+        }
+
+        QSqlDatabase db = QSqlDatabase::database("main_connection");
+        if (!db.isOpen()) {
+            errorLbl->setText("База данных не доступна.");
+            return QString();
+        }
+
+        QString html;
+        html += "<html><head><meta charset='utf-8'>";
+        html += "<style>"
+                "body{font-family:Inter,Arial,sans-serif;margin:11px;font-size:9.5pt;}"
+                "h1{color:#0F172A;font-size:17pt;}"
+                "h2{color:#334155;font-size:13pt;margin-top:11px;}"
+                "p{font-size:9.5pt;}"
+                "table{border-collapse:collapse;width:100%;margin-top:9px;font-size:8.5pt;}"
+                "th{background:#0F00DB;color:white;padding:5px 9px;text-align:left;font-size:8.5pt;}"
+                "td{border:1px solid #E2E8F0;padding:4px 9px;font-size:8.5pt;}"
+                "tr:nth-child(even){background:#F8FAFC;}"
+                ".summary{background:#EFF6FF;border:1px solid #BFDBFE;border-radius:6px;padding:9px;margin:9px 0;font-size:9.5pt;}"
+                "</style></head><body>";
+
+        html += QString("<h1>Годовой отчёт AGV</h1>");
+        html += QString("<p><b>Период:</b> %1 — %2</p>")
+                    .arg(from.toString("dd.MM.yyyy"))
+                    .arg(to.toString("dd.MM.yyyy"));
+
+        if (reportType == QStringLiteral("errors"))
+            html += QStringLiteral("<p><b>Тип отчёта:</b> Ошибки</p>");
+        else
+            html += QStringLiteral("<p><b>Тип отчёта:</b> ТО</p>");
+
+        if (!agvId.isEmpty())
+            html += QString("<p><b>AGV:</b> %1</p>").arg(agvId);
+        else
+            html += "<p><b>AGV:</b> Все</p>";
+
+        html += QString("<p><b>Дата формирования:</b> %1</p>")
+                    .arg(QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm"));
+
+        QSqlQuery agvQ(db);
+        if (agvId.isEmpty()) {
+            agvQ.prepare("SELECT agv_id, model, serial, status, kilometers FROM agv_list ORDER BY agv_id ASC");
+        } else {
+            agvQ.prepare("SELECT agv_id, model, serial, status, kilometers FROM agv_list WHERE agv_id = :id");
+            agvQ.bindValue(":id", agvId);
+        }
+
+        if (agvQ.exec()) {
+            html += "<h2>Список AGV</h2>";
+            html += "<table><tr><th>ID</th><th>Модель</th><th>S/N</th><th>Статус</th><th>Пробег (км)</th></tr>";
+
+            while (agvQ.next()) {
+                html += QString("<tr><td>%1</td><td>%2</td><td>%3</td><td>%4</td><td>%5</td></tr>")
+                            .arg(agvQ.value(0).toString())
+                            .arg(agvQ.value(1).toString())
+                            .arg(agvQ.value(2).toString())
+                            .arg(agvQ.value(3).toString())
+                            .arg(agvQ.value(4).toInt());
+            }
+            html += "</table>";
+        }
+
+        if (reportType == QStringLiteral("errors")) {
+            QString err;
+            const QVector<AgvErrorLog> errors = loadAgvErrorLogs(agvId, from, to, &err);
+            if (!err.trimmed().isEmpty()) {
+                errorLbl->setText(err);
                 return QString();
             }
 
-            QSqlDatabase db = QSqlDatabase::database("main_connection");
-            if (!db.isOpen()) {
-                errorLbl->setText("База данных не доступна.");
-                return QString();
+            html += "<h2>Ошибки</h2>";
+            html += "<table><tr><th>AGV</th><th>Дата</th><th>Тип</th><th>Название</th><th>Время</th><th>Минуты</th><th>Кто</th></tr>";
+            int total = 0;
+            int totalMinutes = 0;
+            for (const AgvErrorLog &e : errors) {
+                total++;
+                totalMinutes += qMax(0, e.durationMinutes);
+                const QString timeRange =
+                    (e.timeFrom.isValid() && e.timeTo.isValid())
+                        ? QString("%1 — %2").arg(e.timeFrom.toString("HH:mm"), e.timeTo.toString("HH:mm"))
+                        : QStringLiteral("—");
+                html += QString("<tr><td>%1</td><td>%2</td><td>%3</td><td>%4</td><td>%5</td><td>%6</td><td>%7</td></tr>")
+                            .arg(e.agvId.toHtmlEscaped())
+                            .arg(e.errorDate.toString("dd.MM.yyyy"))
+                            .arg(e.type.toHtmlEscaped())
+                            .arg(e.title.toHtmlEscaped())
+                            .arg(timeRange.toHtmlEscaped())
+                            .arg(e.durationMinutes)
+                            .arg(e.createdBy.toHtmlEscaped());
             }
+            html += "</table>";
 
-            QString html;
-            html += "<html><head><meta charset='utf-8'>";
-            html += "<style>"
-                    "body{font-family:Inter,Arial,sans-serif;margin:11px;font-size:9.5pt;}"
-                    "h1{color:#0F172A;font-size:17pt;}"
-                    "h2{color:#334155;font-size:13pt;margin-top:11px;}"
-                    "p{font-size:9.5pt;}"
-                    "table{border-collapse:collapse;width:100%;margin-top:9px;font-size:8.5pt;}"
-                    "th{background:#0F00DB;color:white;padding:5px 9px;text-align:left;font-size:8.5pt;}"
-                    "td{border:1px solid #E2E8F0;padding:4px 9px;font-size:8.5pt;}"
-                    "tr:nth-child(even){background:#F8FAFC;}"
-                    ".summary{background:#EFF6FF;border:1px solid #BFDBFE;border-radius:6px;padding:9px;margin:9px 0;font-size:9.5pt;}"
-                    "</style></head><body>";
-
-            html += QString("<h1>Годовой отчёт AGV</h1>");
-            html += QString("<p><b>Период:</b> %1 — %2</p>")
-                        .arg(from.toString("dd.MM.yyyy"))
-                        .arg(to.toString("dd.MM.yyyy"));
-
-            if (reportType == QStringLiteral("errors"))
-                html += QStringLiteral("<p><b>Тип отчёта:</b> Ошибки</p>");
-            else
-                html += QStringLiteral("<p><b>Тип отчёта:</b> ТО</p>");
-
-            if (!agvId.isEmpty())
-                html += QString("<p><b>AGV:</b> %1</p>").arg(agvId);
-            else
-                html += "<p><b>AGV:</b> Все</p>";
-
-            html += QString("<p><b>Дата формирования:</b> %1</p>")
-                        .arg(QDateTime::currentDateTime().toString("dd.MM.yyyy hh:mm"));
-
-            QSqlQuery agvQ(db);
+            html += "<div class='summary'>";
+            html += QString("<p><b>Всего ошибок:</b> %1</p>").arg(total);
+            html += QString("<p><b>Суммарно минут:</b> %1</p>").arg(totalMinutes);
+            html += "</div>";
+        } else {
+            QSqlQuery histQ(db);
             if (agvId.isEmpty()) {
-                agvQ.prepare("SELECT agv_id, model, serial, status, kilometers FROM agv_list ORDER BY agv_id ASC");
+                histQ.prepare(R"(
+                    SELECT h.agv_id, h.task_name, h.interval_days, h.completed_at, h.next_date_after, h.performed_by
+                    FROM agv_task_history h
+                    INNER JOIN agv_list a ON a.agv_id = h.agv_id
+                    WHERE h.completed_at >= :from AND h.completed_at <= :to
+                    ORDER BY h.completed_at DESC
+                )");
             } else {
-                agvQ.prepare("SELECT agv_id, model, serial, status, kilometers FROM agv_list WHERE agv_id = :id");
-                agvQ.bindValue(":id", agvId);
+                histQ.prepare(R"(
+                    SELECT h.agv_id, h.task_name, h.interval_days, h.completed_at, h.next_date_after, h.performed_by
+                    FROM agv_task_history h
+                    INNER JOIN agv_list a ON a.agv_id = h.agv_id
+                    WHERE h.agv_id = :id AND h.completed_at >= :from AND h.completed_at <= :to
+                    ORDER BY h.completed_at DESC
+                )");
+                histQ.bindValue(":id", agvId);
+            }
+            histQ.bindValue(":from", from);
+            histQ.bindValue(":to", to);
+
+            int totalTasks = 0;
+
+            if (histQ.exec()) {
+                html += "<h2>История обслуживания</h2>";
+                html += "<table><tr><th>AGV</th><th>Задача</th><th>Интервал (дн.)</th>"
+                         "<th>Выполнено</th><th>Следующая дата</th><th>Исполнитель</th></tr>";
+
+                while (histQ.next()) {
+                    totalTasks++;
+                    html += QString("<tr><td>%1</td><td>%2</td><td>%3</td><td>%4</td><td>%5</td><td>%6</td></tr>")
+                                .arg(histQ.value(0).toString())
+                                .arg(histQ.value(1).toString())
+                                .arg(histQ.value(2).toInt())
+                                .arg(histQ.value(3).toDate().toString("dd.MM.yyyy"))
+                                .arg(histQ.value(4).toDate().toString("dd.MM.yyyy"))
+                                .arg(histQ.value(5).toString());
+                }
+                html += "</table>";
             }
 
-            if (agvQ.exec()) {
-                html += "<h2>Список AGV</h2>";
-                html += "<table><tr><th>ID</th><th>Модель</th><th>S/N</th><th>Статус</th><th>Пробег (км)</th></tr>";
+            QSqlQuery pendingQ(db);
+            if (agvId.isEmpty()) {
+                pendingQ.prepare(R"(
+                    SELECT t.agv_id, t.task_name, t.interval_days, t.next_date
+                    FROM agv_tasks t
+                    INNER JOIN agv_list a ON a.agv_id = t.agv_id
+                    WHERE t.next_date >= :from AND t.next_date <= :to
+                    ORDER BY t.next_date ASC
+                )");
+            } else {
+                pendingQ.prepare(R"(
+                    SELECT t.agv_id, t.task_name, t.interval_days, t.next_date
+                    FROM agv_tasks t
+                    INNER JOIN agv_list a ON a.agv_id = t.agv_id
+                    WHERE t.agv_id = :id AND t.next_date >= :from AND t.next_date <= :to
+                    ORDER BY t.next_date ASC
+                )");
+                pendingQ.bindValue(":id", agvId);
+            }
+            pendingQ.bindValue(":from", from);
+            pendingQ.bindValue(":to", to);
 
-                while (agvQ.next()) {
+            int overdueCount = 0;
+            int upcomingCount = 0;
+
+            if (pendingQ.exec()) {
+                html += "<h2>Запланированные задачи</h2>";
+                html += "<table><tr><th>AGV</th><th>Задача</th><th>Интервал (дн.)</th><th>Дата</th><th>Статус</th></tr>";
+
+                QDate today = QDate::currentDate();
+                while (pendingQ.next()) {
+                    QDate nextDate = pendingQ.value(3).toDate();
+                    QString status;
+                    if (nextDate < today) {
+                        status = "<span style='color:#FF0000;font-weight:bold;'>Просрочено</span>";
+                        overdueCount++;
+                    } else if (nextDate <= today.addDays(7)) {
+                        status = "<span style='color:#FF8800;font-weight:bold;'>Скоро</span>";
+                        upcomingCount++;
+                    } else {
+                        status = "<span style='color:#18CF00;'>Запланировано</span>";
+                    }
+
                     html += QString("<tr><td>%1</td><td>%2</td><td>%3</td><td>%4</td><td>%5</td></tr>")
-                                .arg(agvQ.value(0).toString())
-                                .arg(agvQ.value(1).toString())
-                                .arg(agvQ.value(2).toString())
-                                .arg(agvQ.value(3).toString())
-                                .arg(agvQ.value(4).toInt());
+                                .arg(pendingQ.value(0).toString())
+                                .arg(pendingQ.value(1).toString())
+                                .arg(pendingQ.value(2).toInt())
+                                .arg(nextDate.toString("dd.MM.yyyy"))
+                                .arg(status);
                 }
                 html += "</table>";
             }
 
-            if (reportType == QStringLiteral("errors")) {
-                QString err;
-                const QVector<AgvErrorLog> errors = loadAgvErrorLogs(agvId, from, to, &err);
-                if (!err.trimmed().isEmpty()) {
-                    errorLbl->setText(err);
-                    return QString();
-                }
+            html += "<div class='summary'>";
+            html += QString("<p><b>Выполнено задач за период:</b> %1</p>").arg(totalTasks);
+            html += QString("<p><b>Просроченных задач:</b> %1</p>").arg(overdueCount);
+            html += QString("<p><b>Ближайших задач (7 дней):</b> %1</p>").arg(upcomingCount);
+            html += "</div>";
+        }
 
-                html += "<h2>Ошибки</h2>";
-                html += "<table><tr><th>AGV</th><th>Дата</th><th>Тип</th><th>Название</th><th>Время</th><th>Минуты</th><th>Кто</th></tr>";
-                int total = 0;
-                int totalMinutes = 0;
-                for (const AgvErrorLog &e : errors) {
-                    total++;
-                    totalMinutes += qMax(0, e.durationMinutes);
-                    const QString timeRange =
-                        (e.timeFrom.isValid() && e.timeTo.isValid())
-                            ? QString("%1 — %2").arg(e.timeFrom.toString("HH:mm"), e.timeTo.toString("HH:mm"))
-                            : QStringLiteral("—");
-                    html += QString("<tr><td>%1</td><td>%2</td><td>%3</td><td>%4</td><td>%5</td><td>%6</td><td>%7</td></tr>")
-                                .arg(e.agvId.toHtmlEscaped())
-                                .arg(e.errorDate.toString("dd.MM.yyyy"))
-                                .arg(e.type.toHtmlEscaped())
-                                .arg(e.title.toHtmlEscaped())
-                                .arg(timeRange.toHtmlEscaped())
-                                .arg(e.durationMinutes)
-                                .arg(e.createdBy.toHtmlEscaped());
-                }
-                html += "</table>";
+        html += "</body></html>";
 
-                html += "<div class='summary'>";
-                html += QString("<p><b>Всего ошибок:</b> %1</p>").arg(total);
-                html += QString("<p><b>Суммарно минут:</b> %1</p>").arg(totalMinutes);
-                html += "</div>";
-            } else {
-                QSqlQuery histQ(db);
-                if (agvId.isEmpty()) {
-                    histQ.prepare(R"(
-                        SELECT h.agv_id, h.task_name, h.interval_days, h.completed_at, h.next_date_after, h.performed_by
-                        FROM agv_task_history h
-                        INNER JOIN agv_list a ON a.agv_id = h.agv_id
-                        WHERE h.completed_at >= :from AND h.completed_at <= :to
-                        ORDER BY h.completed_at DESC
-                    )");
-                } else {
-                    histQ.prepare(R"(
-                        SELECT h.agv_id, h.task_name, h.interval_days, h.completed_at, h.next_date_after, h.performed_by
-                        FROM agv_task_history h
-                        INNER JOIN agv_list a ON a.agv_id = h.agv_id
-                        WHERE h.agv_id = :id AND h.completed_at >= :from AND h.completed_at <= :to
-                        ORDER BY h.completed_at DESC
-                    )");
-                    histQ.bindValue(":id", agvId);
-                }
-                histQ.bindValue(":from", from);
-                histQ.bindValue(":to", to);
+        errorLbl->clear();
+        return html;
+    };
 
-                int totalTasks = 0;
+    connect(saveBtn, &QPushButton::clicked, &dlg, [&](){
+        QString html = generateReportHtml();
+        if (html.isEmpty())
+            return;
 
-                if (histQ.exec()) {
-                    html += "<h2>История обслуживания</h2>";
-                    html += "<table><tr><th>AGV</th><th>Задача</th><th>Интервал (дн.)</th>"
-                             "<th>Выполнено</th><th>Следующая дата</th><th>Исполнитель</th></tr>";
+        QString filePath = QFileDialog::getSaveFileName(
+            &dlg,
+            "Сохранить отчёт",
+            QString("AGV_Report_%1.pdf").arg(QDate::currentDate().toString("yyyy-MM-dd")),
+            "PDF файлы (*.pdf)"
+        );
+        if (filePath.isEmpty())
+            return;
 
-                    while (histQ.next()) {
-                        totalTasks++;
-                        html += QString("<tr><td>%1</td><td>%2</td><td>%3</td><td>%4</td><td>%5</td><td>%6</td></tr>")
-                                    .arg(histQ.value(0).toString())
-                                    .arg(histQ.value(1).toString())
-                                    .arg(histQ.value(2).toInt())
-                                    .arg(histQ.value(3).toDate().toString("dd.MM.yyyy"))
-                                    .arg(histQ.value(4).toDate().toString("dd.MM.yyyy"))
-                                    .arg(histQ.value(5).toString());
-                    }
-                    html += "</table>";
-                }
+        QPrinter printer(QPrinter::ScreenResolution);
+        printer.setOutputFormat(QPrinter::PdfFormat);
+        printer.setOutputFileName(filePath);
+        printer.setPageSize(QPageSize(QPageSize::A4));
+        printer.setPageMargins(QMarginsF(12, 12, 12, 12), QPageLayout::Millimeter);
 
-                QSqlQuery pendingQ(db);
-                if (agvId.isEmpty()) {
-                    pendingQ.prepare(R"(
-                        SELECT t.agv_id, t.task_name, t.interval_days, t.next_date
-                        FROM agv_tasks t
-                        INNER JOIN agv_list a ON a.agv_id = t.agv_id
-                        WHERE t.next_date >= :from AND t.next_date <= :to
-                        ORDER BY t.next_date ASC
-                    )");
-                } else {
-                    pendingQ.prepare(R"(
-                        SELECT t.agv_id, t.task_name, t.interval_days, t.next_date
-                        FROM agv_tasks t
-                        INNER JOIN agv_list a ON a.agv_id = t.agv_id
-                        WHERE t.agv_id = :id AND t.next_date >= :from AND t.next_date <= :to
-                        ORDER BY t.next_date ASC
-                    )");
-                    pendingQ.bindValue(":id", agvId);
-                }
-                pendingQ.bindValue(":from", from);
-                pendingQ.bindValue(":to", to);
+        QTextDocument doc;
+        doc.setHtml(html);
+        doc.setPageSize(printer.pageRect(QPrinter::Point).size());
+        doc.print(&printer);
 
-                int overdueCount = 0;
-                int upcomingCount = 0;
+        QMessageBox::information(&dlg, "Готово",
+            QString("Отчёт сохранён:\n%1").arg(filePath));
+        dlg.accept();
+    });
 
-                if (pendingQ.exec()) {
-                    html += "<h2>Запланированные задачи</h2>";
-                    html += "<table><tr><th>AGV</th><th>Задача</th><th>Интервал (дн.)</th><th>Дата</th><th>Статус</th></tr>";
+    connect(printBtn, &QPushButton::clicked, &dlg, [&](){
+        QString html = generateReportHtml();
+        if (html.isEmpty())
+            return;
 
-                    QDate today = QDate::currentDate();
-                    while (pendingQ.next()) {
-                        QDate nextDate = pendingQ.value(3).toDate();
-                        QString status;
-                        if (nextDate < today) {
-                            status = "<span style='color:#FF0000;font-weight:bold;'>Просрочено</span>";
-                            overdueCount++;
-                        } else if (nextDate <= today.addDays(7)) {
-                            status = "<span style='color:#FF8800;font-weight:bold;'>Скоро</span>";
-                            upcomingCount++;
-                        } else {
-                            status = "<span style='color:#18CF00;'>Запланировано</span>";
-                        }
-
-                        html += QString("<tr><td>%1</td><td>%2</td><td>%3</td><td>%4</td><td>%5</td></tr>")
-                                    .arg(pendingQ.value(0).toString())
-                                    .arg(pendingQ.value(1).toString())
-                                    .arg(pendingQ.value(2).toInt())
-                                    .arg(nextDate.toString("dd.MM.yyyy"))
-                                    .arg(status);
-                    }
-                    html += "</table>";
-                }
-
-                html += "<div class='summary'>";
-                html += QString("<p><b>Выполнено задач за период:</b> %1</p>").arg(totalTasks);
-                html += QString("<p><b>Просроченных задач:</b> %1</p>").arg(overdueCount);
-                html += QString("<p><b>Ближайших задач (7 дней):</b> %1</p>").arg(upcomingCount);
-                html += "</div>";
-            }
-
-            html += "</body></html>";
-
-            errorLbl->clear();
-            return html;
-        };
-
-        connect(saveBtn, &QPushButton::clicked, &dlg, [&](){
-            QString html = generateReportHtml();
-            if (html.isEmpty())
-                return;
-
-            QString filePath = QFileDialog::getSaveFileName(
-                &dlg,
-                "Сохранить отчёт",
-                QString("AGV_Report_%1.pdf").arg(QDate::currentDate().toString("yyyy-MM-dd")),
-                "PDF файлы (*.pdf)"
-            );
-            if (filePath.isEmpty())
-                return;
-
-            QPrinter printer(QPrinter::ScreenResolution);
-            printer.setOutputFormat(QPrinter::PdfFormat);
-            printer.setOutputFileName(filePath);
-            printer.setPageSize(QPageSize(QPageSize::A4));
-            printer.setPageMargins(QMarginsF(12, 12, 12, 12), QPageLayout::Millimeter);
-
+        QPrinter printer(QPrinter::ScreenResolution);
+        QPrintDialog printDlg(&printer, &dlg);
+        if (printDlg.exec() == QDialog::Accepted) {
             QTextDocument doc;
             doc.setHtml(html);
             doc.setPageSize(printer.pageRect(QPrinter::Point).size());
             doc.print(&printer);
 
-            QMessageBox::information(&dlg, "Готово",
-                QString("Отчёт сохранён:\n%1").arg(filePath));
+            QMessageBox::information(&dlg, "Готово", "Отчёт отправлен на печать.");
             dlg.accept();
-        });
-
-        connect(printBtn, &QPushButton::clicked, &dlg, [&](){
-            QString html = generateReportHtml();
-            if (html.isEmpty())
-                return;
-
-            QPrinter printer(QPrinter::ScreenResolution);
-            QPrintDialog printDlg(&printer, &dlg);
-            if (printDlg.exec() == QDialog::Accepted) {
-                QTextDocument doc;
-                doc.setHtml(html);
-                doc.setPageSize(printer.pageRect(QPrinter::Point).size());
-                doc.print(&printer);
-
-                QMessageBox::information(&dlg, "Готово", "Отчёт отправлен на печать.");
-                dlg.accept();
-            }
-        });
-
-        dlg.exec();
-    }
-
-    void leftMenu::showUsersPage()
-    {
-        activePage_ = ActivePage::Users;
-        hideAllPages();
-        clearSearch();
-        if (usersPage) {
-            usersPage->setVisible(true);
-            if (!usersPage->property("loaded_once").toBool()) {
-                usersPage->loadUsers();
-                usersPage->setProperty("loaded_once", true);
-            }
         }
-        stressSuiteLogPageEntered(QStringLiteral("users"));
-    }
-
-    void leftMenu::clearSearch()
-    {
-        if (searchEdit_) {
-            searchEdit_->blockSignals(true);
-            searchEdit_->clear();
-            searchEdit_->blockSignals(false);
-        }
-    }
-
-    void leftMenu::onSearchTextChanged(const QString &text)
-    {
-        auto normalize = [](QString s) -> QString {
-            s = s.toLower().trimmed();
-            // Убираем пробелы и большую часть "мусора", чтобы порядок символов учитывался строго.
-            s.remove(QRegularExpression("[\\s\\-_/]+"));
-            return s;
-        };
-        const QString term = normalize(text);
-
-        // Calendar + upcoming maintenance visible = main page
-        if (rightCalendarFrame && rightCalendarFrame->isVisible()) {
-            // Filter upcoming maintenance items
-            if (rightUpcomingMaintenanceFrame) {
-                QScrollArea *scroll = rightUpcomingMaintenanceFrame->findChild<QScrollArea*>();
-                if (scroll && scroll->widget()) {
-                    QList<QFrame*> items = scroll->widget()->findChildren<QFrame*>(QString(), Qt::FindDirectChildrenOnly);
-                    for (QFrame *frame : items) {
-                        if (term.isEmpty()) {
-                            frame->setVisible(true);
-                        } else {
-                            bool match = false;
-                            const QList<QLabel*> labels = frame->findChildren<QLabel*>();
-                            for (QLabel *lbl : labels) {
-                                if (!lbl) continue;
-                                if (normalize(lbl->text()).contains(term)) { match = true; break; }
-                            }
-                            frame->setVisible(match);
-                        }
-                    }
-                }
-            }
-
-            // Filter calendar previews too (same search box)
-            if (calendarTablePtr) {
-                for (int r = 1; r < calendarTablePtr->rowCount(); ++r) {
-                    for (int c = 0; c < calendarTablePtr->columnCount(); ++c) {
-                        QTableWidgetItem *it = calendarTablePtr->item(r, c);
-                        if (!it) continue;
-                        const QDate d = it->data(Qt::UserRole).toDate();
-                        if (!d.isValid()) continue;
-
-                        const QStringList allKeys = it->data(Qt::UserRole + 10).toStringList();
-                        const QStringList allSev = it->data(Qt::UserRole + 11).toStringList();
-                        if (allKeys.isEmpty()) {
-                            it->setData(Qt::UserRole + 1, QStringList());
-                            it->setData(Qt::UserRole + 2, QStringList());
-                            continue;
-                        }
-                        if (term.isEmpty()) {
-                            // восстановим дефолтный превью (пересчитываем из allKeys)
-                        }
-
-                        // Фильтруем события дня по term.
-                        QStringList filteredKeys;
-                        QStringList filteredSev;
-                        for (int i = 0; i < allKeys.size(); ++i) {
-                            const QString key = allKeys[i];
-                            const QString sev = (i < allSev.size()) ? allSev[i] : QString();
-                            const QString agv = key.section("||", 0, 0);
-                            const QString task = key.section("||", 1, 1);
-                            const QString hay = normalize(agv + task);
-                            if (term.isEmpty() || hay.contains(term)) {
-                                filteredKeys << key;
-                                filteredSev << sev;
-                            }
-                        }
-
-                        // Считаем как раньше: AGV -> количество задач + худшая severity.
-                        QMap<QString, int> agvCounts;
-                        QMap<QString, QString> agvSeverity;
-                        QVector<QString> agvOrder;
-                        auto severityRank = [](const QString &sev) {
-                            if (sev == "overdue") return 4;
-                            if (sev == "soon") return 3;
-                            if (sev == "planned") return 2;
-                            if (sev == "completed") return 1;
-                            return 0;
-                        };
-                        for (int i = 0; i < filteredKeys.size(); ++i) {
-                            const QString agvId = filteredKeys[i].section("||", 0, 0);
-                            const QString sev = (i < filteredSev.size()) ? filteredSev[i] : QString();
-                            if (!agvCounts.contains(agvId)) {
-                                agvOrder.push_back(agvId);
-                                agvCounts[agvId] = 0;
-                                agvSeverity[agvId] = sev;
-                            }
-                            agvCounts[agvId] += 1;
-                            if (severityRank(sev) > severityRank(agvSeverity.value(agvId)))
-                                agvSeverity[agvId] = sev;
-                        }
-
-                        auto shortenAgvIdForCell = [](const QString &rawAgvId) -> QString {
-                            const QString agvId = rawAgvId.trimmed();
-                            const int lastDash = agvId.lastIndexOf('-');
-                            if (lastDash <= 0 || lastDash >= agvId.size() - 1)
-                                return agvId;
-                            const QString prefix = agvId.left(lastDash);
-                            const QString suffix = agvId.mid(lastDash + 1);
-                            if (suffix.size() <= 2)
-                                return agvId;
-                            QString shortSuffix;
-                            const QStringList parts = suffix.split(QRegularExpression("[_\\s]+"), Qt::SkipEmptyParts);
-                            if (parts.size() >= 2) {
-                                for (const QString &part : parts) {
-                                    if (!part.isEmpty())
-                                        shortSuffix += part.left(1).toUpper();
-                                }
-                            } else {
-                                shortSuffix = suffix.left(1).toUpper() + suffix.right(1).toUpper();
-                            }
-                            if (shortSuffix.isEmpty())
-                                return agvId;
-                            return prefix + "-" + shortSuffix;
-                        };
-
-                        QStringList previewLines;
-                        QStringList previewSeverities;
-                        for (int i = 0; i < agvOrder.size() && i < 2; ++i) {
-                            const QString agvId = agvOrder[i];
-                            const int count = agvCounts.value(agvId);
-                            previewLines << QString("%1 - %2 задач").arg(shortenAgvIdForCell(agvId)).arg(count);
-                            previewSeverities << agvSeverity.value(agvId);
-                        }
-                        if (agvOrder.size() > 2) {
-                            if (previewLines.size() < 2) previewLines << "...";
-                            else previewLines[1] = "...";
-                            if (previewSeverities.size() < 2) previewSeverities << "";
-                            else previewSeverities[1] = "";
-                        }
-
-                        it->setData(Qt::UserRole + 1, previewLines);
-                        it->setData(Qt::UserRole + 2, previewSeverities);
-                    }
-                }
-                calendarTablePtr->viewport()->update();
-            }
-            return;
-        }
-
-        // AGV list visible
-        if (listAgvInfo && listAgvInfo->isVisible()) {
-            if (term.isEmpty()) {
-                QVector<AgvInfo> agvs = listAgvInfo->loadAgvList();
-                listAgvInfo->rebuildList(agvs);
-            } else {
-                QVector<AgvInfo> agvs = listAgvInfo->loadAgvList();
-                agvs.erase(std::remove_if(agvs.begin(), agvs.end(),
-                    [&](const AgvInfo &a){
-                        return !normalize(a.id).contains(term)
-                            && !normalize(a.model).contains(term)
-                            && !normalize(a.serial).contains(term);
-                    }), agvs.end());
-                listAgvInfo->rebuildList(agvs);
-            }
-            return;
-        }
-
-        // Users page visible
-        if (usersPage && usersPage->isVisible()) {
-            QList<QWidget*> items = usersPage->findChildren<QWidget*>("userItem");
-            for (QWidget *w : items) {
-                if (term.isEmpty()) {
-                    w->setVisible(true);
-                } else {
-                    bool match = false;
-                    QList<QLabel*> labels = w->findChildren<QLabel*>();
-                    for (QLabel *lbl : labels) {
-                        if (lbl->text().toLower().contains(term)) {
-                            match = true;
-                            break;
-                        }
-                    }
-                    w->setVisible(match);
-                }
-            }
-            return;
-        }
-
-        // Model list page visible
-        if (modelListPage && modelListPage->isVisible()) {
-            QScrollArea *scroll = modelListPage->findChild<QScrollArea*>();
-            if (scroll && scroll->widget()) {
-                QList<QFrame*> cards = scroll->widget()->findChildren<QFrame*>(QString(), Qt::FindDirectChildrenOnly);
-                for (QFrame *card : cards) {
-                    if (term.isEmpty()) {
-                        card->setVisible(true);
-                    } else {
-                        bool match = false;
-                        QList<QLabel*> labels = card->findChildren<QLabel*>();
-                        for (QLabel *lbl : labels) {
-                            if (lbl->text().toLower().contains(term)) {
-                                match = true;
-                                break;
-                            }
-                        }
-                        card->setVisible(match);
-                    }
-                }
-            }
-            return;
-        }
-    }
-
-    void leftMenu::showNotificationsPanel()
-    {
-        const QString currentUser = AppSession::currentUsername();
-        QDialog dlg(this);
-        dlg.setWindowTitle("Уведомления");
-        dlg.setFixedSize(s(520), s(560));
-        dlg.setStyleSheet("background:#F5F7FB;");
-
-        QVBoxLayout *root = new QVBoxLayout(&dlg);
-        root->setContentsMargins(s(16), s(16), s(16), s(16));
-        root->setSpacing(s(10));
-
-        QLabel *title = new QLabel("Уведомления", &dlg);
-        title->setStyleSheet(QString(
-            "font-family:Inter;font-size:%1px;font-weight:900;color:#0F172A;"
-        ).arg(s(22)));
-        root->addWidget(title);
-
-        QScrollArea *scroll = new QScrollArea(&dlg);
-        scroll->setWidgetResizable(true);
-        scroll->setStyleSheet("QScrollArea{border:none;background:transparent;}");
-
-        QWidget *host = new QWidget(scroll);
-        host->setStyleSheet("background:transparent;");
-        QVBoxLayout *listLayout = new QVBoxLayout(host);
-        listLayout->setContentsMargins(0, 0, 0, 0);
-        listLayout->setSpacing(s(8));
-
-        QVector<Notification> notifs = loadNotificationsForUser(currentUser);
-
-        if (notifs.isEmpty()) {
-            QLabel *empty = new QLabel("Нет уведомлений", host);
-            empty->setAlignment(Qt::AlignCenter);
-            empty->setStyleSheet(QString(
-                "font-family:Inter;font-size:%1px;font-weight:700;color:#888;"
-            ).arg(s(16)));
-            listLayout->addStretch();
-            listLayout->addWidget(empty, 0, Qt::AlignCenter);
-            listLayout->addStretch();
-        } else {
-            for (const Notification &n : notifs) {
-                QFrame *card = new QFrame(host);
-                card->setProperty("notificationId", n.id);
-                card->setStyleSheet(QString(
-                    "QFrame{background:%1;border:none;}"
-                ).arg(n.isRead ? "#FFFFFF" : "#EFF6FF"));
-
-                QVBoxLayout *cardL = new QVBoxLayout(card);
-                cardL->setContentsMargins(s(12), s(8), s(12), s(8));
-                cardL->setSpacing(s(4));
-
-                QHBoxLayout *topRow = new QHBoxLayout();
-                QLabel *titleLbl = new QLabel(n.title, card);
-                titleLbl->setStyleSheet(QString(
-                    "font-family:Inter;font-size:%1px;font-weight:800;color:#0F172A;background:transparent;"
-                ).arg(s(14)));
-
-                QLabel *timeLbl = new QLabel(n.createdAt.toString("dd.MM.yy hh:mm"), card);
-                timeLbl->setStyleSheet(QString(
-                    "font-family:Inter;font-size:%1px;color:#94A3B8;background:transparent;"
-                ).arg(s(11)));
-
-                topRow->addWidget(titleLbl);
-                topRow->addStretch();
-                topRow->addWidget(timeLbl);
-                cardL->addLayout(topRow);
-
-                QLabel *msgLbl = new QLabel(notificationMessageForDisplay(n.message), card);
-                msgLbl->setWordWrap(true);
-                msgLbl->setStyleSheet(QString(
-                    "font-family:Inter;font-size:%1px;color:#475569;background:transparent;"
-                ).arg(s(13)));
-                cardL->addWidget(msgLbl);
-
-                auto parseAgvId = [&](const QString &text) -> QString {
-                    QRegularExpression re("AGV\\s*№?\\s*([A-Za-z0-9_\\-]+)");
-                    QRegularExpressionMatch m = re.match(text);
-                    return m.hasMatch() ? m.captured(1).trimmed() : QString();
-                };
-                auto parseSenderLogin = [&](const QString &text) -> QString {
-                    QRegularExpression re("\\(([^\\)]+)\\)");
-                    QRegularExpressionMatch m = re.match(text);
-                    if (m.hasMatch()) return m.captured(1).trimmed();
-                    return QString();
-                };
-                auto parseChatId = [&](const QString &text) -> int {
-                    QRegularExpression re("\\[chat:(\\d+)\\]");
-                    QRegularExpressionMatch m = re.match(text);
-                    return m.hasMatch() ? m.captured(1).toInt() : 0;
-                };
-
-                const bool chatEligible = (n.title == "AGV закреплена за вами" || n.title == "Задача делегирована");
-                const bool chatNotification = (n.title.contains("чат", Qt::CaseInsensitive) ||
-                                               n.title == "Новое сообщение по задаче" ||
-                                               n.title == "Ответ в чате по задаче");
-                if (chatEligible) {
-                    QString agvId = parseAgvId(n.message);
-                    QString recipient = notificationPeerUsername(n.message);
-                    if (recipient.isEmpty())
-                        recipient = parseSenderLogin(n.message);
-                    QPushButton *chatBtn = new QPushButton("Начать чат", card);
-                    chatBtn->setStyleSheet(QString(
-                        "QPushButton{background:#0B89FF;color:white;font-family:Inter;font-size:%1px;"
-                        "font-weight:700;border:none;border-radius:%2px;padding:%3px %4px;}"
-                        "QPushButton:hover{background:#0A75D6;}"
-                    ).arg(s(12)).arg(s(7)).arg(s(6)).arg(s(12)));
-                    chatBtn->setIcon(QIcon(":/new/mainWindowIcons/noback/user.png"));
-                    chatBtn->setIconSize(QSize(s(14), s(14)));
-                    connect(chatBtn, &QPushButton::clicked, &dlg, [this, currentUser, agvId, recipient, &dlg, n]() {
-                        if (agvId.isEmpty() || recipient.isEmpty()) {
-                            QMessageBox::warning(this, "Чат",
-                                                 "Не удалось определить AGV или отправителя из уведомления.");
-                            return;
-                        }
-                        QString err;
-                        int tid = TaskChatDialog::ensureThreadWithUser(currentUser, recipient, QString(), &err);
-                        if (tid <= 0) {
-                            QMessageBox::warning(this, "Чат", err.isEmpty() ? QStringLiteral("Не удалось открыть чат") : err);
-                            return;
-                        }
-                        TaskChatDialog::markNextMessageSpecial(tid, QStringLiteral("AGV %1").arg(agvId));
-                        markNotificationReadById(n.id);
-                        updateNotifBadge();
-                        showChatsPage();
-                        if (embeddedChatWidget_ && chatsStack_) {
-                            embeddedChatWidget_->setThreadId(tid, recipient);
-                            chatsStack_->setCurrentIndex(1);
-                        }
-                        dlg.accept();
-                    });
-                    cardL->addWidget(chatBtn, 0, Qt::AlignLeft);
-                }
-                const bool taskNotifOpenChat =
-                    (n.title == QStringLiteral("Задача выполнена") ||
-                     n.title == QStringLiteral("Задача назначена") ||
-                     n.title == QStringLiteral("Новая задача") ||
-                     n.title == QStringLiteral("Задача делегирована"));
-                if (taskNotifOpenChat) {
-                    const QString peerU = notificationPeerUsername(n.message);
-                    if (!peerU.isEmpty()) {
-                        const QString agvIdTask = parseAgvId(n.message);
-                        QString tname;
-                        {
-                            static const QRegularExpression reTn(QStringLiteral("Задача\\s+\"([^\"]+)\""));
-                            static const QRegularExpression reAvail(QStringLiteral("Доступна задача «([^»]+)»"));
-                            static const QRegularExpression reDel(QStringLiteral("делегирована задача\\s+\"([^\"]+)\""),
-                                                                 QRegularExpression::CaseInsensitiveOption);
-                            QRegularExpressionMatch m = reTn.match(n.message);
-                            if (m.hasMatch()) tname = m.captured(1).trimmed();
-                            if (tname.isEmpty()) {
-                                m = reAvail.match(n.message);
-                                if (m.hasMatch()) tname = m.captured(1).trimmed();
-                            }
-                            if (tname.isEmpty()) {
-                                m = reDel.match(n.message);
-                                if (m.hasMatch()) tname = m.captured(1).trimmed();
-                            }
-                        }
-                        QString ctx;
-                        if (!tname.isEmpty() && !agvIdTask.isEmpty())
-                            ctx = QStringLiteral("По задаче «%1», AGV %2").arg(tname, agvIdTask);
-                        else if (!agvIdTask.isEmpty())
-                            ctx = QStringLiteral("Чат по AGV %1").arg(agvIdTask);
-                        else if (!tname.isEmpty())
-                            ctx = QStringLiteral("По задаче «%1»").arg(tname);
-                        else
-                            ctx = QStringLiteral("По уведомлению");
-                        card->setProperty("openChatPeerUser", peerU);
-                        card->setProperty("openChatAgvHint", agvIdTask);
-                        card->setProperty("openChatContextText", ctx);
-                        card->setCursor(Qt::PointingHandCursor);
-                        card->installEventFilter(this);
-                        QLabel *tapHint = new QLabel(QStringLiteral("Нажмите, чтобы открыть чат"), card);
-                        tapHint->setStyleSheet(QString(
-                            "font-family:Inter;font-size:%1px;font-weight:600;color:#64748B;background:transparent;"
-                        ).arg(s(11)));
-                        cardL->addWidget(tapHint);
-                    }
-                }
-                if (chatNotification) {
-                    int chatId = parseChatId(n.message);
-                    if (chatId > 0) {
-                        card->setProperty("openChatThreadId", chatId);
-                        if (n.title == QStringLiteral("Новое сообщение по задаче")) {
-                            static const QRegularExpression ra(QStringLiteral("AGV\\s+([A-Za-z0-9_\\-]+)"));
-                            const QRegularExpressionMatch mx = ra.match(n.message);
-                            if (mx.hasMatch())
-                                card->setProperty("openChatAgvHintForThread", mx.captured(1).trimmed());
-                        }
-                    } else {
-                        card->setProperty("openChatsPageOnClick", true);
-                    }
-                    card->setCursor(Qt::PointingHandCursor);
-                    card->installEventFilter(this);
-                }
-
-                auto isMutedPeer = [&](const QString &peer) -> bool {
-                    QSettings s("VapManager", "VapManager");
-                    return s.value(QString("chat/mute/%1/%2").arg(currentUser.trimmed(), peer.trimmed()), false).toBool();
-                };
-
-                bool mutedChatNotif = false;
-                if (!n.isRead) {
-                    const int chatId = parseChatId(n.message);
-                    if (chatId > 0) {
-                        TaskChatThread t = getThreadById(chatId);
-                        QString other = (t.createdBy == currentUser) ? t.recipientUser : t.createdBy;
-                        if (!other.trimmed().isEmpty() && isMutedPeer(other))
-                            mutedChatNotif = true;
-                    }
-                }
-
-                if (!n.isRead && !mutedChatNotif) {
-                    QLabel *badge = new QLabel("Новое", card);
-                    badge->setStyleSheet(QString(
-                        "font-family:Inter;font-size:%1px;font-weight:700;color:#2563EB;background:transparent;"
-                    ).arg(s(11)));
-                    cardL->addWidget(badge);
-                }
-
-                listLayout->addWidget(card);
-            }
-            listLayout->addStretch();
-        }
-
-        scroll->setWidget(host);
-        root->addWidget(scroll, 1);
-
-        QPushButton *markReadBtn = new QPushButton("Отметить все как прочитанные", &dlg);
-        markReadBtn->setStyleSheet(QString(
-            "QPushButton{background:#0F00DB;color:white;font-family:Inter;font-size:%1px;"
-            "font-weight:700;border:none;border-radius:%2px;padding:%3px %4px;}"
-            "QPushButton:hover{background:#1A4ACD;}"
-        ).arg(s(13)).arg(s(8)).arg(s(8)).arg(s(16)));
-        connect(markReadBtn, &QPushButton::clicked, &dlg, [&](){
-            markAllReadForUser(currentUser);
-            updateNotifBadge();
-            dlg.accept();
-        });
-        root->addWidget(markReadBtn);
-
-        QHBoxLayout *bottomBtns = new QHBoxLayout();
-        QPushButton *clearBtn = new QPushButton("Очистить уведомления", &dlg);
-        clearBtn->setStyleSheet(QString(
-            "QPushButton{background:#E6E6E6;border-radius:%1px;border:1px solid #C8C8C8;"
-            "font-family:Inter;font-size:%2px;font-weight:700;padding:%3px %4px;}"
-            "QPushButton:hover{background:#D5D5D5;}"
-        ).arg(s(8)).arg(s(13)).arg(s(6)).arg(s(14)));
-        connect(clearBtn, &QPushButton::clicked, &dlg, [&](){
-            clearAllNotificationsForUser(currentUser);
-            updateNotifBadge();
-            DataBus::instance().triggerNotificationsChanged();
-            dlg.accept();
-        });
-        bottomBtns->addWidget(clearBtn, 0, Qt::AlignLeft);
-        bottomBtns->addStretch();
-        QPushButton *closeBtn = new QPushButton("Закрыть", &dlg);
-        closeBtn->setStyleSheet(QString(
-            "QPushButton{background:#E6E6E6;border-radius:%1px;border:1px solid #C8C8C8;"
-            "font-family:Inter;font-size:%2px;font-weight:700;padding:%3px %4px;}"
-            "QPushButton:hover{background:#D5D5D5;}"
-        ).arg(s(8)).arg(s(13)).arg(s(6)).arg(s(14)));
-        connect(closeBtn, &QPushButton::clicked, &dlg, &QDialog::reject);
-        bottomBtns->addWidget(closeBtn);
-
-        root->addLayout(bottomBtns);
-
-        dlg.exec();
-        updateNotifBadge();
-    }
-
-    void leftMenu::updateNotifBadge()
-    {
-        if (!notifBadge_) return;
-        const QString currentUser = AppSession::currentUsername();
-        const QVector<Notification> notifs = loadUnreadNotificationsForUser(currentUser);
-        auto parseChatId = [&](const QString &text) -> int {
-            QRegularExpression re("\\[chat:(\\d+)\\]");
-            QRegularExpressionMatch m = re.match(text);
-            return m.hasMatch() ? m.captured(1).toInt() : 0;
-        };
-        auto isMutedPeer = [&](const QString &peer) -> bool {
-            QSettings s("VapManager", "VapManager");
-            return s.value(QString("chat/mute/%1/%2").arg(currentUser.trimmed(), peer.trimmed()), false).toBool();
-        };
-        QVector<int> chatIds;
-        chatIds.reserve(notifs.size());
-        for (const Notification &n : notifs) {
-            const int chatId = parseChatId(n.message);
-            if (chatId > 0)
-                chatIds.push_back(chatId);
-        }
-        const QHash<int, TaskChatThread> threadMap = chatIds.isEmpty()
-            ? QHash<int, TaskChatThread>()
-            : getThreadsByIds(chatIds);
-        const int unreadAnyCount = notifs.size();
-        int count = 0;
-        int unreadChatCount = 0;
-        for (const Notification &n : notifs) {
-            const int chatId = parseChatId(n.message);
-            if (chatId > 0) {
-                const TaskChatThread t = threadMap.value(chatId);
-                QString other = (t.createdBy == currentUser) ? t.recipientUser : t.createdBy;
-                if (!other.trimmed().isEmpty() && isMutedPeer(other))
-                    continue;
-                unreadChatCount++;
-            }
-            count++;
-        }
-        if (lastUnreadAnyNotifCount_ >= 0 && unreadAnyCount > lastUnreadAnyNotifCount_) {
-            playNotificationSound();
-            flashTaskbarOnNewNotification(this);
-        }
-        lastUnreadChatNotifCount_ = unreadChatCount;
-        lastUnreadAnyNotifCount_ = unreadAnyCount;
-        if (unreadAnyCount == 0)
-            stopTaskbarFlash(this);
-        if (count > 0) {
-            notifBadge_->setText(count > 99 ? "99+" : QString::number(count));
-            notifBadge_->show();
-        } else {
-            notifBadge_->hide();
-        }
-    }
-
-    void leftMenu::showUserProfilePage(const QString &username)
-    {
-        activePage_ = ActivePage::UserProfile;
-        activeUsername_ = username;
-        UserInfo info;
-        if (!loadUserProfile(username, info)) {
-            QMessageBox::warning(this, "Ошибка", "Не удалось загрузить данные пользователя.");
-            return;
-        }
-
-        hideAllPages();
-
-        QWidget *profileParent = rightCalendarFrame ? rightCalendarFrame->parentWidget() : this;
-        QWidget *page = new QWidget(profileParent);
-        page->setStyleSheet("background:#F5F7FB;");
-        page->setObjectName("userProfilePage");
-
-        QVBoxLayout *mainLay = new QVBoxLayout(page);
-        mainLay->setContentsMargins(s(20), s(15), s(20), s(15));
-        mainLay->setSpacing(s(12));
-
-        QWidget *header = new QWidget(page);
-        QHBoxLayout *hdrLay = new QHBoxLayout(header);
-        hdrLay->setContentsMargins(0, 0, 0, 0);
-        hdrLay->setSpacing(s(10));
-
-        QPushButton *backBtn = new QPushButton("   Назад", header);
-        backBtn->setIcon(QIcon(":/new/mainWindowIcons/noback/arrow_left.png"));
-        backBtn->setIconSize(QSize(s(24), s(24)));
-        backBtn->setFixedSize(s(150), s(50));
-        backBtn->setStyleSheet(QString(
-            "QPushButton{background-color:#E6E6E6;border-radius:%1px;border:1px solid #C8C8C8;"
-            "font-family:Inter;font-size:%2px;font-weight:800;color:black;text-align:left;padding-left:%3px;}"
-            "QPushButton:hover{background-color:#D5D5D5;}"
-        ).arg(s(10)).arg(s(16)).arg(s(10)));
-
-        connect(backBtn, &QPushButton::clicked, this, [this, page](){
-            page->setVisible(false);
-            page->deleteLater();
-            showUsersPage();
-        });
-
-        hdrLay->addWidget(backBtn, 0, Qt::AlignLeft);
-        hdrLay->addStretch();
-
-        QLabel *titleLbl = new QLabel(
-            info.fullName.isEmpty() ? info.username : info.fullName, header);
-        titleLbl->setStyleSheet(QString(
-            "font-family:Inter;font-size:%1px;font-weight:900;color:#0F172A;background:transparent;"
-        ).arg(s(24)));
-        hdrLay->addWidget(titleLbl, 0, Qt::AlignCenter);
-        hdrLay->addStretch();
-
-        mainLay->addWidget(header);
-
-        QScrollArea *scroll = new QScrollArea(page);
-        scroll->setWidgetResizable(true);
-        scroll->setFrameShape(QFrame::NoFrame);
-        scroll->setStyleSheet("QScrollArea{background:transparent;}");
-
-        QWidget *content = new QWidget();
-        content->setStyleSheet("background:transparent;");
-        QVBoxLayout *contentLay = new QVBoxLayout(content);
-        contentLay->setContentsMargins(s(10), 0, s(10), 0);
-        contentLay->setSpacing(s(14));
-
-        QString roleText;
-        if (info.role == "admin") roleText = "Администратор";
-        else if (info.role == "tech") roleText = "Техник";
-        else roleText = "Пользователь";
-
-        auto addCopyableRow = [&](const QString &label, const QString &value) {
-            if (value.trimmed().isEmpty()) return;
-            QWidget *row = new QWidget(content);
-            row->setStyleSheet("background:transparent;");
-            QHBoxLayout *h = new QHBoxLayout(row);
-            h->setContentsMargins(0, s(4), 0, s(4));
-            h->setSpacing(s(10));
-
-            QLabel *lbl = new QLabel(label + ":", row);
-            lbl->setStyleSheet(QString(
-                "font-family:Inter;font-size:%1px;font-weight:700;color:#334155;background:transparent;"
-            ).arg(s(15)));
-            lbl->setMinimumWidth(s(140));
-
-            QLineEdit *valEdit = new QLineEdit(row);
-            valEdit->setReadOnly(true);
-            valEdit->setText(value);
-            valEdit->setCursor(Qt::IBeamCursor);
-            valEdit->setStyleSheet(QString(
-                "QLineEdit{background:#F1F5F9;border:1px solid #E2E8F0;border-radius:8px;"
-                "padding:8px 12px;font-family:Inter;font-size:%1px;color:#0F172A;}"
-                "QLineEdit:focus{border:1px solid #3B82F6;}"
-            ).arg(s(14)));
-            valEdit->setMinimumWidth(s(200));
-
-            QPushButton *copyBtn = new QPushButton("Копировать", row);
-            copyBtn->setFixedHeight(s(36));
-            copyBtn->setStyleSheet(QString(
-                "QPushButton{background:#0EA5E9;color:white;font-family:Inter;font-size:%1px;"
-                "font-weight:700;border:none;border-radius:6px;padding:0 12px;}"
-                "QPushButton:hover{background:#0284C7;}"
-            ).arg(s(12)));
-            connect(copyBtn, &QPushButton::clicked, row, [valEdit, copyBtn](){
-                QApplication::clipboard()->setText(valEdit->text());
-                copyBtn->setText("Скопировано");
-                QTimer::singleShot(1500, copyBtn, [copyBtn](){
-                    copyBtn->setText("Копировать");
-                });
-            });
-
-            h->addWidget(lbl);
-            h->addWidget(valEdit, 1);
-            h->addWidget(copyBtn);
-            contentLay->addWidget(row);
-        };
-
-        // Сетка: слева ФИО, Табельный, Должность; справа Логин, Роль, Подразделение
-        QGridLayout *grid = new QGridLayout();
-        grid->setContentsMargins(0, 0, 0, 0);
-        grid->setSpacing(s(8));
-        auto addGridCell = [&](int row, int col, const QString &label, const QString &value) {
-            QString v = value.trimmed().isEmpty() ? "—" : value;
-            QLabel *l = new QLabel(QString("<b>%1:</b> %2").arg(label, v), content);
-            l->setStyleSheet(QString("font-family:Inter;font-size:%1px;color:#1A1A1A;background:transparent;").arg(s(15)));
-            l->setWordWrap(true);
-            grid->addWidget(l, row, col);
-        };
-        addGridCell(0, 0, "ФИО", info.fullName);
-        addGridCell(0, 1, "Логин", info.username);
-        addGridCell(1, 0, "Табельный номер", info.employeeId);
-        addGridCell(1, 1, "Роль", roleText);
-        addGridCell(2, 0, "Должность", info.position);
-        addGridCell(2, 1, "Подразделение", info.department);
-        contentLay->addLayout(grid);
-        addCopyableRow("Телефон", info.mobile);
-        addCopyableRow("Внутренний номер", info.extPhone);
-        addCopyableRow("Email", info.email);
-        addCopyableRow("Telegram", info.telegram);
-        addCopyableRow("Recovery key", info.permanentRecoveryKey);
-
-        // AGV закреплены за пользователем
-        QStringList agvList = getAgvIdsAssignedToUser(username);
-        if (!agvList.isEmpty()) {
-            QLabel *agvTitle = new QLabel("Закреплённые AGV:", content);
-            agvTitle->setStyleSheet(QString(
-                "font-family:Inter;font-size:%1px;font-weight:700;color:#334155;background:transparent;"
-            ).arg(s(15)));
-            agvTitle->setMinimumWidth(s(140));
-            contentLay->addWidget(agvTitle);
-            QLabel *agvVal = new QLabel(agvList.join(", "), content);
-            agvVal->setStyleSheet(QString(
-                "font-family:Inter;font-size:%1px;color:#0F172A;background:transparent;"
-            ).arg(s(14)));
-            agvVal->setWordWrap(true);
-            contentLay->addWidget(agvVal);
-        }
-
-        // Activity history section (без рамки)
-        QWidget *histFrame = new QWidget(content);
-        histFrame->setStyleSheet("background:transparent;");
-        QVBoxLayout *histLay = new QVBoxLayout(histFrame);
-        histLay->setContentsMargins(0, s(10), 0, 0);
-        histLay->setSpacing(s(6));
-
-        QFrame *histLine = new QFrame(histFrame);
-        histLine->setFixedHeight(1);
-        histLine->setStyleSheet("background:#E2E8F0;");
-        histLay->addWidget(histLine);
-
-        QHBoxLayout *histTitleRow = new QHBoxLayout();
-        histTitleRow->addStretch();
-        QLabel *histTitle = new QLabel("История действий", histFrame);
-        histTitle->setStyleSheet(QString(
-            "font-family:Inter;font-size:%1px;font-weight:900;color:#0F172A;background:transparent;"
-        ).arg(s(18)));
-        histTitleRow->addWidget(histTitle, 0, Qt::AlignCenter);
-        histTitleRow->addStretch();
-        histLay->addLayout(histTitleRow);
-
-        QSqlDatabase db = QSqlDatabase::database("main_connection");
-        if (db.isOpen()) {
-            QSqlQuery histQ(db);
-            histQ.prepare(R"(
-                SELECT task_name, agv_id, completed_ts
-                FROM agv_task_history
-                WHERE performed_by = :u
-                ORDER BY completed_ts DESC
-                LIMIT 50
-            )");
-            histQ.bindValue(":u", username);
-            if (histQ.exec()) {
-                bool hasHistory = false;
-                while (histQ.next()) {
-                    hasHistory = true;
-                    QString taskName = histQ.value(0).toString();
-                    QString agvId = histQ.value(1).toString();
-                    QDateTime completedTs = histQ.value(2).toDateTime();
-                    QString dateStr = completedTs.isValid() ? completedTs.toString("dd.MM.yyyy") : "—";
-
-                    QLabel *histLbl = new QLabel(
-                        QString("• %1 — %2 (выполнено %3)").arg(taskName, agvId, dateStr),
-                        histFrame);
-                    histLbl->setStyleSheet(QString(
-                        "font-family:Inter;font-size:%1px;color:#475569;background:transparent;"
-                        "padding:4px 0;"
-                    ).arg(s(14)));
-                    histLay->addWidget(histLbl);
-                }
-                if (!hasHistory) {
-                    QLabel *noHist = new QLabel("Нет записей", histFrame);
-                    noHist->setStyleSheet(QString(
-                        "font-family:Inter;font-size:%1px;color:#94A3B8;background:transparent;"
-                    ).arg(s(14)));
-                    histLay->addWidget(noHist);
-                }
-            }
-        }
-        contentLay->addWidget(histFrame);
-
-        contentLay->addStretch();
-        scroll->setWidget(content);
-        mainLay->addWidget(scroll, 1);
-
-        if (rightCalendarFrame) {
-            QWidget *rightBodyFrame = rightCalendarFrame->parentWidget();
-            if (rightBodyFrame) {
-                if (QVBoxLayout *rbl = qobject_cast<QVBoxLayout*>(rightBodyFrame->layout())) {
-                    rbl->addWidget(page, 3);
-                }
-            }
-        }
-
-        page->setVisible(true);
-        stressSuiteLogPageEntered(QStringLiteral("user_profile"));
-    }
-
-
-    void leftMenu::showChatsPage()
-    {
-        activePage_ = ActivePage::Chats;
-        hideAllPages();
-        clearSearch();
-
-        if (!chatsPage) {
-            QWidget *parent = rightCalendarFrame ? rightCalendarFrame->parentWidget() : this;
-            chatsPage = new QWidget(parent);
-            chatsPage->setStyleSheet("background:#F5F7FB;");
-
-            QVBoxLayout *main = new QVBoxLayout(chatsPage);
-            main->setContentsMargins(0, 0, 0, 0);
-            main->setSpacing(0);
-
-            chatsStack_ = new QStackedWidget(chatsPage);
-            main->addWidget(chatsStack_);
-
-            // Страница 0: список чатов
-            QWidget *listPage = new QWidget(chatsStack_);
-            listPage->setStyleSheet("background:#F5F7FB;");
-            QVBoxLayout *listMain = new QVBoxLayout(listPage);
-            listMain->setContentsMargins(s(12), s(10), s(12), s(10));
-            listMain->setSpacing(s(10));
-
-            QWidget *header = new QWidget(listPage);
-            QHBoxLayout *hdr = new QHBoxLayout(header);
-            hdr->setContentsMargins(0, 0, 0, 0);
-            hdr->setSpacing(s(10));
-
-            QPushButton *backBtn = new QPushButton("   Назад", header);
-            backBtn->setIcon(QIcon(":/new/mainWindowIcons/noback/arrow_left.png"));
-            backBtn->setIconSize(QSize(s(24), s(24)));
-            backBtn->setFixedSize(s(150), s(50));
-            backBtn->setStyleSheet(QString(
-                "QPushButton{background-color:#E6E6E6;border-radius:%1px;border:1px solid #C8C8C8;"
-                "font-family:Inter;font-size:%2px;font-weight:800;color:black;text-align:left;padding-left:%3px;}"
-                "QPushButton:hover{background-color:#D5D5D5;}"
-            ).arg(s(10)).arg(s(16)).arg(s(10)));
-            connect(backBtn, &QPushButton::clicked, this, [this]() { showCalendar(); });
-
-            QLabel *title = new QLabel("Чаты", header);
-            title->setStyleSheet(QString(
-                "font-family:Inter;font-size:%1px;font-weight:900;color:#0F172A;"
-            ).arg(s(22)));
-
-            QWidget *rightPad = new QWidget(header);
-            rightPad->setFixedSize(s(150), s(50));
-
-            hdr->addWidget(backBtn, 0, Qt::AlignLeft);
-            hdr->addStretch();
-            hdr->addWidget(title, 0, Qt::AlignVCenter);
-            hdr->addStretch();
-            hdr->addWidget(rightPad, 0, Qt::AlignRight);
-            listMain->addWidget(header);
-
-            QScrollArea *scroll = new QScrollArea(listPage);
-            scroll->setWidgetResizable(true);
-            scroll->setFrameShape(QFrame::NoFrame);
-            scroll->setStyleSheet("QScrollArea{background:transparent;border:none;}");
-            QWidget *host = new QWidget(scroll);
-            host->setStyleSheet("background:transparent;");
-            chatsListLayout_ = new QVBoxLayout(host);
-            chatsListLayout_->setContentsMargins(0, 0, 0, 0);
-            chatsListLayout_->setSpacing(s(12));
-            scroll->setWidget(host);
-            listMain->addWidget(scroll, 1);
-
-            QHBoxLayout *fabRow = new QHBoxLayout();
-            fabRow->setContentsMargins(0, 0, 0, 0);
-            fabRow->addStretch();
-            QToolButton *addChatFab = new QToolButton(listPage);
-            addChatFab->setFixedSize(s(56), s(56));
-            addChatFab->setIcon(QIcon(":/new/mainWindowIcons/noback/edit.png"));
-            addChatFab->setIconSize(QSize(s(24), s(24)));
-            addChatFab->setStyleSheet(QString(
-                "QToolButton{background:#55BFFF;border:none;border-radius:%1px;color:white;}"
-                "QToolButton:hover{background:#43AEEA;}"
-            ).arg(s(28)));
-            addChatFab->setToolTip("Начать чат");
-            connect(addChatFab, &QToolButton::clicked, this, [this]() {
-                const QString currentUser = AppSession::currentUsername();
-                QVector<UserInfo> allUsers = getAllUsers(false);
-                QVector<UserInfo> candidates;
-                for (const UserInfo &u : allUsers) {
-                    if (u.username != currentUser) candidates.push_back(u);
-                }
-                if (candidates.isEmpty()) {
-                    QMessageBox::information(this, "Начать чат", "Нет пользователей для чата.");
-                    return;
-                }
-                QDialog pick(this);
-                pick.setWindowTitle("Начать чат");
-                pick.setMinimumSize(s(460), s(560));
-                pick.setStyleSheet(
-                    "QDialog{background:#F8FAFF;}"
-                    "QLabel{font-family:Inter;font-size:14px;font-weight:700;color:#334155;}"
-                    "QListWidget{background:#FFFFFF;border:1px solid #D5DCE8;border-radius:10px;padding:6px;}"
-                    "QListWidget::item{padding:10px 8px;border-radius:10px;}"
-                    "QListWidget::item:hover{background:rgba(80,118,251,36);}"
-                    "QListWidget::item:selected{background:rgba(80,118,251,52);}"
-                    "QPushButton{background:#E2E8F0;color:#334155;font-weight:800;border:none;border-radius:10px;padding:8px 14px;}"
-                    "QPushButton:hover{background:#CBD5E1;}"
-                );
-                QVBoxLayout *root = new QVBoxLayout(&pick);
-                QLabel *hint = new QLabel("Выберите пользователя", &pick);
-                root->addWidget(hint);
-                QListWidget *list = new QListWidget(&pick);
-                list->setIconSize(QSize(s(40), s(40)));
-                const QPixmap defaultUserPm = QPixmap(QStringLiteral(":/new/mainWindowIcons/noback/user.png"));
-                QSet<QString> peerNames;
-                for (const UserInfo &u : candidates)
-                    peerNames.insert(u.username);
-                const QHash<QString, ChatPeerMeta> peerMeta = loadChatPeerMeta(peerNames);
-                for (const UserInfo &u : candidates) {
-                    const ChatPeerMeta meta = peerMeta.value(u.username);
-                    const QString display = meta.displayName.isEmpty()
-                        ? (u.fullName.isEmpty() ? u.username : (u.fullName + " (" + u.username + ")"))
-                        : (meta.displayName + " (" + u.username + ")");
-                    QPixmap avatar = meta.avatar;
-                    if (avatar.isNull())
-                        avatar = defaultUserPm;
-                    QListWidgetItem *it = new QListWidgetItem(QIcon(makeRoundPixmap(avatar, s(40))), display, list);
-                    it->setSizeHint(QSize(0, s(58)));
-                    it->setData(Qt::UserRole, u.username);
-                }
-                root->addWidget(list, 1);
-                QPushButton *cancel = new QPushButton("Отмена", &pick);
-                connect(cancel, &QPushButton::clicked, &pick, &QDialog::reject);
-                root->addWidget(cancel);
-                connect(list, &QListWidget::itemClicked, &pick, [&pick, this, currentUser](QListWidgetItem *it) {
-                    if (!it) return;
-                    const QString other = it->data(Qt::UserRole).toString().trimmed();
-                    if (other.isEmpty()) return;
-                    QString err;
-                    const int tid = TaskChatDialog::ensureThreadWithUser(currentUser, other, QString(), &err);
-                    if (tid <= 0) {
-                        QMessageBox::warning(this, "Чат", err.isEmpty() ? QStringLiteral("Не удалось открыть чат") : err);
-                        return;
-                    }
-                    pick.accept();
-                    showChatsPage();
-                    if (embeddedChatWidget_ && chatsStack_) {
-                        chatsStack_->setCurrentIndex(1);
-                        embeddedChatWidget_->setThreadId(tid, other);
-                    }
-                    QTimer::singleShot(0, this, [this]() { reloadChatsPageList(); });
-                });
-                pick.exec();
-            });
-            fabRow->addWidget(addChatFab, 0, Qt::AlignRight | Qt::AlignBottom);
-            listMain->addLayout(fabRow);
-
-            chatsStack_->addWidget(listPage);
-
-            // Страница 1: встроенный чат с человеком (замещает список)
-            const QString curUser = AppSession::currentUsername();
-            const QString role = getUserRole(curUser);
-            const bool isAdmin = (role == "admin" || role == "tech");
-            embeddedChatWidget_ = new TaskChatWidget(0, curUser, isAdmin, [this](int v) { return s(v); }, chatsStack_);
-            connect(embeddedChatWidget_, &TaskChatWidget::showProfileRequested, this, [this](const QString &u) {
-                showUserProfilePage(u);
-            });
-    connect(embeddedChatWidget_, &TaskChatWidget::backRequested, this, [this]() {
-        if (chatsStack_) chatsStack_->setCurrentIndex(0);
-        reloadChatsPageList();
     });
-    chatsStack_->addWidget(embeddedChatWidget_);
 
-            if (rightCalendarFrame) {
-                QWidget *rightBodyFrame = rightCalendarFrame->parentWidget();
-                if (rightBodyFrame) {
-                    if (QVBoxLayout *rightBodyLayout = qobject_cast<QVBoxLayout*>(rightBodyFrame->layout()))
-                        rightBodyLayout->addWidget(chatsPage, 3);
-                }
-            }
-        }
+    dlg.exec();
+}
 
-        if (chatsStack_)
-            chatsStack_->setCurrentIndex(0);
-        chatsPage->setVisible(true);
-        reloadChatsPageList();
-        stressSuiteLogPageEntered(QStringLiteral("chats"));
-    }
-
-    void leftMenu::openEmbeddedDelegatorChatForAgv(const QString &agvId)
-    {
-        const QString aid = agvId.trimmed();
-        if (aid.isEmpty()) {
-            QMessageBox::information(this, QStringLiteral("Перейти в диалог"), QStringLiteral("AGV не выбран."));
-            return;
-        }
-        const QString currentUser = AppSession::currentUsername();
-        const QVector<QString> order = TaskChatDialog::delegatorUsernamesForAgv(aid, currentUser);
-        if (order.isEmpty()) {
-            QMessageBox::information(this, QStringLiteral("Перейти в диалог"),
-                QStringLiteral("По этому AGV вам никто не назначал задачи и не закреплял его за вами. Используйте «Начать чат» в разделе Чаты."));
-            return;
-        }
-        const QString specialContext = QStringLiteral("AGV %1").arg(aid);
-
-        const auto openWithPeer = [this, currentUser, specialContext](const QString &otherRaw) {
-            const QString otherUser = otherRaw.trimmed();
-            if (otherUser.isEmpty())
-                return;
-            QString err;
-            const int tid = TaskChatDialog::ensureThreadWithUser(currentUser, otherUser, QString(), &err);
-            if (tid <= 0) {
-                QMessageBox::warning(this, QStringLiteral("Перейти в диалог"),
-                    err.isEmpty() ? QStringLiteral("Не удалось открыть чат") : err);
-                return;
-            }
-            TaskChatDialog::markNextMessageSpecial(tid, specialContext);
-            showChatsPage();
-            if (embeddedChatWidget_ && chatsStack_) {
-                embeddedChatWidget_->setThreadId(tid, otherUser);
-                chatsStack_->setCurrentIndex(1);
-            }
-            reloadChatsPageList();
-        };
-
-        if (order.size() == 1) {
-            openWithPeer(order[0]);
-            return;
-        }
-
-        QDialog dlg(this);
-        dlg.setWindowTitle(QStringLiteral("Перейти в диалог"));
-        dlg.setMinimumSize(s(360), s(300));
-        dlg.setStyleSheet(
-            "QDialog{background:#F4F6FA;} QListWidget{background:#FFFFFF;border:1px solid #E5EAF2;border-radius:12px;padding:4px;} "
-            "QListWidget::item{min-height:48px;padding:8px 12px;border-radius:8px;} QListWidget::item:hover{background:#E8EEFF;} "
-            "QLabel{font-weight:600;color:#475569;font-size:13px;}"
-        );
-        QVBoxLayout *root = new QVBoxLayout(&dlg);
-        root->setContentsMargins(16, 16, 16, 16);
-        QLabel *hint = new QLabel(QStringLiteral("С кем открыть диалог?"), &dlg);
-        root->addWidget(hint);
-        QListWidget *list = new QListWidget(&dlg);
-        const QVector<UserInfo> allUsers = getAllUsers(false);
-        for (const QString &username : order) {
-            QString display = username;
-            for (const UserInfo &u : allUsers) {
-                if (u.username.compare(username, Qt::CaseInsensitive) == 0) {
-                    display = u.fullName.trimmed().isEmpty() ? u.username : (u.fullName + QStringLiteral(" (") + u.username + QLatin1Char(')'));
-                    break;
-                }
-            }
-            list->addItem(display);
-            list->item(list->count() - 1)->setData(Qt::UserRole, username);
-        }
-        root->addWidget(list, 1);
-        connect(list, &QListWidget::itemClicked, &dlg, [&dlg, openWithPeer](QListWidgetItem *item) {
-            if (!item)
-                return;
-            const QString otherUser = item->data(Qt::UserRole).toString().trimmed();
-            if (otherUser.isEmpty())
-                return;
-            dlg.accept();
-            openWithPeer(otherUser);
-        });
-        QPushButton *cancelBtn = new QPushButton(QStringLiteral("Отмена"), &dlg);
-        cancelBtn->setStyleSheet(
-            "QPushButton{background:#E2E8F0;color:#334155;font-weight:700;padding:10px 20px;border-radius:10px;} "
-            "QPushButton:hover{background:#CBD5E1;}");
-        connect(cancelBtn, &QPushButton::clicked, &dlg, &QDialog::reject);
-        root->addWidget(cancelBtn);
-        dlg.exec();
-    }
-
-    void leftMenu::reloadChatsPageList()
-    {
-        if (!chatsPage || !chatsListLayout_) return;
-
-        QWidget *listHost = qobject_cast<QWidget*>(chatsListLayout_->parent());
-        if (!listHost) listHost = chatsPage;
-
-        if (chatsPage) chatsPage->setUpdatesEnabled(false);
-        if (listHost) listHost->setUpdatesEnabled(false);
-
-        const QString currentUser = AppSession::currentUsername();
-        const QString role = getUserRole(currentUser);
-        const bool isAdmin = (role == "admin" || role == "tech");
-        QVector<TaskChatThread> threads = isAdmin ? getThreadsForAdmin(currentUser) : getThreadsForUser(currentUser);
-
-        // Комплексный тест: не грузим ФИО/аватар по каждому ряду (N запросов к БД → подвисание UI).
-        const bool complexTestFast = stressSuiteRunning_;
-        if (threads.size() > 100)
-            threads.resize(100);
-
-        const QString newSignature = makeChatListSignature(threads);
-        if (!complexTestFast && newSignature == lastChatsListSignature_ && chatsListLayout_->count() > 0) {
-            if (chatsPage) chatsPage->setUpdatesEnabled(true);
-            if (listHost) listHost->setUpdatesEnabled(true);
-            return;
-        }
-
-        while (QLayoutItem *it = chatsListLayout_->takeAt(0)) {
-            if (it->widget()) it->widget()->deleteLater();
-            delete it;
-        }
-
-        if (threads.isEmpty()) {
-            lastChatsListSignature_ = newSignature;
-            QLabel *empty = new QLabel("Чатов пока нет", listHost);
-            empty->setAlignment(Qt::AlignCenter);
-            empty->setStyleSheet(QString(
-                "font-family:Inter;font-size:%1px;font-weight:700;color:#94A3B8;"
-            ).arg(s(16)));
-            chatsListLayout_->addStretch();
-            chatsListLayout_->addWidget(empty);
-            chatsListLayout_->addStretch();
-            if (chatsPage) chatsPage->setUpdatesEnabled(true);
-            if (listHost) listHost->setUpdatesEnabled(true);
-            return;
-        }
-
-        QSet<QString> peerUsers;
-        for (const TaskChatThread &t : threads) {
-            const QString otherUser = (t.createdBy == currentUser) ? t.recipientUser : t.createdBy;
-            if (!otherUser.isEmpty())
-                peerUsers.insert(otherUser);
-        }
-        const QHash<QString, ChatPeerMeta> peerMetaMap = loadChatPeerMeta(peerUsers);
-        const QPixmap defaultUserPm = QPixmap(QStringLiteral(":/new/mainWindowIcons/noback/user.png"));
-
-        for (const TaskChatThread &t : threads) {
-            QString otherUser = (t.createdBy == currentUser) ? t.recipientUser : t.createdBy;
-            QString otherDisplay = otherUser.isEmpty() ? QString("Без адресата") : otherUser;
-            const ChatPeerMeta meta = peerMetaMap.value(otherUser);
-            if (!meta.displayName.isEmpty())
-                otherDisplay = meta.displayName;
-            const QString lastSeenText = formatLastSeenText(meta.isActive, meta.lastLogin);
-
-            const QString agvText = t.agvId.trimmed();
-            QString secondaryText;
-            if (!agvText.isEmpty() && agvText != QStringLiteral("—")) {
-                secondaryText = agvText;
-                if (!t.taskName.isEmpty())
-                    secondaryText += QString(" • %1").arg(t.taskName);
-            } else if (!t.taskName.isEmpty()) {
-                secondaryText = t.taskName;
-            }
-
-            QPushButton *btn = new QPushButton(listHost);
-            btn->setCursor(Qt::PointingHandCursor);
-            btn->setMinimumHeight(s(94));
-            QPixmap peerAvatar;
-            if (!otherUser.isEmpty()) {
-                const QString cacheKey = otherUser.trimmed();
-                if (avatarCache_.contains(cacheKey)) {
-                    peerAvatar = avatarCache_.value(cacheKey);
-                } else if (!meta.avatar.isNull()) {
-                    peerAvatar = meta.avatar;
-                    avatarCache_.insert(cacheKey, peerAvatar);
-                }
-            }
-            if (peerAvatar.isNull())
-                peerAvatar = defaultUserPm;
-            btn->setStyleSheet(QString(
-                "QPushButton{background:white;border:1px solid transparent;border-radius:%1px;padding:%2px %3px;"
-                "text-align:left;%4}"
-                "QPushButton:hover{background:rgba(80,118,251,36);border:1px solid rgb(80,118,251);}"
-            ).arg(s(14)).arg(s(13)).arg(s(14))
-             .arg(t.isClosed() ? "opacity:0.9;" : ""));
-
-            QHBoxLayout *btnLay = new QHBoxLayout(btn);
-            btnLay->setContentsMargins(s(14), s(12), s(14), s(12));
-            btnLay->setSpacing(s(12));
-
-            QWidget *avatarWrap = new QWidget(btn);
-            avatarWrap->setFixedSize(s(42), s(42));
-            avatarWrap->setAttribute(Qt::WA_TransparentForMouseEvents);
-            QLabel *avatarLbl = new QLabel(avatarWrap);
-            avatarLbl->setGeometry(0, 0, s(42), s(42));
-            avatarLbl->setAttribute(Qt::WA_TransparentForMouseEvents);
-            if (!peerAvatar.isNull()) {
-                avatarLbl->setPixmap(makeRoundPixmap(peerAvatar, s(42)));
-                avatarLbl->setAlignment(Qt::AlignCenter);
-            }
-            const int dotPx = s(10);
-            const int dotRadius = qMax(1, dotPx / 2);
-            QLabel *statusDot = new QLabel(avatarWrap);
-            statusDot->setFixedSize(dotPx, dotPx);
-            statusDot->move(s(42) - dotPx - s(2), s(42) - dotPx - s(2));
-            statusDot->setAttribute(Qt::WA_TransparentForMouseEvents);
-            const bool peerOnline = !otherUser.isEmpty() && chatListPeerShowsOnline(meta.isActive, meta.lastLogin);
-            statusDot->setStyleSheet(
-                peerOnline
-                    ? QStringLiteral("background:#22C55E;border:%1px solid #FFFFFF;border-radius:%2px;")
-                          .arg(s(2))
-                          .arg(dotRadius)
-                    : QStringLiteral("background:#CBD5E1;border:%1px solid #FFFFFF;border-radius:%2px;")
-                          .arg(s(2))
-                          .arg(dotRadius));
-            statusDot->raise();
-
-            QWidget *textHost = new QWidget(btn);
-            textHost->setAttribute(Qt::WA_TransparentForMouseEvents);
-            QVBoxLayout *textLay = new QVBoxLayout(textHost);
-            textLay->setContentsMargins(0, 0, 0, 0);
-            textLay->setSpacing(s(2));
-
-            QLabel *nameLbl = new QLabel(otherDisplay, textHost);
-            nameLbl->setAttribute(Qt::WA_TransparentForMouseEvents);
-            nameLbl->setStyleSheet(QString(
-                "font-family:Inter;font-size:%1px;font-weight:800;color:%2;background:transparent;%3"
-            ).arg(s(15))
-             .arg(t.isClosed() ? "#94A3B8" : "#0F172A")
-             .arg(t.isClosed() ? "text-decoration: line-through;" : ""));
-
-            textLay->addWidget(nameLbl);
-
-            if (!secondaryText.trimmed().isEmpty()) {
-                QLabel *secondaryLbl = new QLabel(secondaryText, textHost);
-                secondaryLbl->setAttribute(Qt::WA_TransparentForMouseEvents);
-                secondaryLbl->setWordWrap(true);
-                secondaryLbl->setStyleSheet(QString(
-                    "font-family:Inter;font-size:%1px;font-weight:700;color:%2;background:transparent;%3"
-                ).arg(s(13))
-                 .arg(t.isClosed() ? "#94A3B8" : "#475569")
-                 .arg(t.isClosed() ? "text-decoration: line-through;" : ""));
-                textLay->addWidget(secondaryLbl);
-            }
-
-            QLabel *lastSeenLbl = new QLabel(lastSeenText, textHost);
-            lastSeenLbl->setAttribute(Qt::WA_TransparentForMouseEvents);
-            lastSeenLbl->setStyleSheet(QString(
-                "font-family:Inter;font-size:%1px;font-weight:600;color:#94A3B8;background:transparent;"
-            ).arg(s(12)));
-            textLay->addWidget(lastSeenLbl);
-
-            btnLay->addWidget(avatarWrap, 0, Qt::AlignTop);
-            btnLay->addWidget(textHost, 1);
-
-            connect(btn, &QPushButton::clicked, this, [this, t]() {
-                if (embeddedChatWidget_) {
-                    const QString currentUser = AppSession::currentUsername();
-                    const QString peer = (t.createdBy == currentUser) ? t.recipientUser : t.createdBy;
-                    embeddedChatWidget_->setThreadId(t.id, peer);
-                    if (chatsStack_) chatsStack_->setCurrentIndex(1);
-                }
-            });
-            chatsListLayout_->addWidget(btn);
-        }
-        chatsListLayout_->addStretch();
-        lastChatsListSignature_ = newSignature;
-
-        if (chatsPage) chatsPage->setUpdatesEnabled(true);
-        if (listHost) listHost->setUpdatesEnabled(true);
-        if (chatsPage) chatsPage->update();
-    }
-
-    void leftMenu::hideAllPages()
-    {
-        if (topRow_)                         topRow_->setVisible(true);
-        if (bottomRow_)                      bottomRow_->setVisible(true);
-
-        if (rightCalendarFrame)              rightCalendarFrame->setVisible(false);
-        if (rightUpcomingMaintenanceFrame)   rightUpcomingMaintenanceFrame->setVisible(false);
-        if (listAgvInfo)                     listAgvInfo->setVisible(false);
-        if (agvSettingsPage)                 agvSettingsPage->setVisible(false);
-        if (modelListPage)                   modelListPage->setVisible(false);
-        if (logsPage)                        logsPage->setVisible(false);
-        if (profilePage)                     profilePage->setVisible(false);
-        if (chatsPage)                       chatsPage->setVisible(false);
-        if (usersPage)                       usersPage->setVisible(false);
-
-        QList<QWidget*> profilePages = findChildren<QWidget*>("userProfilePage");
-        for (QWidget *w : profilePages) {
-            w->setVisible(false);
-            w->deleteLater();
-        }
-    }
 
 
 //

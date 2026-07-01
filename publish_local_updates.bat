@@ -6,7 +6,7 @@ set "OUT_DIR=%~dp0dist\VapManager"
 set "UPD_DIR=%~dp0updates"
 set "FILES_DIR=%UPD_DIR%\files"
 set "APP_VERSION=1.0.0"
-set "APP_BUILD=140"
+set "APP_BUILD=141"
 
 echo === Publish local updates (this PC as server) ===
 

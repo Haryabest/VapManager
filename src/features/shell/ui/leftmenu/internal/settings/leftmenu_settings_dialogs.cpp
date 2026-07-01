@@ -310,9 +310,7 @@ public:
             QString host = dbHostEdit_->text().trimmed();
             if (host.isEmpty()) host = "localhost";
             const bool reconnectOk = reconnectWithHost(host);
-            if (reconnectOk) {
-                QMessageBox::information(this, "Настройки", "Настройки сохранены.");
-            } else {
+            if (!reconnectOk) {
                 QMessageBox::warning(this, "Ошибка", "Не удалось подключиться к базе данных.\nПроверьте IP-адрес.");
             }
             accept();

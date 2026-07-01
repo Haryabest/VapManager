@@ -75,6 +75,7 @@ SOURCES += \
     src/features/shell/ui/leftmenu/internal/profile/leftmenu_profile.cpp \
     src/features/shell/ui/leftmenu/internal/navigation/leftmenu_navigation.cpp \
     src/features/shell/ui/leftmenu/internal/chats/leftmenu_chats.cpp \
+    src/features/shell/ui/leftmenu/internal/reports/leftmenu_annual_report.cpp \
     src/features/shell/ui/leftmenu.cpp \
     src/features/agv/ui/listagvinfo.cpp \
     src/features/account/ui/logindialog.cpp \

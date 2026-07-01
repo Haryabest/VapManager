@@ -111,7 +111,7 @@ bool hasAnyTech()
 bool verifyTechInviteKey(const QString &key, QString &error)
 {
     if (key.trimmed().isEmpty()) {
-        error = "Введите ключ техника";
+        error = "Введите ключ разработчика";
         return false;
     }
 
@@ -126,7 +126,7 @@ bool verifyTechInviteKey(const QString &key, QString &error)
     q.bindValue(":k", key.trimmed().toUpper());
 
     if (!q.exec() || !q.next()) {
-        error = "Неверный или просроченный ключ техника";
+        error = "Неверный или просроченный ключ разработчика";
         return false;
     }
 

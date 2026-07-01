@@ -215,7 +215,7 @@ void leftMenu::buildProfilePage()
 
     QString roleText =
         isAdmin ? "Роль: Администратор"
-        : (userRole == "tech" ? "Роль: Техник" : "Роль: Пользователь");
+        : (userRole == "tech" ? "Роль: Разработчик" : "Роль: Пользователь");
 
     QLabel *roleLabel = new QLabel(roleText, profileCard);
     roleLabel->setStyleSheet(
@@ -270,7 +270,7 @@ void leftMenu::buildProfilePage()
         //
         // Заголовок
         //
-        QString keyBlockTitle = isTech ? "Ключ техника" : "Ключ администратора";
+        QString keyBlockTitle = isTech ? "Ключ разработчика" : "Ключ администратора";
         QLabel *keyTitle = new QLabel(keyBlockTitle, adminBlock);
         keyTitle->setStyleSheet(
             "font-family:Inter;"
@@ -315,7 +315,7 @@ void leftMenu::buildProfilePage()
         // Подсказка
         //
         QString keyHintText = isTech
-            ? "Действует 10 минут. Передайте новому технику для регистрации."
+            ? "Действует 10 минут. Передайте новому разработчику для регистрации."
             : "Действует 10 минут. Передайте новому админу для регистрации.";
         QLabel *keyHint = new QLabel(keyHintText, adminBlock);
         keyHint->setWordWrap(true);

@@ -592,7 +592,7 @@ void leftMenu::showUserProfilePage(const QString &username)
 
     QString roleText;
     if (info.role == "admin") roleText = "Администратор";
-    else if (info.role == "tech") roleText = "Техник";
+    else if (info.role == "tech") roleText = "Разработчик";
     else roleText = "Пользователь";
 
     auto addCopyableRow = [&](const QString &label, const QString &value) {

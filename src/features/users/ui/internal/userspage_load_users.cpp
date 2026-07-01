@@ -160,7 +160,7 @@ void UsersPage::loadUsers()
         layout->addWidget(sec);
     };
 
-    addSection("Техники", techs, CollapsibleSection::StyleTech);
+    addSection("Разработчики", techs, CollapsibleSection::StyleTech);
     addSection("Администраторы", admins, CollapsibleSection::StyleAdmin);
     addSection("Пользователи", viewers, CollapsibleSection::StyleViewer);
 

@@ -73,6 +73,11 @@ SOURCES += \
     src/features/shell/ui/leftmenu/internal/stress/leftmenu_stress.cpp \
     src/features/shell/ui/leftmenu/internal/stress/leftmenu_stress_autotest_ui.cpp \
     src/features/shell/ui/leftmenu/internal/profile/leftmenu_profile.cpp \
+    src/features/shell/ui/leftmenu/internal/init/leftmenu_init.cpp \
+    src/features/shell/ui/leftmenu/internal/calendar/leftmenu_calendar_nav.cpp \
+    src/features/shell/ui/leftmenu/internal/agv/leftmenu_agv_pages.cpp \
+    src/features/shell/ui/leftmenu/internal/avatars/leftmenu_avatars.cpp \
+    src/features/shell/ui/leftmenu/internal/chats/leftmenu_event_filter.cpp \
     src/features/shell/ui/leftmenu/internal/navigation/leftmenu_navigation.cpp \
     src/features/shell/ui/leftmenu/internal/pages/leftmenu_pages.cpp \
     src/features/shell/ui/leftmenu/internal/chats/leftmenu_chats.cpp \

@@ -73,7 +73,7 @@ AccountInfoDialog::AccountInfoDialog(const QString &username,
     //
     QString roleDisplay = role;
     if (role == "admin") roleDisplay = "Администратор";
-    else if (role == "tech") roleDisplay = "Техник";
+    else if (role == "tech") roleDisplay = "Разработчик";
     else if (role == "viewer") roleDisplay = "Пользователь";
     QLabel *roleLabel = new QLabel("Роль: " + roleDisplay, this);
     roleLabel->setStyleSheet(
@@ -113,7 +113,7 @@ AccountInfoDialog::AccountInfoDialog(const QString &username,
     //
     bool isTech = (role == "tech");
     bool hasInviteKey = (role == "admin" || role == "tech");
-    QString keyTitleText = isTech ? "🔑 Ключ техника" : "🔑 Ключ администратора";
+    QString keyTitleText = isTech ? "🔑 Ключ разработчика" : "🔑 Ключ администратора";
     if (hasInviteKey) {
         QLabel *keyTitle = new QLabel(keyTitleText, this);
         keyTitle->setStyleSheet(
@@ -125,7 +125,7 @@ AccountInfoDialog::AccountInfoDialog(const QString &username,
         main->addWidget(keyTitle);
 
         QString hintText = isTech
-            ? "Этот ключ нужен для регистрации новых техников."
+            ? "Этот ключ нужен для регистрации новых разработчиков."
             : "Этот ключ нужен для регистрации новых администраторов.";
         QLabel *hint = new QLabel(hintText, this);
         hint->setWordWrap(true);

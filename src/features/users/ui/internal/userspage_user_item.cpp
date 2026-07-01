@@ -162,7 +162,7 @@ void UserItem::build()
         roleText = "[admin]";
         roleColor = "#FF3B30";
     } else if (data_.role == "tech") {
-        roleText = "[tech]";
+        roleText = "[dev]";
         roleColor = "#18CF00";
     } else {
         roleText = "[user]";

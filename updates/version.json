@@ -1,6 +1,6 @@
 {
     "version":  "1.0.0",
-    "build":  138,
+    "build":  140,
     "notes":  "Local VapManager update from this PC",
     "baseUrl":  "http://192.168.43.19:8765/files/",
     "setupUrl":  "",
@@ -99,7 +99,7 @@
                   },
                   {
                       "path":  "VapManager.exe",
-                      "size":  2411008
+                      "size":  2503168
                   },
                   {
                       "path":  "iconengines/qsvgicon.dll",

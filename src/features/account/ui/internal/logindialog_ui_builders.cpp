@@ -267,7 +267,7 @@ QWidget *LoginDialog::buildRegisterPage()
     regRoleCombo = new QComboBox(regPage);
     regRoleCombo->addItem("Пользователь", "viewer");
     regRoleCombo->addItem("Администратор", "admin");
-    regRoleCombo->addItem("Техник", "tech");
+    regRoleCombo->addItem("Разработчик", "tech");
     regRoleCombo->setMinimumHeight(42);
     regForm->addWidget(regRoleCombo);
 
@@ -290,11 +290,11 @@ QWidget *LoginDialog::buildRegisterPage()
     QVBoxLayout *techKeyLayout = new QVBoxLayout(techKeyRow);
     techKeyLayout->setContentsMargins(0, 0, 0, 0);
     techKeyLayout->setSpacing(4);
-    QLabel *regTechKeyLabel = new QLabel("Ключ от техника", techKeyRow);
+    QLabel *regTechKeyLabel = new QLabel("Ключ от разработчика", techKeyRow);
     regTechKeyLabel->setObjectName("fieldLabel");
     techKeyLayout->addWidget(regTechKeyLabel);
     regTechKeyEdit = new QLineEdit(techKeyRow);
-    regTechKeyEdit->setPlaceholderText("Запросите ключ у действующего техника");
+    regTechKeyEdit->setPlaceholderText("Запросите ключ у действующего разработчика");
     regTechKeyEdit->setMinimumHeight(42);
     techKeyLayout->addWidget(regTechKeyEdit);
     regForm->addWidget(techKeyRow);

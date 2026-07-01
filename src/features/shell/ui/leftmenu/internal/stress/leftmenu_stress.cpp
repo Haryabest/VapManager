@@ -106,7 +106,7 @@ void leftMenu::runFullStressAutotest()
     const QString role = getUserRole(who);
     if (role != QStringLiteral("admin") && role != QStringLiteral("tech")) {
         QMessageBox::warning(this, QStringLiteral("Автотест"),
-                             QStringLiteral("Доступно только для ролей «администратор» и «техник»."));
+                             QStringLiteral("Доступно только для ролей «администратор» и «разработчик»."));
         return;
     }
     if (stressSuiteRunning_) {

@@ -11,7 +11,7 @@
                   },
                   {
                       "path":  "install_agv_manager_db.sql",
-                      "size":  9729
+                      "size":  9717
                   },
                   {
                       "path":  "libcrypto-3-x64.dll",
@@ -99,7 +99,7 @@
                   },
                   {
                       "path":  "VapManager.exe",
-                      "size":  2375680
+                      "size":  2411008
                   },
                   {
                       "path":  "iconengines/qsvgicon.dll",

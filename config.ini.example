@@ -1,0 +1,8 @@
+[General]
+db_driver=psql
+db_host=192.168.43.19
+db_port=5432
+db_name=agv_manager_db
+db_user=vapmanager
+db_password=51525354
+language=ru

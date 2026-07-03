@@ -1,0 +1,67 @@
+#pragma once
+
+#include <QString>
+#include <QVector>
+#include <QDateTime>
+#include <QHash>
+
+struct TaskChatThread {
+    int id = 0;
+    QString agvId;
+    int taskId = 0;
+    QString taskName;
+    QString createdBy;
+    QString recipientUser;  // private recipient username
+    QDateTime createdAt;
+    QDateTime closedAt;
+    QString closedBy;
+    QDateTime lastMessageAt;
+    QString lastMessagePreview;
+    int unreadCount = 0;
+    bool isClosed() const { return closedAt.isValid(); }
+};
+
+struct TaskChatMessage {
+    int id = 0;
+    int threadId = 0;
+    QString fromUser;
+    QString message;
+    QDateTime createdAt;
+};
+
+bool initTaskChatTables();
+int createThread(const QString &agvId, int taskId, const QString &taskName,
+                 const QString &createdBy, const QString &recipientUser,
+                 const QString &firstMessage, QString &error);
+bool addChatMessage(int threadId, const QString &fromUser, const QString &message, QString &error);
+bool closeThread(int threadId, const QString &closedBy, QString &error);
+bool reopenThread(int threadId, QString &error);
+bool deleteThread(int threadId, QString &error);
+bool hideThreadForUser(int threadId, const QString &username, QString &error);
+/// Скрыть сообщение только для пользователя (удалить у себя)
+bool hideMessageForUser(int messageId, const QString &username, QString &error);
+/// Удалить сообщение для всех (только админ или автор сообщения)
+bool deleteMessage(int messageId, const QString &actingUser, QString &error);
+bool updateChatMessageText(int messageId, const QString &actingUser, const QString &newText, QString &error);
+QVector<TaskChatThread> getThreadsForUser(const QString &username);
+QVector<TaskChatThread> getThreadsForAdmin(const QString &adminUsername);
+/// Найти тред между двумя пользователями (участники: user1 и user2). optionalAgvId — при желании фильтр по agv_id.
+int getThreadBetweenUsers(const QString &user1, const QString &user2, const QString &optionalAgvId = QString());
+QVector<TaskChatMessage> getMessagesForThread(int threadId, bool decryptMessage = true);
+/// Как getMessagesForThread, но исключает сообщения, скрытые для currentUser
+QVector<TaskChatMessage> getMessagesForThread(int threadId, const QString &currentUser,
+                                              bool decryptMessage = true);
+/// Последние limit сообщений треда (для пагинации)
+QVector<TaskChatMessage> getMessagesForThreadLastN(int threadId, const QString &currentUser, int limit,
+                                                   bool decryptMessage = true);
+/// До limit сообщений старше beforeId (для подгрузки при скролле вверх)
+QVector<TaskChatMessage> getMessagesForThreadOlderThan(int threadId, const QString &currentUser, int beforeId, int limit,
+                                                       bool decryptMessage = true);
+/// Все сообщения с id >= fromId (для обновления при уже загруженной истории)
+QVector<TaskChatMessage> getMessagesForThreadFrom(int threadId, const QString &currentUser, int fromId,
+                                                  bool decryptMessage = true);
+/// Есть ли новые сообщения с id >= fromId (без расшифровки тела)
+bool hasMessagesForThreadFrom(int threadId, const QString &currentUser, int fromId);
+TaskChatMessage getChatMessageById(int messageId, bool decryptMessage = true);
+TaskChatThread getThreadById(int threadId);
+QHash<int, TaskChatThread> getThreadsByIds(const QVector<int> &threadIds);

@@ -1,0 +1,3 @@
+Сюда положите файл agv_manager_full.dump перед запуском 2_vosstanovit_bazu.bat.
+
+Создать дамп на старом сервере: 1_snyat_dump.bat

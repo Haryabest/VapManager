@@ -81,11 +81,11 @@ bool copyModelTasksToAgv(const QString &agvId, const QString &modelName)
             is_default,
             CURRENT_DATE + (interval_days * INTERVAL '1 day')
         FROM model_maintenance_template
-        WHERE model_name = :model_name
+        WHERE LOWER(model_name) = LOWER(:model_name)
     )");
 
     q.bindValue(":agv_id", agvId);
-    q.bindValue(":model_name", modelName.toUpper());
+    q.bindValue(":model_name", modelName);
 
     if (!q.exec()) {
         qDebug() << "copyModelTasksToAgv error:" << q.lastError().text();

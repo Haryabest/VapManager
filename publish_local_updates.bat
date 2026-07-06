@@ -6,7 +6,7 @@ set "OUT_DIR=%~dp0dist\VapManager"
 set "UPD_DIR=%~dp0updates"
 set "FILES_DIR=%UPD_DIR%\files"
 set "APP_VERSION=1.0.2"
-set "APP_BUILD=161"
+set "APP_BUILD=162"
 
 echo === Publish local updates (this PC as server) ===
 
@@ -29,6 +29,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
   "$updDir = '%UPD_DIR%';" ^
   "$version = '%APP_VERSION%';" ^
   "$build = [int]'%APP_BUILD%';" ^
+  "$notes = 'Build 162: fix case-sensitivity when copying model maintenance template tasks to new AGVs. Build 161: no full UI rebuild when virtual keyboard opens/closes on tablets.';" ^
   "$ip = '';" ^
   "$cfg = Join-Path $repoRoot 'config.ini';" ^
   "if (Test-Path $cfg) {" ^
@@ -54,7 +55,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
   "$obj = [ordered]@{" ^
   "    version = $version;" ^
   "    build = $build;" ^
-  "    notes = 'Build 161: no full UI rebuild when virtual keyboard opens/closes on tablets (scale from width only, not height). Build 160: fixes chat input bug on Windows tablets (preserves draft and focus on resize). Build 159: chat row context menu, advanced message search, tray update notification, download size in update dialog.';" ^
+  "    notes = $notes;" ^
   "    baseUrl = $baseUrl;" ^
   "    setupUrl = '';" ^
   "    files = @($files)" ^

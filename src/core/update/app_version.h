@@ -11,7 +11,7 @@ inline QString string()
 
 inline int build()
 {
-    return 164;
+    return 166;
 }
 
 inline QString label()

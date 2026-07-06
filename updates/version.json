@@ -1,10 +1,14 @@
 {
     "version":  "1.0.2",
-    "build":  164,
+    "build":  166,
     "notes":  "Build 164: robust model template saving тАФ wraps in transaction, shows explicit error dialog if tasks fail to save, validates tasks list. Build 163: fix PostgreSQL boolean insert. Build 162: fix case-sensitivity copying tasks to AGVs.",
     "baseUrl":  "http://192.168.43.20:8765/files/",
     "setupUrl":  "",
     "files":  [
+                  {
+                      "path":  "d3dcompiler_47.dll",
+                      "size":  4173928
+                  },
                   {
                       "path":  "install_agv_manager_db.sql",
                       "size":  9717
@@ -14,8 +18,16 @@
                       "size":  5706240
                   },
                   {
+                      "path":  "libEGL.dll",
+                      "size":  67688
+                  },
+                  {
                       "path":  "libgcc_s_seh-1.dll",
                       "size":  74240
+                  },
+                  {
+                      "path":  "libGLESv2.dll",
+                      "size":  6362768
                   },
                   {
                       "path":  "libiconv-2.dll",
@@ -42,6 +54,10 @@
                       "size":  52224
                   },
                   {
+                      "path":  "opengl32sw.dll",
+                      "size":  20923392
+                  },
+                  {
                       "path":  "qt.conf",
                       "size":  20
                   },
@@ -50,12 +66,108 @@
                       "size":  72504
                   },
                   {
+                      "path":  "Qt5Core.dll",
+                      "size":  8343776
+                  },
+                  {
+                      "path":  "Qt5Gui.dll",
+                      "size":  9844240
+                  },
+                  {
                       "path":  "Qt5Network.dll",
                       "size":  2586952
                   },
                   {
+                      "path":  "Qt5PrintSupport.dll",
+                      "size":  635128
+                  },
+                  {
+                      "path":  "Qt5Sql.dll",
+                      "size":  424856
+                  },
+                  {
+                      "path":  "Qt5Svg.dll",
+                      "size":  575128
+                  },
+                  {
+                      "path":  "Qt5Widgets.dll",
+                      "size":  8623912
+                  },
+                  {
                       "path":  "VapManager.exe",
-                      "size":  2756608
+                      "size":  2758656
+                  },
+                  {
+                      "path":  "iconengines/qsvgicon.dll",
+                      "size":  99200
+                  },
+                  {
+                      "path":  "imageformats/qgif.dll",
+                      "size":  79072
+                  },
+                  {
+                      "path":  "imageformats/qicns.dll",
+                      "size":  98008
+                  },
+                  {
+                      "path":  "imageformats/qico.dll",
+                      "size":  83816
+                  },
+                  {
+                      "path":  "imageformats/qjpeg.dll",
+                      "size":  485632
+                  },
+                  {
+                      "path":  "imageformats/qsvg.dll",
+                      "size":  74448
+                  },
+                  {
+                      "path":  "imageformats/qtga.dll",
+                      "size":  71392
+                  },
+                  {
+                      "path":  "imageformats/qtiff.dll",
+                      "size":  527432
+                  },
+                  {
+                      "path":  "imageformats/qwbmp.dll",
+                      "size":  69736
+                  },
+                  {
+                      "path":  "imageformats/qwebp.dll",
+                      "size":  681920
+                  },
+                  {
+                      "path":  "platforms/qdirect2d.dll",
+                      "size":  2984600
+                  },
+                  {
+                      "path":  "platforms/qminimal.dll",
+                      "size":  1289224
+                  },
+                  {
+                      "path":  "platforms/qoffscreen.dll",
+                      "size":  1089400
+                  },
+                  {
+                      "path":  "platforms/qwebgl.dll",
+                      "size":  1026568
+                  },
+                  {
+                      "path":  "platforms/qwindows.dll",
+                      "size":  2849024
+                  },
+                  {
+                      "path":  "printsupport/windowsprintersupport.dll",
+                      "size":  111040
+                  },
+                  {
+                      "path":  "sqldrivers/qsqlpsql.dll",
+                      "size":  178544
+                  },
+                  {
+                      "path":  "styles/qwindowsvistastyle.dll",
+                      "size":  310752
                   }
               ]
 }

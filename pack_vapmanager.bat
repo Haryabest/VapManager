@@ -55,6 +55,19 @@ if not "%RUNTIME_SRC%"=="" (
   exit /b 1
 )
 
+for %%F in (Qt5Core.dll Qt5Gui.dll Qt5Widgets.dll Qt5Sql.dll Qt5PrintSupport.dll Qt5Svg.dll Qt5Concurrent.dll Qt5Network.dll) do (
+  if not exist "%OUT_DIR%\%%F" if exist "%QT_BIN%\%%F" copy /Y "%QT_BIN%\%%F" "%OUT_DIR%\" >nul
+)
+
+set "QT_PLUGINS=C:\Qt\Qt5.14.2\5.14.2\mingw73_64\plugins"
+for %%D in (platforms sqldrivers imageformats styles iconengines printsupport) do (
+  if not exist "%OUT_DIR%\%%D" if exist "%QT_PLUGINS%\%%D" xcopy /E /I /Y "%QT_PLUGINS%\%%D" "%OUT_DIR%\%%D\" >nul
+)
+if exist "%QT_BIN%\libGLESv2.dll" copy /Y "%QT_BIN%\libGLESv2.dll" "%OUT_DIR%\" >nul
+if exist "%QT_BIN%\libEGL.dll" copy /Y "%QT_BIN%\libEGL.dll" "%OUT_DIR%\" >nul
+if exist "%QT_BIN%\D3Dcompiler_47.dll" copy /Y "%QT_BIN%\D3Dcompiler_47.dll" "%OUT_DIR%\" >nul
+if exist "%QT_BIN%\opengl32sw.dll" copy /Y "%QT_BIN%\opengl32sw.dll" "%OUT_DIR%\" >nul
+
 for %%F in (Qt5Network.dll Qt5Concurrent.dll) do (
   if not exist "%OUT_DIR%\%%F" if exist "%QT_BIN%\%%F" copy /Y "%QT_BIN%\%%F" "%OUT_DIR%\" >nul
 )

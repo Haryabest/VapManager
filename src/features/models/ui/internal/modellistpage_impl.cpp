@@ -1941,10 +1941,7 @@ void ModelListPage::showTemplateMode(const ModelInfo &model)
                     }
                 }
 
-                QMessageBox::information(this, "Модель AGV",
-                    QString("Модель «%1» создана. Сохранено задач шаблона: %2.")
-                        .arg(model.name).arg(insertedCount));
-
+                qDebug() << "Template saved: model=" << model.name << "tasks=" << insertedCount;
                 reloadFromDatabase();
             });
 

@@ -135,7 +135,6 @@ bool insertModelToDb(const ModelInfo &m, QString *outError)
             *outError = err;
         return false;
     }
-    db.commit();
     qDebug() << "Модель добавлена в БД:" << db.hostName() << db.databaseName() << "name=" << m.name;
 
     logAction(AppSession::currentUsername(),

@@ -30,8 +30,9 @@ powershell -NoProfile -Command ^
 
 echo [2/3] Perezapis zadachi avtozapuska...
 set "UPD=%~dp0updates"
+for /f "tokens=5" %%P in ('netstat -ano ^| findstr ":8765" ^| findstr LISTENING') do taskkill /F /PID %%P >nul 2>&1
 schtasks /Delete /TN "VapManager Update Server" /F >nul 2>&1
-schtasks /Create /TN "VapManager Update Server" /TR "\"%PYTHON%\" -m http.server 8765 --bind 0.0.0.0" /SC ONSTART /RL HIGHEST /RU SYSTEM /F
+schtasks /Create /TN "VapManager Update Server" /TR "cmd /c cd /d \"%UPD%\" && \"%PYTHON%\" -m http.server 8765 --bind 0.0.0.0" /SC ONSTART /RL HIGHEST /RU SYSTEM /F
 if errorlevel 1 (
     echo [WARN] Ne udalos sozdat zadachu, zapustite vruchnuyu: updates\start_update_server.bat
 ) else (
@@ -42,7 +43,9 @@ if errorlevel 1 (
 echo [3/3] Proverka...
 timeout /t 2 /nobreak >nul
 powershell -NoProfile -Command ^
-  "try { $r = Invoke-WebRequest 'http://192.168.0.1:8765/version.json' -UseBasicParsing -TimeoutSec 5; Write-Host ('[OK] version.json dostupen, kod ' + $r.StatusCode) -ForegroundColor Green } catch { Write-Host ('[WARN] http://192.168.0.1:8765/version.json - ' + $_.Exception.Message) -ForegroundColor Yellow }"
+  "foreach ($url in @('http://127.0.0.1:8765/version.json','http://192.168.0.1:8765/version.json')) {" ^
+  "  try { $r = Invoke-WebRequest $url -UseBasicParsing -TimeoutSec 5; Write-Host ('[OK] ' + $url + ' kod ' + $r.StatusCode) -ForegroundColor Green }" ^
+  "  catch { Write-Host ('[WARN] ' + $url + ' - ' + $_.Exception.Message) -ForegroundColor Yellow } }"
 
 echo.
 echo Na KLIENTE v config.ini dobavte (esli net):

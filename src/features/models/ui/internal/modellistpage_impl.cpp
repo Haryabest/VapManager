@@ -1876,11 +1876,9 @@ void ModelListPage::showTemplateMode(const ModelInfo &model)
 
     connect(templatePage_, &TemplatePageWidget::saveRequested,
             this, [this](const ModelInfo &model, const QVector<MaintenanceTask> &tasks){
-                QString insertError;
-                if (!insertModelToDb(model, &insertError)) {
-                    QMessageBox::warning(this,
-                                         "Модель AGV",
-                                         "Не удалось добавить модель: " + insertError);
+                if (tasks.isEmpty()) {
+                    QMessageBox::warning(this, "Модель AGV",
+                        "Нет задач для сохранения. Заполните хотя бы одну строку (название, дни > 0, минуты > 0).");
                     return;
                 }
 
@@ -1888,23 +1886,64 @@ void ModelListPage::showTemplateMode(const ModelInfo &model)
                 if (!db.isOpen()) {
                     QMessageBox::warning(this, "Модель AGV", "База данных не открыта.");
                     return;
-                } else {
-                    for (const auto &t : tasks) {
-                        QSqlQuery q(db);
-                        q.prepare("INSERT INTO model_maintenance_template "
-                                  "(model_name, task_name, task_description, interval_days, duration_minutes, is_default) "
-                                  "VALUES (:m, :n, :dsc, :d, :min, :def)");
-                        q.bindValue(":m",   model.name);
-                        q.bindValue(":n",   t.name);
-                        q.bindValue(":dsc", QString());
-                        q.bindValue(":d",   t.intervalDays);
-                        q.bindValue(":min", t.durationMinutes);
-                        q.bindValue(":def", true);
-                        if (!q.exec()) {
-                            qDebug() << "Ошибка вставки шаблона ТО:" << q.lastError().text();
-                        }
+                }
+
+                const bool txSupported = db.driver() && db.driver()->hasFeature(QSqlDriver::Transactions);
+                bool txStarted = false;
+                if (txSupported) {
+                    txStarted = db.transaction();
+                    if (!txStarted)
+                        qDebug() << "Template save: transaction start failed:" << db.lastError().text();
+                }
+
+                QString insertError;
+                if (!insertModelToDb(model, &insertError)) {
+                    if (txStarted) db.rollback();
+                    QMessageBox::warning(this, "Модель AGV",
+                                         "Не удалось добавить модель: " + insertError);
+                    return;
+                }
+
+                int insertedCount = 0;
+                QString lastErr;
+                for (const auto &t : tasks) {
+                    QSqlQuery q(db);
+                    q.prepare("INSERT INTO model_maintenance_template "
+                              "(model_name, task_name, task_description, interval_days, duration_minutes, is_default) "
+                              "VALUES (:m, :n, :dsc, :d, :min, TRUE)");
+                    q.bindValue(":m",   model.name);
+                    q.bindValue(":n",   t.name);
+                    q.bindValue(":dsc", QString());
+                    q.bindValue(":d",   t.intervalDays);
+                    q.bindValue(":min", t.durationMinutes);
+                    if (!q.exec()) {
+                        lastErr = q.lastError().text();
+                        qDebug() << "Ошибка вставки шаблона ТО:" << lastErr
+                                 << "model=" << model.name << "task=" << t.name;
+                    } else {
+                        ++insertedCount;
                     }
                 }
+
+                if (insertedCount == 0) {
+                    if (txStarted) db.rollback();
+                    QMessageBox::warning(this, "Модель AGV",
+                        QString("Не удалось сохранить ни одной задачи шаблона.\nОшибка: %1\nМодель: %2")
+                            .arg(lastErr, model.name));
+                    return;
+                }
+
+                if (txStarted) {
+                    if (!db.commit()) {
+                        db.rollback();
+                        QMessageBox::warning(this, "Модель AGV", "Не удалось зафиксировать шаблон в БД.");
+                        return;
+                    }
+                }
+
+                QMessageBox::information(this, "Модель AGV",
+                    QString("Модель «%1» создана. Сохранено задач шаблона: %2.")
+                        .arg(model.name).arg(insertedCount));
 
                 reloadFromDatabase();
             });

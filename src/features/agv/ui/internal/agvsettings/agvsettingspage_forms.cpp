@@ -365,7 +365,7 @@ void AgvSettingsPage::openAddTaskForm()
         QSqlDatabase db = QSqlDatabase::database("main_connection");
         QSqlQuery q(db);
         q.prepare("INSERT INTO agv_tasks (agv_id, task_name, task_description, interval_days, duration_minutes, is_default, next_date, assigned_to, delegated_by) "
-                  "VALUES (:id, :n, :dsc, :d, :m, 0, :next, :assign, :delegated_by)");
+                    "VALUES (:id, :n, :dsc, :d, :m, FALSE, :next, :assign, :delegated_by)");
         q.bindValue(":id", currentAgvId);
         q.bindValue(":n", name->text());
         q.bindValue(":dsc", QString());

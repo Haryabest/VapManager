@@ -1505,7 +1505,7 @@ ModelDetailsPageWidget::ModelDetailsPageWidget(const ModelInfo &model,
             QSqlQuery insQ(db);
             insQ.prepare("INSERT INTO model_maintenance_template "
                          "(model_name, task_name, task_description, interval_days, duration_minutes, is_default) "
-                         "VALUES (:model, :name, :dsc, :days, :mins, 1)");
+                         "VALUES (:model, :name, :dsc, :days, :mins, TRUE)");
             insQ.bindValue(":model", *modelName);
             insQ.bindValue(":name", taskName);
             insQ.bindValue(":dsc", QString());
@@ -1899,7 +1899,7 @@ void ModelListPage::showTemplateMode(const ModelInfo &model)
                         q.bindValue(":dsc", QString());
                         q.bindValue(":d",   t.intervalDays);
                         q.bindValue(":min", t.durationMinutes);
-                        q.bindValue(":def", 1);
+                        q.bindValue(":def", true);
                         if (!q.exec()) {
                             qDebug() << "Ошибка вставки шаблона ТО:" << q.lastError().text();
                         }

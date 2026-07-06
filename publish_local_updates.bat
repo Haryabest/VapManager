@@ -6,7 +6,7 @@ set "OUT_DIR=%~dp0dist\VapManager"
 set "UPD_DIR=%~dp0updates"
 set "FILES_DIR=%UPD_DIR%\files"
 set "APP_VERSION=1.0.2"
-set "APP_BUILD=162"
+set "APP_BUILD=163"
 
 echo === Publish local updates (this PC as server) ===
 
@@ -29,7 +29,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
   "$updDir = '%UPD_DIR%';" ^
   "$version = '%APP_VERSION%';" ^
   "$build = [int]'%APP_BUILD%';" ^
-  "$notes = 'Build 162: fix case-sensitivity when copying model maintenance template tasks to new AGVs. Build 161: no full UI rebuild when virtual keyboard opens/closes on tablets.';" ^
+  "$notes = 'Build 163: fix PostgreSQL boolean insert error when saving model maintenance templates. Build 162: fix case-sensitivity when copying model maintenance template tasks to new AGVs.';" ^
   "$ip = '';" ^
   "$cfg = Join-Path $repoRoot 'config.ini';" ^
   "if (Test-Path $cfg) {" ^

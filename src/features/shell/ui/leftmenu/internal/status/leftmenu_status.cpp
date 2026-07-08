@@ -4,6 +4,7 @@
 #include "databus.h"
 #include "db_users.h"
 #include "notifications_logs.h"
+#include "opc_connection_manager.h"
 
 #include <QDebug>
 #include <QFrame>
@@ -235,6 +236,11 @@ QVector<MaintenanceItemData> leftMenu::loadUpcomingMaintenance(int month, int ye
 
 SystemStatus leftMenu::loadSystemStatus()
 {
+    if (OpcConnectionManager::instance().isEnabled() && listAgvInfo) {
+        const QVector<AgvInfo> merged = listAgvInfo->loadAgvList();
+        return OpcConnectionManager::instance().computeSystemStatus(merged);
+    }
+
     SystemStatus st;
 
     QSqlDatabase db = QSqlDatabase::database("main_connection");
@@ -478,4 +484,45 @@ void leftMenu::updateSystemStatus()
     statusWidget_->setErrorTotalCount(total);
     statusWidget_->setDisabledCurrentCount(st.disabled);
     statusWidget_->setDisabledTotalCount(total);
+}
+
+void leftMenu::updateOpcStatusIndicator()
+{
+    if (!opcStatusBadge_ || !opcStatusDot_ || !opcStatusLabel_)
+        return;
+
+    const int r = s(19);
+    const auto applyBadgeStyle = [this, r](const QString &gradTop, const QString &gradBottom,
+                                           const QString &border, const QString &dotStyle) {
+        opcStatusBadge_->setStyleSheet(QString(
+            "QFrame#opcStatusBadge{"
+            "background:qlineargradient(x1:0,y1:0,x2:0,y2:1,stop:0 %1,stop:1 %2);"
+            "border:1px solid %3;border-radius:%4px;"
+            "}"
+        ).arg(gradTop, gradBottom, border).arg(r));
+        opcStatusDot_->setStyleSheet(dotStyle);
+    };
+
+    OpcConnectionManager &opc = OpcConnectionManager::instance();
+    if (!opc.isEnabled()) {
+        opcStatusLabel_->setText(QStringLiteral("OPC · выкл"));
+        applyBadgeStyle(
+            QStringLiteral("#94A3B8"), QStringLiteral("#64748B"), QStringLiteral("#475569"),
+            QStringLiteral("background:#E2E8F0;border-radius:5px;border:1px solid #CBD5E1;"));
+        opcStatusBadge_->setToolTip(QStringLiteral("OPC отключён в config.ini ([Opc] opc_enabled=false)"));
+        return;
+    }
+
+    const bool online = opc.isLive();
+    opcStatusLabel_->setText(online ? QStringLiteral("OPC · онлайн") : QStringLiteral("OPC · офлайн"));
+    if (online) {
+        applyBadgeStyle(
+            QStringLiteral("#4ADE80"), QStringLiteral("#16A34A"), QStringLiteral("#15803D"),
+            QStringLiteral("background:#FFFFFF;border-radius:5px;border:none;"));
+    } else {
+        applyBadgeStyle(
+            QStringLiteral("#F87171"), QStringLiteral("#DC2626"), QStringLiteral("#B91C1C"),
+            QStringLiteral("background:#FEE2E2;border-radius:5px;border:1px solid #FECACA;"));
+    }
+    opcStatusBadge_->setToolTip(opc.statusHint());
 }

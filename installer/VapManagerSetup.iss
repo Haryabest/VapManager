@@ -2,7 +2,7 @@
 ; Build: build_installer.bat
 
 #define MyAppName "VapManager"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.0.2"
 #define MyAppPublisher "VapManager"
 #define MyAppExeName "VapManager.exe"
 #define MyDistDir "..\dist\VapManager"

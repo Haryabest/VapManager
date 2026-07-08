@@ -545,29 +545,34 @@ void leftMenu::applyCalendarEventsToVisibleCells(int loadGeneration)
         if (!item || !date.isValid())
             continue;
 
-        QVector<CalendarEvent> dayEvents = calendarEventsByDate_.value(date);
+        const QVector<CalendarEvent> allDayEvents = calendarEventsByDate_.value(date);
+        QVector<CalendarEvent> dayEvents = allDayEvents;
         if (!searchKey.isEmpty()) {
             dayEvents.erase(std::remove_if(dayEvents.begin(), dayEvents.end(),
                 [&](const CalendarEvent &ev) {
                     return !normSearch(ev.agvId + ev.taskTitle).contains(searchKey);
                 }), dayEvents.end());
         }
+
+        QStringList allEventKeys;
+        QStringList allEventSeverities;
+        for (const CalendarEvent &ev : allDayEvents) {
+            allEventKeys << (ev.agvId.trimmed() + "||" + ev.taskTitle.trimmed());
+            allEventSeverities << ev.severity;
+        }
+        item->setData(Qt::UserRole + 10, allEventKeys);
+        item->setData(Qt::UserRole + 11, allEventSeverities);
+
         if (dayEvents.isEmpty()) {
             item->setData(Qt::UserRole + 1, QStringList());
             item->setData(Qt::UserRole + 2, QStringList());
-            item->setData(Qt::UserRole + 10, QStringList());
-            item->setData(Qt::UserRole + 11, QStringList());
             continue;
         }
 
         QMap<QString, int> agvCounts;
         QMap<QString, QString> agvSeverity;
         QVector<QString> agvOrder;
-        QStringList allEventKeys;
-        QStringList allEventSeverities;
         for (const CalendarEvent &ev : dayEvents) {
-            allEventKeys << (ev.agvId.trimmed() + "||" + ev.taskTitle.trimmed());
-            allEventSeverities << ev.severity;
             if (!agvCounts.contains(ev.agvId)) {
                 agvOrder.push_back(ev.agvId);
                 agvCounts[ev.agvId] = 0;

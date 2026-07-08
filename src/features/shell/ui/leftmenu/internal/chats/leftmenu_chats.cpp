@@ -8,6 +8,7 @@
 #include "databus.h"
 
 #include <QApplication>
+#include <QComboBox>
 #include <QDialog>
 #include <QFrame>
 #include <QGridLayout>
@@ -25,6 +26,7 @@
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QStackedWidget>
+#include <QTextEdit>
 #include <QTimer>
 #include <QToolButton>
 #include <QVBoxLayout>
@@ -198,6 +200,101 @@ QHash<QString, ChatPeerMeta> loadChatPeerMeta(const QSet<QString> &usernames)
 }
 
 } // namespace
+
+void leftMenu::showBroadcastNotificationDetails(const QString &senderLogin,
+                                                const QString &subject,
+                                                const QString &body,
+                                                int notificationId)
+{
+    QDialog dlg(this);
+    dlg.setWindowTitle(QStringLiteral("Рассылка"));
+    dlg.setFixedWidth(s(500));
+    dlg.setMaximumHeight(s(580));
+    dlg.setStyleSheet(QStringLiteral(
+        "QDialog{background:#F7FAFF;border:1px solid #E2E8F0;border-radius:12px;}"));
+
+    QVBoxLayout *root = new QVBoxLayout(&dlg);
+    root->setContentsMargins(s(20), s(20), s(20), s(20));
+    root->setSpacing(s(14));
+
+    QLabel *titleLbl = new QLabel(QStringLiteral("Сообщение рассылки"), &dlg);
+    titleLbl->setStyleSheet(QString(
+        "font-family:Inter;font-size:%1px;font-weight:900;color:#0F172A;background:transparent;"
+    ).arg(s(20)));
+    root->addWidget(titleLbl);
+
+    const QString fieldStyle = QString(
+        "font-family:Inter;font-size:%1px;font-weight:600;color:#0F172A;background:#FFFFFF;"
+        "border:1px solid #E2E8F0;border-radius:%2px;padding:%3px %4px;"
+    ).arg(s(15)).arg(s(8)).arg(s(10)).arg(s(12));
+
+    auto addLabel = [&](const QString &label) {
+        QLabel *lbl = new QLabel(label, &dlg);
+        lbl->setStyleSheet(QString(
+            "font-family:Inter;font-size:%1px;font-weight:700;color:#64748B;background:transparent;"
+        ).arg(s(13)));
+        root->addWidget(lbl);
+    };
+
+    auto addPlainField = [&](const QString &value) {
+        QLabel *val = new QLabel(value.isEmpty() ? QStringLiteral("—") : value, &dlg);
+        val->setWordWrap(true);
+        val->setTextInteractionFlags(Qt::TextSelectableByMouse);
+        val->setStyleSheet(fieldStyle);
+        root->addWidget(val);
+    };
+
+    auto addScrollableField = [&](const QString &value, int maxLines) {
+        QTextEdit *val = new QTextEdit(&dlg);
+        val->setReadOnly(true);
+        val->setPlainText(value.isEmpty() ? QStringLiteral("—") : value);
+        val->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+        val->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        val->setLineWrapMode(QTextEdit::WidgetWidth);
+        val->setStyleSheet(fieldStyle);
+        QFont f = val->font();
+        f.setFamily(QStringLiteral("Inter"));
+        f.setPixelSize(s(15));
+        val->setFont(f);
+        const int lineHeight = QFontMetrics(f).lineSpacing();
+        val->setFixedHeight(lineHeight * maxLines + s(20));
+        root->addWidget(val);
+    };
+
+    QString fromText;
+    if (senderLogin.isEmpty()) {
+        fromText = QStringLiteral("—");
+    } else {
+        const QString displayName = userDisplayName(senderLogin);
+        fromText = (displayName.isEmpty() || displayName == senderLogin)
+                       ? senderLogin
+                       : QStringLiteral("%1 — %2").arg(displayName, senderLogin);
+    }
+
+    addLabel(QStringLiteral("От кого"));
+    addPlainField(fromText);
+    addLabel(QStringLiteral("Тема"));
+    addScrollableField(subject, 3);
+    addLabel(QStringLiteral("Текст"));
+    addScrollableField(body, 15);
+
+    QPushButton *closeBtn = new QPushButton(QStringLiteral("Закрыть"), &dlg);
+    closeBtn->setFixedHeight(s(44));
+    closeBtn->setStyleSheet(QString(
+        "QPushButton{background:#0F00DB;color:white;font-family:Inter;font-size:%1px;"
+        "font-weight:700;border:none;border-radius:%2px;padding:0 %3px;}"
+        "QPushButton:hover{background:#1A4ACD;}"
+    ).arg(s(15)).arg(s(8)).arg(s(18)));
+    connect(closeBtn, &QPushButton::clicked, &dlg, &QDialog::accept);
+    root->addWidget(closeBtn, 0, Qt::AlignRight);
+
+    dlg.exec();
+
+    if (notificationId > 0) {
+        markNotificationReadById(notificationId);
+        updateNotifBadge();
+    }
+}
 
 void leftMenu::showNotificationsPanel()
 {
@@ -394,6 +491,19 @@ void leftMenu::showNotificationsPanel()
                 card->setCursor(Qt::PointingHandCursor);
                 card->installEventFilter(this);
             }
+            if (isBroadcastNotification(n.message)) {
+                card->setProperty("openBroadcastDetails", true);
+                card->setProperty("broadcastFromUser", broadcastNotificationSender(n.message));
+                card->setProperty("broadcastSubject", n.title);
+                card->setProperty("broadcastBody", broadcastNotificationBody(n.message));
+                card->setCursor(Qt::PointingHandCursor);
+                card->installEventFilter(this);
+                QLabel *tapHint = new QLabel(QStringLiteral("Нажмите, чтобы прочитать"), card);
+                tapHint->setStyleSheet(QString(
+                    "font-family:Inter;font-size:%1px;font-weight:600;color:#64748B;background:transparent;"
+                ).arg(s(11)));
+                cardL->addWidget(tapHint);
+            }
 
             auto isMutedPeer = [&](const QString &peer) -> bool {
                 QSettings s("VapManager", "VapManager");
@@ -522,6 +632,10 @@ void leftMenu::updateNotifBadge()
     } else {
         notifBadge_->hide();
     }
+
+    // Пока открыт список чатов — подтягиваем новые треды при каждом опросе уведомлений (~5 с).
+    if (chatsPage && chatsPage->isVisible() && chatsStack_ && chatsStack_->currentIndex() == 0)
+        reloadChatsPageList();
 }
 
 void leftMenu::showUserProfilePage(const QString &username)
@@ -595,6 +709,21 @@ void leftMenu::showUserProfilePage(const QString &username)
     else if (info.role == "tech") roleText = "Разработчик";
     else roleText = "Пользователь";
 
+    const QString editorUsername = AppSession::currentUsername();
+    const QString editorRole = getUserRole(editorUsername);
+    const bool isSelf = (username == editorUsername);
+    const bool isAdminEditor = (editorRole == QStringLiteral("admin"));
+    const bool isTechEditor = (editorRole == QStringLiteral("tech"));
+    const bool canEditRole = !isSelf && (isAdminEditor || isTechEditor);
+    bool roleEditable = false;
+    if (canEditRole) {
+        if (isTechEditor)
+            roleEditable = true;
+        else if (isAdminEditor
+                 && (info.role == QStringLiteral("viewer") || info.role == QStringLiteral("admin")))
+            roleEditable = true;
+    }
+
     auto addCopyableRow = [&](const QString &label, const QString &value) {
         if (value.trimmed().isEmpty()) return;
         QWidget *row = new QWidget(content);
@@ -655,7 +784,83 @@ void leftMenu::showUserProfilePage(const QString &username)
     addGridCell(0, 0, "ФИО", info.fullName);
     addGridCell(0, 1, "Логин", info.username);
     addGridCell(1, 0, "Табельный номер", info.employeeId);
-    addGridCell(1, 1, "Роль", roleText);
+    if (!roleEditable) {
+        addGridCell(1, 1, "Роль", roleText);
+    } else {
+        QWidget *roleCell = new QWidget(content);
+        roleCell->setStyleSheet("background:transparent;");
+        QVBoxLayout *roleCellLay = new QVBoxLayout(roleCell);
+        roleCellLay->setContentsMargins(0, 0, 0, 0);
+        roleCellLay->setSpacing(s(6));
+
+        QLabel *roleLbl = new QLabel(QStringLiteral("<b>Роль:</b>"), roleCell);
+        roleLbl->setStyleSheet(QString(
+            "font-family:Inter;font-size:%1px;color:#1A1A1A;background:transparent;"
+        ).arg(s(15)));
+
+        QComboBox *roleCombo = new QComboBox(roleCell);
+        roleCombo->setStyleSheet(QString(
+            "QComboBox{background:#FFFFFF;border:1px solid #CBD5E1;border-radius:8px;"
+            "padding:6px 10px;font-family:Inter;font-size:%1px;color:#0F172A;}"
+            "QComboBox::drop-down{border:none;width:24px;}"
+        ).arg(s(14)));
+        if (isTechEditor) {
+            roleCombo->addItem(QStringLiteral("Пользователь"), QStringLiteral("viewer"));
+            roleCombo->addItem(QStringLiteral("Администратор"), QStringLiteral("admin"));
+            roleCombo->addItem(QStringLiteral("Разработчик"), QStringLiteral("tech"));
+        } else {
+            roleCombo->addItem(QStringLiteral("Пользователь"), QStringLiteral("viewer"));
+            roleCombo->addItem(QStringLiteral("Администратор"), QStringLiteral("admin"));
+        }
+        for (int i = 0; i < roleCombo->count(); ++i) {
+            if (roleCombo->itemData(i).toString() == info.role) {
+                roleCombo->setCurrentIndex(i);
+                break;
+            }
+        }
+
+        QPushButton *saveRoleBtn = new QPushButton(QStringLiteral("Сохранить роль"), roleCell);
+        saveRoleBtn->setFixedHeight(s(36));
+        saveRoleBtn->setStyleSheet(QString(
+            "QPushButton{background:#2563EB;color:white;font-family:Inter;font-size:%1px;"
+            "font-weight:700;border:none;border-radius:6px;padding:0 14px;}"
+            "QPushButton:hover{background:#1D4ED8;}"
+        ).arg(s(13)));
+
+        connect(saveRoleBtn, &QPushButton::clicked, this,
+                [this, username, roleCombo, saveRoleBtn]() {
+            const QString newRole = roleCombo->currentData().toString();
+            const QString currentRole = getUserRole(username);
+            if (newRole == currentRole) {
+                QMessageBox::information(this,
+                                         QStringLiteral("Роль"),
+                                         QStringLiteral("Роль не изменилась."));
+                return;
+            }
+
+            QString err;
+            if (!setUserRole(username, newRole, err)) {
+                QMessageBox::warning(this, QStringLiteral("Ошибка"), err);
+                return;
+            }
+
+            if (usersPage)
+                usersPage->loadUsers();
+
+            saveRoleBtn->setText(QStringLiteral("Сохранено"));
+            QTimer::singleShot(1500, saveRoleBtn, [saveRoleBtn]() {
+                saveRoleBtn->setText(QStringLiteral("Сохранить роль"));
+            });
+            QMessageBox::information(this,
+                                     QStringLiteral("Роль"),
+                                     QStringLiteral("Роль пользователя обновлена."));
+        });
+
+        roleCellLay->addWidget(roleLbl);
+        roleCellLay->addWidget(roleCombo);
+        roleCellLay->addWidget(saveRoleBtn);
+        grid->addWidget(roleCell, 1, 1);
+    }
     addGridCell(2, 0, "Должность", info.position);
     addGridCell(2, 1, "Подразделение", info.department);
     contentLay->addLayout(grid);

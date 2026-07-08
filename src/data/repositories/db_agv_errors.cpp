@@ -148,3 +148,18 @@ QVector<AgvErrorLog> loadAgvErrorLogs(const QString &agvId, const QDate &fromDat
     return list;
 }
 
+bool hasAgvErrorLogToday(const QString &agvId, const QString &type)
+{
+    QSqlDatabase db = QSqlDatabase::database(QStringLiteral("main_connection"));
+    if (!db.isOpen() || !initAgvErrorLogsTable())
+        return false;
+
+    QSqlQuery q(db);
+    q.prepare(QStringLiteral(
+        "SELECT 1 FROM agv_error_logs "
+        "WHERE agv_id = :agv AND error_type = :type AND error_date = CURRENT_DATE LIMIT 1"));
+    q.bindValue(QStringLiteral(":agv"), agvId.trimmed());
+    q.bindValue(QStringLiteral(":type"), type.trimmed());
+    return q.exec() && q.next();
+}
+

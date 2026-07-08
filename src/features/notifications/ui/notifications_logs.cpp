@@ -145,7 +145,10 @@ QVector<Notification> loadNotificationsForUser(const QString &username)
     q.prepare("SELECT id, target_user, title, message, is_read, created_at "
               "FROM notifications WHERE target_user = :u ORDER BY created_at DESC LIMIT 100");
     q.bindValue(":u", u);
-    if (!q.exec()) return list;
+    if (!q.exec()) {
+        qDebug() << "loadNotificationsForUser failed:" << q.lastError().text();
+        return list;
+    }
 
     while (q.next()) {
         Notification n;
@@ -153,7 +156,7 @@ QVector<Notification> loadNotificationsForUser(const QString &username)
         n.targetUser = q.value(1).toString();
         n.title = q.value(2).toString();
         n.message = q.value(3).toString();
-        n.isRead = q.value(4).toInt() == 1;
+        n.isRead = q.value(4).toBool();
         n.createdAt = q.value(5).toDateTime();
         list.push_back(n);
     }
@@ -171,9 +174,12 @@ QVector<Notification> loadUnreadNotificationsForUser(const QString &username)
 
     QSqlQuery q(db);
     q.prepare("SELECT id, message FROM notifications "
-              "WHERE target_user = :u AND is_read = 0 ORDER BY created_at DESC");
+              "WHERE target_user = :u AND is_read = FALSE ORDER BY created_at DESC");
     q.bindValue(":u", u);
-    if (!q.exec()) return list;
+    if (!q.exec()) {
+        qDebug() << "loadUnreadNotificationsForUser failed:" << q.lastError().text();
+        return list;
+    }
 
     while (q.next()) {
         Notification n;
@@ -194,7 +200,7 @@ int unreadCountForUser(const QString &username)
     if (u.isEmpty()) return 0;
 
     QSqlQuery q(db);
-    q.prepare("SELECT COUNT(*) FROM notifications WHERE target_user = :u AND is_read = 0");
+    q.prepare("SELECT COUNT(*) FROM notifications WHERE target_user = :u AND is_read = FALSE");
     q.bindValue(":u", u);
     if (!q.exec() || !q.next()) return 0;
     return q.value(0).toInt();
@@ -208,7 +214,7 @@ void markAllReadForUser(const QString &username)
     if (u.isEmpty()) return;
 
     QSqlQuery q(db);
-    q.prepare("UPDATE notifications SET is_read = 1 WHERE target_user = :u AND is_read = 0");
+    q.prepare("UPDATE notifications SET is_read = TRUE WHERE target_user = :u AND is_read = FALSE");
     q.bindValue(":u", u);
     q.exec();
 }
@@ -220,7 +226,7 @@ void markNotificationReadById(int notificationId)
     if (!db.isOpen()) return;
 
     QSqlQuery q(db);
-    q.prepare("UPDATE notifications SET is_read = 1 WHERE id = :id AND is_read = 0");
+    q.prepare("UPDATE notifications SET is_read = TRUE WHERE id = :id AND is_read = FALSE");
     q.bindValue(":id", notificationId);
     q.exec();
 }
@@ -318,7 +324,7 @@ void clearChatNotificationsForThread(const QString &username, int threadId)
     if (!db.isOpen()) return;
 
     QSqlQuery q(db);
-    q.prepare("UPDATE notifications SET is_read = 1 WHERE target_user = :u AND message LIKE :pattern");
+    q.prepare("UPDATE notifications SET is_read = TRUE WHERE target_user = :u AND message LIKE :pattern");
     q.bindValue(":u", u);
     q.bindValue(":pattern", QString("[chat:%1]%%").arg(threadId));
     q.exec();
@@ -327,6 +333,8 @@ void clearChatNotificationsForThread(const QString &username, int threadId)
 QString notificationMessageForDisplay(const QString &storedMessage)
 {
     QString s = storedMessage;
+    s.remove(QRegularExpression(QStringLiteral("^\\[broadcast\\]\\s*")));
+    s.remove(QRegularExpression(QStringLiteral("\\[from:[^\\]]+\\]\\s*")));
     s.remove(QRegularExpression(QStringLiteral("\\[chat:\\d+\\]\\s*")));
     s.remove(QRegularExpression(QStringLiteral("\\s*\\[peer:[^\\]]+\\]\\s*")));
     return s.trimmed();
@@ -339,6 +347,25 @@ QString notificationPeerUsername(const QString &storedMessage)
     if (!m.hasMatch())
         return QString();
     return m.captured(1).trimmed();
+}
+
+bool isBroadcastNotification(const QString &storedMessage)
+{
+    return storedMessage.trimmed().startsWith(QStringLiteral("[broadcast]"));
+}
+
+QString broadcastNotificationSender(const QString &storedMessage)
+{
+    static const QRegularExpression re(QStringLiteral("\\[from:([^\\]]+)\\]"));
+    const QRegularExpressionMatch m = re.match(storedMessage);
+    if (!m.hasMatch())
+        return QString();
+    return m.captured(1).trimmed();
+}
+
+QString broadcastNotificationBody(const QString &storedMessage)
+{
+    return notificationMessageForDisplay(storedMessage);
 }
 
 notifications_logs::notifications_logs(QObject *parent)

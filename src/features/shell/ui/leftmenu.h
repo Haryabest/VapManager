@@ -36,6 +36,7 @@
 #include <QSqlQuery>
 #include <QTimer>
 #include <QElapsedTimer>
+#include <QCheckBox>
 #include <QClipboard>
 #include <QFile>
 #include <QFormLayout>
@@ -108,6 +109,7 @@ private:
     void showModelList();
     void showLogs();
     void reloadLogs(int maxRows = 2000);
+    void runDatabaseBenchTest();
     void showProfile();
     void buildProfilePage();
     void showProfilePage();
@@ -117,6 +119,10 @@ private:
     void showUsersPage();
     void showAnnualReportDialog();
     void showNotificationsPanel();
+    void showBroadcastNotificationDetails(const QString &senderLogin,
+                                          const QString &subject,
+                                          const QString &body,
+                                          int notificationId);
     void showChatsPage();
     void openEmbeddedDelegatorChatForAgv(const QString &agvId);
     void reloadChatsPageList();
@@ -156,6 +162,7 @@ private:
     void updateAgvCounter();
     void updateUpcomingMaintenance();
     void updateSystemStatus();
+    void updateOpcStatusIndicator();
     void scheduleDeferredStartupLoads();
 
 private slots:
@@ -174,6 +181,7 @@ private:
     QDate selectedDay_;
     int selectedWeek_ = 0;
     bool highlightWeek_ = false;
+    int upcomingMaintenanceUiLimit_ = 40;
 
     QWidget *topRow_ = nullptr;
     QWidget *bottomRow_ = nullptr;
@@ -246,6 +254,9 @@ private:
     QComboBox *logFilterSource_ = nullptr;
     QComboBox *logFilterCategory_ = nullptr;
     QComboBox *logFilterTime_ = nullptr;
+    QWidget *opcStatusBadge_ = nullptr;
+    QLabel *opcStatusDot_ = nullptr;
+    QLabel *opcStatusLabel_ = nullptr;
     bool reloadingLogs_ = false;
     bool logsReloadPending_ = false;
     bool logsStale_ = false;

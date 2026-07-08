@@ -17,6 +17,7 @@ public:
     void triggerModelsChanged() { emit modelsChanged(); }
     void triggerUserDataChanged() { emit userDataChanged(); }
     void triggerAgvTasksChanged(const QString &agvId) { emit agvTasksChanged(agvId); }
+    void triggerOpcConnectionChanged() { emit opcConnectionChanged(); }
 
 signals:
     void agvListChanged();                 // список AGV изменился
@@ -25,6 +26,7 @@ signals:
     void calendarChanged();                // влияет на календарь / предстоящее ТО
     void userDataChanged();                // данные пользователя изменились
     void notificationsChanged();           // уведомления обновились
+    void opcConnectionChanged();           // состояние OPC-сервера изменилось
 
 private:
     DataBus() = default;

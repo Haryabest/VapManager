@@ -33,10 +33,13 @@ void playNotificationSound();
 /// Clear chat notifications for thread (mark as read)
 void clearChatNotificationsForThread(const QString &username, int threadId);
 
-/// Убрать служебные метки [chat:N] и [peer:login] для показа пользователю.
+/// Убрать служебные метки [chat:N], [peer:login], [broadcast], [from:login] для показа пользователю.
 QString notificationMessageForDisplay(const QString &storedMessage);
 /// Логин собеседника из хвоста сообщения [peer:username] (для чата из уведомления).
 QString notificationPeerUsername(const QString &storedMessage);
+bool isBroadcastNotification(const QString &storedMessage);
+QString broadcastNotificationSender(const QString &storedMessage);
+QString broadcastNotificationBody(const QString &storedMessage);
 
 class notifications_logs : public QObject
 {

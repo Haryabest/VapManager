@@ -52,6 +52,7 @@ SOURCES += \
     src/features/chat/ui/internal/taskchatdialog_impl.cpp \
     src/core/events/databus.cpp \
     src/data/db/db.cpp \
+    src/data/db/db_bench.cpp \
     src/data/db/db_tables.cpp \
     src/data/repositories/db_agv_tasks.cpp \
     src/data/repositories/db_agv_errors.cpp \
@@ -65,6 +66,10 @@ SOURCES += \
     src/data/repositories/db_users_profile.cpp \
     src/data/repositories/db_users_avatar_presence.cpp \
     src/data/repositories/internal/db_users_internal_state.cpp \
+    src/data/sources/opc/opc_config.cpp \
+    src/data/sources/opc/opc_snapshot_store.cpp \
+    src/data/sources/opc/opc_agv_telemetry.cpp \
+    src/data/sources/opc/opc_connection_manager.cpp \
     src/features/shell/ui/leftmenu/internal/calendar/leftmenu_calendar_utils.cpp \
     src/features/shell/ui/leftmenu/internal/calendar/leftmenu_calendar_grid.cpp \
     src/features/shell/ui/leftmenu/internal/settings/leftmenu_settings_dialogs.cpp \
@@ -111,12 +116,18 @@ HEADERS += \
     src/features/agv/ui/internal/listagvinfo_ui_modules.h \
     src/core/events/databus.h \
     src/data/db/db.h \
+    src/data/db/db_bench.h \
     src/data/db/db_tables.h \
     src/data/repositories/db_agv_tasks.h \
     src/data/repositories/db_agv_errors.h \
     src/data/repositories/db_models.h \
     src/data/repositories/db_task_chat.h \
     src/data/repositories/db_users.h \
+    src/data/sources/opc/opc_config.h \
+    src/data/sources/opc/opc_snapshot_store.h \
+    src/data/sources/opc/opc_agv_telemetry.h \
+    src/data/sources/opc/opc_connection_manager.h \
+    src/data/sources/opc/opc_types.h \
     src/features/shell/ui/leftmenu/internal/calendar/leftmenu_calendar_utils.h \
     src/features/shell/ui/leftmenu/internal/settings/leftmenu_settings_dialogs.h \
     src/features/shell/ui/leftmenu/internal/stress/leftmenu_stress_utils.h \
@@ -157,7 +168,8 @@ INCLUDEPATH += \
     src/core/crypto \
     src/core/update \
     src/data/db \
-    src/data/repositories
+    src/data/repositories \
+    src/data/sources/opc
 
 TRANSLATIONS += AgvNewUi_en.ts AgvNewUi_zh.ts
 

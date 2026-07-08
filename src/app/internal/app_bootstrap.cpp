@@ -12,6 +12,7 @@
 #include "app_session.h"
 #include "ui_action_logger.h"
 #include "app_updater.h"
+#include "opc_connection_manager.h"
 
 #include <QApplication>
 #include <QCoreApplication>
@@ -195,6 +196,8 @@ int run(int argc, char *argv[])
     initTaskChatTables();
     ensureAssignedToColumn();
     ensureAgvListAssignedUserColumn();
+
+    OpcConnectionManager::instance().start();
 
     UserInfo user;
     bool autoLoginOk = tryAutoLogin(user);

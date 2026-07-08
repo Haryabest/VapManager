@@ -35,6 +35,7 @@ void leftMenu::clearSearch()
         searchEdit_->blockSignals(true);
         searchEdit_->clear();
         searchEdit_->blockSignals(false);
+        onSearchTextChanged(QString());
     }
 }
 
@@ -71,110 +72,9 @@ void leftMenu::onSearchTextChanged(const QString &text)
             }
         }
 
-        // Filter calendar previews too (same search box)
-        if (calendarTablePtr) {
-            for (int r = 1; r < calendarTablePtr->rowCount(); ++r) {
-                for (int c = 0; c < calendarTablePtr->columnCount(); ++c) {
-                    QTableWidgetItem *it = calendarTablePtr->item(r, c);
-                    if (!it) continue;
-                    const QDate d = it->data(Qt::UserRole).toDate();
-                    if (!d.isValid()) continue;
-
-                    const QStringList allKeys = it->data(Qt::UserRole + 10).toStringList();
-                    const QStringList allSev = it->data(Qt::UserRole + 11).toStringList();
-                    if (allKeys.isEmpty()) {
-                        it->setData(Qt::UserRole + 1, QStringList());
-                        it->setData(Qt::UserRole + 2, QStringList());
-                        continue;
-                    }
-                    if (term.isEmpty()) {
-                        // восстановим дефолтный превью (пересчитываем из allKeys)
-                    }
-
-                    // Фильтруем события дня по term.
-                    QStringList filteredKeys;
-                    QStringList filteredSev;
-                    for (int i = 0; i < allKeys.size(); ++i) {
-                        const QString key = allKeys[i];
-                        const QString sev = (i < allSev.size()) ? allSev[i] : QString();
-                        const QString agv = key.section("||", 0, 0);
-                        const QString task = key.section("||", 1, 1);
-                        const QString hay = normalize(agv + task);
-                        if (term.isEmpty() || hay.contains(term)) {
-                            filteredKeys << key;
-                            filteredSev << sev;
-                        }
-                    }
-
-                    // Считаем как раньше: AGV -> количество задач + худшая severity.
-                    QMap<QString, int> agvCounts;
-                    QMap<QString, QString> agvSeverity;
-                    QVector<QString> agvOrder;
-                    auto severityRank = [](const QString &sev) {
-                        if (sev == "overdue") return 4;
-                        if (sev == "soon") return 3;
-                        if (sev == "planned") return 2;
-                        if (sev == "completed") return 1;
-                        return 0;
-                    };
-                    for (int i = 0; i < filteredKeys.size(); ++i) {
-                        const QString agvId = filteredKeys[i].section("||", 0, 0);
-                        const QString sev = (i < filteredSev.size()) ? filteredSev[i] : QString();
-                        if (!agvCounts.contains(agvId)) {
-                            agvOrder.push_back(agvId);
-                            agvCounts[agvId] = 0;
-                            agvSeverity[agvId] = sev;
-                        }
-                        agvCounts[agvId] += 1;
-                        if (severityRank(sev) > severityRank(agvSeverity.value(agvId)))
-                            agvSeverity[agvId] = sev;
-                    }
-
-                    auto shortenAgvIdForCell = [](const QString &rawAgvId) -> QString {
-                        const QString agvId = rawAgvId.trimmed();
-                        const int lastDash = agvId.lastIndexOf('-');
-                        if (lastDash <= 0 || lastDash >= agvId.size() - 1)
-                            return agvId;
-                        const QString prefix = agvId.left(lastDash);
-                        const QString suffix = agvId.mid(lastDash + 1);
-                        if (suffix.size() <= 2)
-                            return agvId;
-                        QString shortSuffix;
-                        const QStringList parts = suffix.split(QRegularExpression("[_\\s]+"), Qt::SkipEmptyParts);
-                        if (parts.size() >= 2) {
-                            for (const QString &part : parts) {
-                                if (!part.isEmpty())
-                                    shortSuffix += part.left(1).toUpper();
-                            }
-                        } else {
-                            shortSuffix = suffix.left(1).toUpper() + suffix.right(1).toUpper();
-                        }
-                        if (shortSuffix.isEmpty())
-                            return agvId;
-                        return prefix + "-" + shortSuffix;
-                    };
-
-                    QStringList previewLines;
-                    QStringList previewSeverities;
-                    for (int i = 0; i < agvOrder.size() && i < 2; ++i) {
-                        const QString agvId = agvOrder[i];
-                        const int count = agvCounts.value(agvId);
-                        previewLines << QString("%1 - %2 задач").arg(shortenAgvIdForCell(agvId)).arg(count);
-                        previewSeverities << agvSeverity.value(agvId);
-                    }
-                    if (agvOrder.size() > 2) {
-                        if (previewLines.size() < 2) previewLines << "...";
-                        else previewLines[1] = "...";
-                        if (previewSeverities.size() < 2) previewSeverities << "";
-                        else previewSeverities[1] = "";
-                    }
-
-                    it->setData(Qt::UserRole + 1, previewLines);
-                    it->setData(Qt::UserRole + 2, previewSeverities);
-                }
-            }
-            calendarTablePtr->viewport()->update();
-        }
+        // Filter calendar previews (applyCalendarEventsToVisibleCells читает searchEdit_)
+        if (calendarTablePtr)
+            applyCalendarEventsToVisibleCells(calendarLoadGeneration_);
         return;
     }
 

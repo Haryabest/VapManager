@@ -36,3 +36,5 @@ QVector<AgvErrorLog> loadAgvErrorLogs(const QString &agvId /* empty = all */,
                                      const QDate &toDate /* invalid = no bound */,
                                      QString *outError = nullptr);
 
+bool hasAgvErrorLogToday(const QString &agvId, const QString &type);
+

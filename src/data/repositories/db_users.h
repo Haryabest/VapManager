@@ -89,6 +89,7 @@ bool loadUserProfile(const QString &username, UserInfo &outUser);
 /// ФИО из профиля или логин, если ФИО пустое.
 QString userDisplayName(const QString &username);
 bool saveUserProfile(const UserInfo &user, QString &error);
+bool setUserRole(const QString &username, const QString &newRole, QString &error);
 
 // Аватар
 QPixmap loadUserAvatarFromDb(const QString &username);

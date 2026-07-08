@@ -1,5 +1,6 @@
 #include "db_users.h"
 
+#include "app_session.h"
 #include <QDateTime>
 #include <QDebug>
 #include <QSqlDatabase>
@@ -185,5 +186,63 @@ bool saveUserProfile(const UserInfo &user, QString &error)
 
     invalidateUserCaches(user.username);
     logAction(user.username, "profile_saved_db", "Профиль обновлён в БД");
+    return true;
+}
+
+bool setUserRole(const QString &username, const QString &newRole, QString &error)
+{
+    const QString u = username.trimmed();
+    const QString r = newRole.trimmed();
+    if (u.isEmpty()) {
+        error = QStringLiteral("Пустой логин");
+        return false;
+    }
+    if (r != QStringLiteral("admin") && r != QStringLiteral("tech") && r != QStringLiteral("viewer")) {
+        error = QStringLiteral("Недопустимая роль");
+        return false;
+    }
+    if (isHiddenAutotestUser(u)) {
+        error = QStringLiteral("Нельзя изменить роль служебного пользователя");
+        return false;
+    }
+
+    QSqlDatabase db = QSqlDatabase::database(QStringLiteral("main_connection"));
+    if (!db.isOpen()) {
+        error = QStringLiteral("БД недоступна");
+        return false;
+    }
+
+    const QString oldRole = getUserRole(u);
+    if (oldRole.isEmpty() || oldRole == QStringLiteral("unknown")) {
+        error = QStringLiteral("Пользователь не найден");
+        return false;
+    }
+    if (oldRole == r)
+        return true;
+
+    if (oldRole == QStringLiteral("admin") && r != QStringLiteral("admin")) {
+        QSqlQuery countQ(db);
+        if (countQ.exec(QStringLiteral(
+                "SELECT COUNT(*) FROM users WHERE role = 'admin' AND is_active = TRUE"))
+            && countQ.next()
+            && countQ.value(0).toInt() <= 1) {
+            error = QStringLiteral("Нельзя снять роль у последнего администратора");
+            return false;
+        }
+    }
+
+    QSqlQuery q(db);
+    q.prepare(QStringLiteral("UPDATE users SET role = :r WHERE username = :u"));
+    q.bindValue(QStringLiteral(":r"), r);
+    q.bindValue(QStringLiteral(":u"), u);
+    if (!q.exec()) {
+        error = q.lastError().text();
+        return false;
+    }
+
+    invalidateUserCaches(u);
+    logAction(AppSession::currentUsername(),
+              QStringLiteral("user_role_changed"),
+              QStringLiteral("Пользователь %1: %2 → %3").arg(u, oldRole, r));
     return true;
 }

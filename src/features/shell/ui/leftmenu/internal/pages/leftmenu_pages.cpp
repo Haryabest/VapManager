@@ -81,6 +81,7 @@ void leftMenu::scheduleDeferredStartupLoads()
     QTimer::singleShot(0, this, [this]() {
         updateAgvCounter();
         updateSystemStatus();
+        updateOpcStatusIndicator();
         updateUpcomingMaintenance();
     });
 }

@@ -6,12 +6,12 @@ namespace AppVersion {
 
 inline QString string()
 {
-    return QStringLiteral("1.0.0");
+    return QStringLiteral("1.0.2");
 }
 
 inline int build()
 {
-    return 141;
+    return 157;
 }
 
 inline QString label()

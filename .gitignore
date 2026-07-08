@@ -34,6 +34,8 @@ tech_verbose.log
 stress_autotest_last.log
 updates/update_server.log
 updates/files/
+server/migration/agv_manager_full.dump
+server/migration/*.dump
 
 # Сборка / релизы
 releases/

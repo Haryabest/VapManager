@@ -14,6 +14,14 @@ bool leftMenu::eventFilter(QObject *obj, QEvent *event)
         for (QWidget *w = qobject_cast<QWidget*>(obj); w; w = qobject_cast<QWidget*>(w->parentWidget())) {
             const int notificationId = w->property("notificationId").toInt();
 
+            if (w->property("openBroadcastDetails").toBool()) {
+                const QString senderLogin = w->property("broadcastFromUser").toString().trimmed();
+                const QString subject = w->property("broadcastSubject").toString();
+                const QString body = w->property("broadcastBody").toString();
+                showBroadcastNotificationDetails(senderLogin, subject, body, notificationId);
+                return true;
+            }
+
             const QString peerOpen = w->property("openChatPeerUser").toString().trimmed();
             if (!peerOpen.isEmpty()) {
                 const QString currentUser = AppSession::currentUsername();

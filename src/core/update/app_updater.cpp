@@ -343,13 +343,47 @@ QString updatePromptText(const RemoteRelease &release)
         : release.notes;
     return QStringLiteral("Текущая версия: %1 (build %2)\n"
                           "Новая версия: %3 (build %4)\n\n"
-                          "%5\n\n"
-                          "Обновить сейчас?")
+                          "%5")
         .arg(AppVersion::string())
         .arg(AppVersion::build())
         .arg(release.version.isEmpty() ? QStringLiteral("—") : release.version)
         .arg(release.build)
         .arg(notes);
+}
+
+bool showUpdatePrompt(QWidget *parent, const RemoteRelease &release)
+{
+    QMessageBox box(parent);
+    box.setIcon(QMessageBox::Information);
+    box.setWindowTitle(QStringLiteral("Доступно обновление"));
+    box.setText(updatePromptText(release));
+    box.setTextFormat(Qt::PlainText);
+    box.setStyleSheet(QStringLiteral(
+        "QMessageBox { background-color: #F0F4FA; }"
+        "QMessageBox QLabel#qt_msgbox_label { background: transparent; color: #1A1A1A; "
+        "font-family: Inter; font-size: 14px; min-width: 380px; }"
+        "QMessageBox QLabel#qt_msgboxex_icon_label { background: transparent; }"));
+
+    QPushButton *updateBtn = box.addButton(QStringLiteral("Обновить"), QMessageBox::AcceptRole);
+    QPushButton *laterBtn = box.addButton(QStringLiteral("Позже"), QMessageBox::RejectRole);
+    box.setDefaultButton(updateBtn);
+
+    const QString primaryBtnStyle = QStringLiteral(
+        "QPushButton { background-color: #0F00DB; color: white; font-family: Inter; "
+        "font-size: 14px; font-weight: 700; border-radius: 8px; padding: 8px 20px; border: none; min-width: 110px; }"
+        "QPushButton:hover { background-color: #1A4ACD; }");
+    const QString secondaryBtnStyle = QStringLiteral(
+        "QPushButton { background-color: #E6E6E6; color: #1A1A1A; font-family: Inter; "
+        "font-size: 14px; font-weight: 700; border-radius: 8px; padding: 8px 20px; "
+        "border: 1px solid #C8C8C8; min-width: 110px; }"
+        "QPushButton:hover { background-color: #D5D5D5; }");
+    if (updateBtn)
+        updateBtn->setStyleSheet(primaryBtnStyle);
+    if (laterBtn)
+        laterBtn->setStyleSheet(secondaryBtnStyle);
+
+    box.exec();
+    return box.clickedButton() == updateBtn;
 }
 
 bool performUpdateFlow(QWidget *parent, const RemoteRelease &release)
@@ -610,13 +644,7 @@ void AppUpdateScheduler::handleManualResult(QWidget *parent, QLabel *statusLabel
         return;
     }
 
-    const int answer = QMessageBox::question(
-        parent,
-        QStringLiteral("Доступно обновление"),
-        updatePromptText(release),
-        QMessageBox::Yes | QMessageBox::No,
-        QMessageBox::Yes);
-    if (answer == QMessageBox::Yes)
+    if (showUpdatePrompt(parent, release))
         performUpdateFlow(parent, release);
 }
 
@@ -628,18 +656,9 @@ void AppUpdateScheduler::showBackgroundPrompt()
     const RemoteRelease release = g_pendingRelease;
     g_hasPendingRelease = false;
 
-    QMessageBox box(mainWindow_);
-    box.setIcon(QMessageBox::Information);
-    box.setWindowTitle(QStringLiteral("Доступно обновление"));
-    box.setText(updatePromptText(release));
-    QPushButton *updateBtn = box.addButton(QStringLiteral("Обновить"), QMessageBox::AcceptRole);
-    QPushButton *laterBtn = box.addButton(QStringLiteral("Позже"), QMessageBox::RejectRole);
-    box.setDefaultButton(updateBtn);
-    box.exec();
-
-    if (box.clickedButton() == updateBtn) {
+    if (showUpdatePrompt(mainWindow_, release)) {
         performUpdateFlow(mainWindow_, release);
-    } else if (box.clickedButton() == laterBtn) {
+    } else {
         snoozeForOneHour();
     }
 }

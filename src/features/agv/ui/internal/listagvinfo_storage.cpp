@@ -3,6 +3,7 @@
 #include "app_session.h"
 #include "databus.h"
 #include "db_users.h"
+#include "opc_connection_manager.h"
 #include "ui_action_logger.h"
 
 #include <QDebug>
@@ -90,6 +91,13 @@ QVector<AgvInfo> ListAgvInfo::loadAgvList()
     }
 
     qDebug() << "loadAgvList: загружено записей:" << list.size();
+
+    OpcConnectionManager &opc = OpcConnectionManager::instance();
+    if (opc.isEnabled()) {
+        opc.applyToAgvList(list);
+        opc.appendOpcOnlyAgvs(list);
+    }
+
     return list;
 }
 

@@ -18,6 +18,8 @@
 #include "leftmenu/internal/settings/leftmenu_settings_dialogs.h"
 #include "leftmenu/internal/stress/leftmenu_stress_utils.h"
 #include "db.h"
+#include "opc_config.h"
+#include "opc_connection_manager.h"
 
 #include <QApplication>
 #include <QCheckBox>
@@ -1277,6 +1279,7 @@ void leftMenu::initUI()
     if (logsLoadAllBtn) logsHdr->addWidget(logsLoadAllBtn, 0, Qt::AlignRight);
     if (logsExportBtn) logsHdr->addWidget(logsExportBtn, 0, Qt::AlignRight);
     logsHdr->addWidget(logsRefresh, 0, Qt::AlignRight);
+
     logsRoot->addWidget(logsHeader);
 
     // Log filters
@@ -1364,13 +1367,48 @@ void leftMenu::initUI()
             "QPushButton{background:#7C3AED;color:white;font-family:Inter;font-size:%1px;font-weight:800;border-radius:%2px;padding:6px 12px;}"
             "QPushButton:hover{background:#6D28D9;}"
         ).arg(s(12)).arg(s(8)));
+        QPushButton *dbBenchBtn = new QPushButton(QStringLiteral("Тест базы"), logsPage);
+        dbBenchBtn->setToolTip(QStringLiteral("Проверка задержки типичных запросов к PostgreSQL; отчёт сохраняется в VapManagerLogs"));
+        dbBenchBtn->setStyleSheet(QString(
+            "QPushButton{background:#0891B2;color:white;font-family:Inter;font-size:%1px;font-weight:800;border-radius:%2px;padding:6px 12px;}"
+            "QPushButton:hover{background:#0E7490;}"
+        ).arg(s(12)).arg(s(8)));
         QHBoxLayout *techRow = new QHBoxLayout();
         techRow->setContentsMargins(0, 0, 0, 0);
         techRow->addWidget(techLbl);
         techRow->addWidget(calendarStressTestBtn_);
         techRow->addWidget(fullStressAutotestBtn_);
-        techRow->addStretch();
+        techRow->addWidget(dbBenchBtn);
+        techRow->addStretch(1);
+
+        opcStatusBadge_ = new QFrame(logsPage);
+        opcStatusBadge_->setObjectName(QStringLiteral("opcStatusBadge"));
+        opcStatusBadge_->setMinimumSize(s(182), s(38));
+        opcStatusBadge_->setMaximumHeight(s(38));
+        opcStatusBadge_->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+        QHBoxLayout *opcBadgeLay = new QHBoxLayout(opcStatusBadge_);
+        opcBadgeLay->setContentsMargins(s(12), s(6), s(14), s(6));
+        opcBadgeLay->setSpacing(s(10));
+
+        opcStatusDot_ = new QLabel(opcStatusBadge_);
+        opcStatusDot_->setFixedSize(s(10), s(10));
+        opcStatusDot_->setStyleSheet(QStringLiteral(
+            "background:#FFFFFF;border-radius:5px;border:1px solid rgba(255,255,255,0.55);"));
+
+        opcStatusLabel_ = new QLabel(QStringLiteral("OPC"), opcStatusBadge_);
+        opcStatusLabel_->setStyleSheet(QString(
+            "font-family:Inter;font-size:%1px;font-weight:800;color:#FFFFFF;"
+            "letter-spacing:0.3px;background:transparent;border:none;"
+        ).arg(s(12)));
+
+        opcBadgeLay->addWidget(opcStatusDot_, 0, Qt::AlignVCenter);
+        opcBadgeLay->addWidget(opcStatusLabel_, 0, Qt::AlignVCenter);
+        opcBadgeLay->addStretch();
+
+        techRow->addWidget(opcStatusBadge_, 0, Qt::AlignRight | Qt::AlignVCenter);
+
         logsRoot->addLayout(techRow);
+        updateOpcStatusIndicator();
 
         techDiagLogEdit_ = new QTextEdit(logsPage);
         techDiagLogEdit_->setReadOnly(true);
@@ -1389,7 +1427,25 @@ void leftMenu::initUI()
         connect(fullStressAutotestBtn_, &QPushButton::clicked, this, [this]() {
             runFullStressAutotest();
         });
+        connect(dbBenchBtn, &QPushButton::clicked, this, [this]() {
+            runDatabaseBenchTest();
+        });
         logsRoot->addWidget(techDiagLogEdit_);
+    } else {
+        QPushButton *dbBenchBtn = new QPushButton(QStringLiteral("Тест базы"), logsPage);
+        dbBenchBtn->setToolTip(QStringLiteral("Проверка задержки типичных запросов к PostgreSQL; отчёт сохраняется в VapManagerLogs"));
+        dbBenchBtn->setStyleSheet(QString(
+            "QPushButton{background:#0891B2;color:white;font-family:Inter;font-size:%1px;font-weight:800;border-radius:%2px;padding:6px 12px;}"
+            "QPushButton:hover{background:#0E7490;}"
+        ).arg(s(12)).arg(s(8)));
+        QHBoxLayout *benchRow = new QHBoxLayout();
+        benchRow->setContentsMargins(0, 0, 0, 0);
+        benchRow->addWidget(dbBenchBtn);
+        benchRow->addStretch();
+        logsRoot->addLayout(benchRow);
+        connect(dbBenchBtn, &QPushButton::clicked, this, [this]() {
+            runDatabaseBenchTest();
+        });
     }
 
     connect(logsBack, &QPushButton::clicked, this, [this](){
@@ -1570,6 +1626,7 @@ void leftMenu::initUI()
             this, [this]() {
         avatarCache_.clear();
         if (!usersPage) return;
+        usersPage->invalidatePrefetch();
         usersPage->setProperty("loaded_once", false);
         QTimer::singleShot(0, usersPage, [this]() {
             if (usersPage) usersPage->loadUsers();
@@ -1577,6 +1634,8 @@ void leftMenu::initUI()
     });
 
     rightBodyLayout->addWidget(usersPage, 3);
+
+    QTimer::singleShot(300, usersPage, &UsersPage::prefetchUsers);
 
     connect(btnAgv, &QPushButton::clicked, this, [this](){
         showAgvList();
@@ -1636,6 +1695,39 @@ void leftMenu::initUI()
     connect(&DataBus::instance(), &DataBus::calendarChanged,
             this, &leftMenu::updateSystemStatus);
 
+    connect(&DataBus::instance(), &DataBus::opcConnectionChanged,
+            this, [this]() {
+        logsStale_ = true;
+        updateSystemStatus();
+        updateOpcStatusIndicator();
+        agvListDirty_ = true;
+        if (listAgvInfo && listAgvInfo->isVisible()) {
+            listAgvInfo->rebuildList(listAgvInfo->loadAgvList());
+            agvListDirty_ = false;
+        }
+    });
+
+    connect(&OpcConnectionManager::instance(), &OpcConnectionManager::telemetryUpdated,
+            this, [this]() {
+        logsStale_ = true;
+        updateSystemStatus();
+        updateOpcStatusIndicator();
+        agvListDirty_ = true;
+        if (listAgvInfo && listAgvInfo->isVisible()) {
+            listAgvInfo->rebuildList(listAgvInfo->loadAgvList());
+            agvListDirty_ = false;
+        }
+    });
+
+    if (OpcConnectionManager::instance().isEnabled()) {
+        QTimer *opcPollTimer = new QTimer(this);
+        opcPollTimer->setObjectName(QStringLiteral("opcPollTimer"));
+        opcPollTimer->setInterval(qMax(1000, loadOpcConfig().pollIntervalMs));
+        connect(opcPollTimer, &QTimer::timeout, &OpcConnectionManager::instance(),
+                &OpcConnectionManager::poll);
+        opcPollTimer->start();
+    }
+
     agvCounterTimer = new QTimer(this);
     agvCounterTimer->setSingleShot(true);
     connect(agvCounterTimer, &QTimer::timeout, this, [this](){
@@ -1648,8 +1740,10 @@ void leftMenu::initUI()
             this, &leftMenu::updateNotifBadge);
     connect(&DataBus::instance(), &DataBus::notificationsChanged,
             this, [this]() {
-        if (chatsPage && chatsPage->isVisible() && chatsStack_ && chatsStack_->currentIndex() == 0)
+        if (chatsPage && chatsPage->isVisible() && chatsStack_ && chatsStack_->currentIndex() == 0) {
+            lastChatsListSignature_.clear();
             reloadChatsPageList();
+        }
     });
 
     QTimer::singleShot(100, this, &leftMenu::updateNotifBadge);
@@ -1660,8 +1754,8 @@ void leftMenu::initUI()
     notifPollTimer->start();
 
     chatsPollTimer = new QTimer(this);
-        // Статус "когда был в сети" обновляем не слишком часто, чтобы не перегружать БД.
-        chatsPollTimer->setInterval(180000);
+    // Статус «в сети» в списке чатов — реже; новые треды подтягивает updateNotifBadge (~5 с).
+    chatsPollTimer->setInterval(60000);
     connect(chatsPollTimer, &QTimer::timeout, this, [this]() {
         // Обновляем список только когда открыт именно список чатов (не сам диалог).
             if (chatsPage && chatsPage->isVisible() && chatsStack_ && chatsStack_->currentIndex() == 0) {

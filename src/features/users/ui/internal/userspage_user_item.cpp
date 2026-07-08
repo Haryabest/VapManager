@@ -9,13 +9,13 @@
 #include <QMouseEvent>
 #include <QDateTime>
 
-#include "app_session.h"
-#include "db_users.h"
-
 namespace UsersPageInternal {
 
-UserItem::UserItem(const UserData &data, std::function<int(int)> scale, QWidget *parent)
-    : QFrame(parent), data_(data), s_(scale)
+UserItem::UserItem(const UserData &data,
+                   std::function<int(int)> scale,
+                   bool showRecoveryKey,
+                   QWidget *parent)
+    : QFrame(parent), data_(data), s_(scale), showRecoveryKey_(showRecoveryKey)
 {
     setObjectName("userItem");
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Maximum);
@@ -89,6 +89,55 @@ void UserItem::rebuildUI()
     build();
 }
 
+void UserItem::setAvatarPixmap(const QPixmap &pm)
+{
+    if (!avatarLabel_)
+        return;
+    avatarLabel_->setPixmap(makeAvatarPixmap(pm));
+}
+
+QPixmap UserItem::makeAvatarPixmap(const QPixmap &source) const
+{
+    QPixmap final(s_(42), s_(42));
+    final.fill(Qt::transparent);
+
+    QPainter p(&final);
+    p.setRenderHint(QPainter::Antialiasing, true);
+    p.setRenderHint(QPainter::SmoothPixmapTransform, true);
+
+    QPainterPath path;
+    path.addEllipse(0, 0, s_(42), s_(42));
+    p.setClipPath(path);
+
+    if (!source.isNull()) {
+        const QPixmap scaled = source.scaled(
+            s_(42),
+            s_(42),
+            Qt::KeepAspectRatioByExpanding,
+            Qt::SmoothTransformation
+        );
+        p.drawPixmap(0, 0, scaled);
+        return final;
+    }
+
+    p.setBrush(QColor("#888"));
+    p.setPen(Qt::NoPen);
+    p.drawEllipse(0, 0, s_(42), s_(42));
+
+    p.setPen(Qt::white);
+    QFont f(QStringLiteral("Inter"));
+    f.setPointSize(s_(16));
+    f.setBold(true);
+    p.setFont(f);
+
+    QString initials;
+    for (const QString &part : data_.fullName.split(QStringLiteral(" "), Qt::SkipEmptyParts))
+        initials += part.left(1).toUpper();
+
+    p.drawText(final.rect(), Qt::AlignCenter, initials.left(2));
+    return final;
+}
+
 void UserItem::build()
 {
     QHBoxLayout *root = new QHBoxLayout(this);
@@ -108,53 +157,9 @@ void UserItem::build()
     h->setContentsMargins(0, 0, 0, 0);
     h->setSpacing(s_(10));
 
-    QLabel *avatar = new QLabel(header_);
-    avatar->setFixedSize(s_(42), s_(42));
-
-    QPixmap pm;
-    if (!data_.avatarBlob.isEmpty())
-        pm.loadFromData(data_.avatarBlob);
-
-    QPixmap final(s_(42), s_(42));
-    final.fill(Qt::transparent);
-
-    {
-        QPainter p(&final);
-        p.setRenderHint(QPainter::Antialiasing, true);
-        p.setRenderHint(QPainter::SmoothPixmapTransform, true);
-
-        QPainterPath path;
-        path.addEllipse(0, 0, s_(42), s_(42));
-        p.setClipPath(path);
-
-        if (!pm.isNull()) {
-            QPixmap scaled = pm.scaled(
-                s_(42),
-                s_(42),
-                Qt::KeepAspectRatioByExpanding,
-                Qt::SmoothTransformation
-            );
-            p.drawPixmap(0, 0, scaled);
-        } else {
-            p.setBrush(QColor("#888"));
-            p.setPen(Qt::NoPen);
-            p.drawEllipse(0, 0, s_(42), s_(42));
-
-            p.setPen(Qt::white);
-            QFont f("Inter");
-            f.setPointSize(s_(16));
-            f.setBold(true);
-            p.setFont(f);
-
-            QString initials;
-            for (const QString &part : data_.fullName.split(" ", Qt::SkipEmptyParts))
-                initials += part.left(1).toUpper();
-
-            p.drawText(final.rect(), Qt::AlignCenter, initials.left(2));
-        }
-    }
-
-    avatar->setPixmap(final);
+    avatarLabel_ = new QLabel(header_);
+    avatarLabel_->setFixedSize(s_(42), s_(42));
+    avatarLabel_->setPixmap(makeAvatarPixmap(QPixmap()));
 
     QString roleText;
     QString roleColor;
@@ -185,7 +190,7 @@ void UserItem::build()
     arrow_ = new QLabel(header_);
     arrow_->setPixmap(QPixmap(":/new/mainWindowIcons/noback/arrow_down.png").scaled(s_(18), s_(18)));
 
-    h->addWidget(avatar);
+    h->addWidget(avatarLabel_);
     h->addWidget(title);
     h->addWidget(roleLabel);
     h->addStretch();
@@ -246,15 +251,7 @@ void UserItem::build()
     d->addWidget(makeRow("Телефон", data_.mobile));
     d->addWidget(makeRow("Telegram", data_.telegram));
 
-    static QString cachedRoleForUser;
-    static QString cachedRole;
-    const QString currentUser = AppSession::currentUsername();
-    if (cachedRoleForUser != currentUser) {
-        cachedRoleForUser = currentUser;
-        cachedRole = getUserRole(currentUser);
-    }
-
-    if (cachedRole == "tech")
+    if (showRecoveryKey_)
         d->addWidget(makeRow("Recovery key", data_.recoveryKey));
 
     left->addWidget(details_);

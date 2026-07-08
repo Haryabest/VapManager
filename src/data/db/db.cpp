@@ -9,7 +9,7 @@
 #include <QDir>
 #include <QFileInfo>
 
-static const char *DEFAULT_DB_HOST = "192.168.43.19";
+static const char *DEFAULT_DB_HOST = "192.168.0.1";
 
 static const char *KEY_HOST = "db_host";
 static const char *KEY_PORT = "db_port";

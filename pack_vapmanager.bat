@@ -8,8 +8,9 @@ set "OUT_DIR=%~dp0dist\VapManager"
 set "SRC_EXE="
 set "RUNTIME_SRC="
 
+if exist "%~1" set "SRC_EXE=%~1"
 if exist "%~2" set "SRC_EXE=%~2"
-if "%SRC_EXE%"=="" if exist "%~dp0release\VapManager.exe" set "SRC_EXE=%~dp0release\VapManager.exe"
+if "%SRC_EXE%"=="" if exist "%~dp0build_release\release\VapManager.exe" set "SRC_EXE=%~dp0build_release\release\VapManager.exe"
 if "%SRC_EXE%"=="" if exist "C:\Users\Dima\Desktop\agv admin backup\build-AgvNewUi-Desktop_Qt_5_14_2_MinGW_64_bit-Release\release\VapManager.exe" set "SRC_EXE=C:\Users\Dima\Desktop\agv admin backup\build-AgvNewUi-Desktop_Qt_5_14_2_MinGW_64_bit-Release\release\VapManager.exe"
 if "%SRC_EXE%"=="" if exist "C:\Users\Dima\Desktop\agv admin backup\build-AgvNewUi-Desktop_Qt_5_14_2_MinGW_64_bit-Release\release\AgvNewUi.exe" set "SRC_EXE=C:\Users\Dima\Desktop\agv admin backup\build-AgvNewUi-Desktop_Qt_5_14_2_MinGW_64_bit-Release\release\AgvNewUi.exe"
 if "%SRC_EXE%"=="" if exist "%~dp0release\AgvNewUi.exe" set "SRC_EXE=%~dp0release\AgvNewUi.exe"
@@ -22,7 +23,8 @@ if "%SRC_EXE%"=="" (
 
 REM Qt runtime: from folder where windeployqt already ran (debug OK — Qt DLLs without 'd')
 if exist "C:\Users\Dima\Desktop\agv admin backup\build-AgvNewUi-Desktop_Qt_5_14_2_MinGW_64_bit-Debug\debug\Qt5Core.dll" set "RUNTIME_SRC=C:\Users\Dima\Desktop\agv admin backup\build-AgvNewUi-Desktop_Qt_5_14_2_MinGW_64_bit-Debug\debug"
-if "%RUNTIME_SRC%"=="" if exist "%~dp0deploy_staging\Qt5Core.dll" set "RUNTIME_SRC=%~dp0deploy_staging"
+if "%RUNTIME_SRC%"=="" if exist "%~dp0build_release\release\Qt5Core.dll" set "RUNTIME_SRC=%~dp0build_release\release"
+if "%RUNTIME_SRC%"=="" if exist "%~dp0release\VapManager.exe" set "RUNTIME_SRC=%~dp0release"
 
 set "WINDEPLOYQT=C:\Qt\Qt5.14.2\5.14.2\mingw73_64\bin\windeployqt.exe"
 set "QT_BIN=C:\Qt\Qt5.14.2\5.14.2\mingw73_64\bin"
@@ -105,7 +107,7 @@ copy /Y "%~dp0config.ini" "%OUT_DIR%\config.ini" >nul 2>nul
 if not exist "%OUT_DIR%\config.ini" (
   (
   echo db_driver=psql
-  echo db_host=192.168.43.19
+  echo db_host=192.168.0.1
   echo db_port=5432
   echo db_name=agv_manager_db
   echo db_user=vapmanager

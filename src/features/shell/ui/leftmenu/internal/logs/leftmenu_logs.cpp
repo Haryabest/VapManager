@@ -1,18 +1,33 @@
 #include "leftmenu.h"
 
 #include "app_session.h"
+#include "db.h"
+#include "db_bench.h"
 #include "db_users.h"
+#include "diag_logger.h"
 
 #include <QApplication>
 #include <QComboBox>
 #include <QCoreApplication>
 #include <QDateTime>
+#include <QDesktopServices>
+#include <QDialog>
+#include <QDir>
 #include <QFile>
+#include <QFileInfo>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QMessageBox>
+#include <QPushButton>
 #include <QSet>
+#include <QSqlDatabase>
 #include <QTableWidget>
 #include <QTableWidgetItem>
+#include <QTextEdit>
 #include <QTextStream>
 #include <QTimer>
+#include <QUrl>
+#include <QVBoxLayout>
 #include <algorithm>
 void leftMenu::showLogs()
 {
@@ -291,4 +306,134 @@ void leftMenu::reloadLogs(int maxRows)
     logsTable->setUpdatesEnabled(true);
     logsTable->viewport()->update();
     lastLogsReloadTimer_.restart();
+}
+
+void leftMenu::runDatabaseBenchTest()
+{
+    QSqlDatabase db = QSqlDatabase::database(QStringLiteral("main_connection"));
+    if (!db.isOpen()) {
+        QString err;
+        if (!connectToDB(&err)) {
+            QMessageBox::warning(this,
+                                 QStringLiteral("Тест базы"),
+                                 QStringLiteral("Нет подключения к PostgreSQL.\n%1")
+                                     .arg(err.isEmpty() ? QStringLiteral("Проверьте config.ini.") : err));
+            return;
+        }
+        db = QSqlDatabase::database(QStringLiteral("main_connection"));
+    }
+
+    const int iterations = 30;
+    const QDateTime started = QDateTime::currentDateTime();
+
+    techDiagLog(QStringLiteral("DB_BENCH"),
+                QStringLiteral("START iterations=%1 host=%2 db=%3")
+                    .arg(iterations)
+                    .arg(db.hostName())
+                    .arg(db.databaseName()));
+
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+    int failedScenarios = 0;
+    const QString reportBody = runDatabaseBenchReport(iterations, &failedScenarios);
+    QApplication::restoreOverrideCursor();
+
+    if (reportBody.isEmpty()) {
+        QMessageBox::warning(this,
+                             QStringLiteral("Тест базы"),
+                             QStringLiteral("Не удалось выполнить тест: подключение к БД недоступно."));
+        techDiagLog(QStringLiteral("DB_BENCH"), QStringLiteral("FAIL no connection"));
+        return;
+    }
+
+    QString report = QStringLiteral("=== Тест базы ===\n");
+    report += QStringLiteral("time:   %1\n").arg(started.toString(QStringLiteral("dd.MM.yyyy hh:mm:ss")));
+    report += QStringLiteral("user:   %1\n").arg(AppSession::currentUsername());
+    report += QStringLiteral("host:   %1:%2\n").arg(db.hostName()).arg(db.port());
+    report += QStringLiteral("db:     %1\n").arg(db.databaseName());
+    report += QStringLiteral("iter:   %1 на сценарий\n\n").arg(iterations);
+    report += reportBody;
+
+    QString reportPath;
+    const QString logsDir = localLogsDirPath();
+    if (QDir().mkpath(logsDir)) {
+        reportPath = logsDir + QStringLiteral("/db_bench_%1.txt")
+                                 .arg(started.toString(QStringLiteral("yyyyMMdd_HHmmss")));
+        QFile outFile(reportPath);
+        if (outFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            QTextStream out(&outFile);
+            out.setCodec("UTF-8");
+            out << report;
+            outFile.close();
+        } else {
+            reportPath.clear();
+        }
+    }
+
+    techDiagLog(QStringLiteral("DB_BENCH"),
+                QStringLiteral("DONE fails=%1 elapsed_ms=%2 file=%3")
+                    .arg(failedScenarios)
+                    .arg(started.msecsTo(QDateTime::currentDateTime()))
+                    .arg(reportPath.isEmpty() ? QStringLiteral("-") : reportPath));
+
+    QDialog dlg(this);
+    dlg.setWindowTitle(QStringLiteral("Тест базы"));
+    dlg.setMinimumSize(s(640), s(520));
+    dlg.setStyleSheet(QStringLiteral(
+        "QDialog{background:#F6F8FC;border:1px solid #DCE2EE;border-radius:14px;}"));
+
+    QVBoxLayout *root = new QVBoxLayout(&dlg);
+    root->setContentsMargins(s(16), s(16), s(16), s(16));
+    root->setSpacing(s(10));
+
+    if (!reportPath.isEmpty()) {
+        QLabel *pathLbl = new QLabel(
+            QStringLiteral("Отчёт сохранён:\n%1").arg(QDir::toNativeSeparators(reportPath)), &dlg);
+        pathLbl->setWordWrap(true);
+        pathLbl->setStyleSheet(QStringLiteral(
+            "font-family:Inter;font-size:13px;color:#334155;background:#E0F2FE;"
+            "border:1px solid #BAE6FD;border-radius:8px;padding:8px;"));
+        root->addWidget(pathLbl);
+    } else {
+        QLabel *pathLbl = new QLabel(QStringLiteral("Не удалось сохранить файл отчёта."), &dlg);
+        pathLbl->setStyleSheet(QStringLiteral(
+            "font-family:Inter;font-size:13px;color:#B91C1C;background:#FEE2E2;"
+            "border:1px solid #FECACA;border-radius:8px;padding:8px;"));
+        root->addWidget(pathLbl);
+    }
+
+    QTextEdit *view = new QTextEdit(&dlg);
+    view->setReadOnly(true);
+    view->setFontFamily(QStringLiteral("Consolas"));
+    view->setPlainText(report);
+    view->setStyleSheet(QStringLiteral(
+        "QTextEdit{background:#FFFFFF;border:1px solid #E2E8F0;border-radius:8px;padding:8px;}"));
+    root->addWidget(view, 1);
+
+    QHBoxLayout *btns = new QHBoxLayout();
+    btns->addStretch();
+    if (!reportPath.isEmpty()) {
+        QPushButton *openDirBtn = new QPushButton(QStringLiteral("Открыть папку"), &dlg);
+        openDirBtn->setFixedSize(s(150), s(40));
+        openDirBtn->setStyleSheet(QString(
+            "QPushButton{background:#0891B2;color:white;font-family:Inter;font-size:%1px;"
+            "font-weight:800;border-radius:%2px;}"
+            "QPushButton:hover{background:#0E7490;}"
+        ).arg(s(14)).arg(s(8)));
+        connect(openDirBtn, &QPushButton::clicked, &dlg, [reportPath]() {
+            QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(reportPath).absolutePath()));
+        });
+        btns->addWidget(openDirBtn);
+    }
+    QPushButton *closeBtn = new QPushButton(QStringLiteral("Закрыть"), &dlg);
+    closeBtn->setFixedSize(s(120), s(40));
+    closeBtn->setStyleSheet(QString(
+        "QPushButton{background:#0F00DB;color:white;font-family:Inter;font-size:%1px;"
+        "font-weight:800;border-radius:%2px;}"
+        "QPushButton:hover{background:#1A4ACD;}"
+    ).arg(s(14)).arg(s(8)));
+    connect(closeBtn, &QPushButton::clicked, &dlg, &QDialog::accept);
+    btns->addWidget(closeBtn);
+    root->addLayout(btns);
+
+    dlg.exec();
 }
